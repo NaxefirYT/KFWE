@@ -8,6 +8,7 @@
 [![Downloads](https://img.shields.io/github/downloads/NaxefirYT/KFWE/total?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9&color=2B2D33)](../../releases)
 [![Warcraft III](https://img.shields.io/badge/Warcraft_III-1.26a-2B2D33)](#установка)
 [![Discord](https://img.shields.io/badge/Discord-KFWE-5865F2?logo=discord&logoColor=white)](https://discord.gg/2Chc8rbXXD)
+[![License](https://img.shields.io/github/license/NaxefirYT/KFWE?label=%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F&color=2B2D33)](LICENSE)
 
 **[Скачать](../../releases/latest)** · [Discord](https://discord.gg/2Chc8rbXXD)
 
@@ -82,3 +83,7 @@ dotnet build installer -c Release -p:Payload=kfwe.zip
 ## Благодарности
 
 [YDWE](https://github.com/actboy168/YDWE), на котором всё построено, и YDWE PK, от которой отталкивается KFWE. [w3x2lni](https://github.com/sumneko/w3x2lni), [War3Net](https://github.com/Drake53/War3Net), LibDeflate.NET, LibJpeg.NET и pjass, на них работает KFMO.
+
+## Лицензия
+
+[GPL-3.0](LICENSE), как и у YDWE. Можно свободно пользоваться, менять и распространять, но изменённые версии тоже должны выходить с открытым кодом под этой же лицензией.
