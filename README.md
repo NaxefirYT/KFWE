@@ -1,107 +1,65 @@
+<div align="center">
+
 # KFWE
 
-Редактор карт для Warcraft III 1.26, собранный поверх YDWE PK. От PK отличается тем, что заметно быстрее работает, умеет искать в окнах выбора, у него нормальный менеджер импорта и свой оптимизатор карт KFMO.
+Быстрый редактор карт для Warcraft III 1.26 на основе YDWE PK
 
-Вопросы, баги и предложения: [Discord](https://discord.gg/2Chc8rbXXD)
+[![Release](https://img.shields.io/github/v/release/NaxefirYT/KFWE?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=7C5CFF)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/NaxefirYT/KFWE/total?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9&color=2B2D33)](../../releases)
+[![Warcraft III](https://img.shields.io/badge/Warcraft_III-1.26-2B2D33)](#установка)
+[![Discord](https://img.shields.io/badge/Discord-KFWE-5865F2?logo=discord&logoColor=white)](https://discord.gg/2Chc8rbXXD)
+
+**[Скачать](../../releases/latest)** · [Discord](https://discord.gg/2Chc8rbXXD)
+
+<img src="docs/import-tiles.png" width="860" alt="Менеджер импорта">
+
+</div>
 
 ## Установка
 
-1. Скачайте архив со страницы [Releases](../../releases).
-2. Распакуйте его в папку с игрой, например в `Warcraft III\KFWE`.
-3. Запустите `YDWE.exe`.
+1. Скачайте `KFWE-Setup.exe` со страницы [Releases](../../releases/latest).
+2. Запустите его. Папку с игрой установщик найдёт сам, если не найдёт, укажите её вручную.
+3. Нажмите «Установить», потом «Запустить».
 
-Нужен Warcraft III версии 1.26.
+Обновление ставится так же, поверх старой версии. Настройки при этом сохраняются.
+
+Если Windows ругается на неизвестное приложение, нажмите «Подробнее» и «Выполнить в любом случае». Можно обойтись и без установщика: скачайте `KFWE.zip` и распакуйте его в папку с игрой.
 
 ## Что нового по сравнению с PK
 
-### Скорость
+- **Скорость.** Ускорено почти всё: запуск редактора, сохранение и тест карты, редактор объектов, окна выбора. На больших картах разница особенно заметна.
+- **Поиск** в окнах выбора модели, способности и других списках.
+- **Новый менеджер импорта.** Папки, разбивка по типам, поиск, превью иконок и текстур, выделение рамкой, экспорт и удаление сразу нескольких файлов.
+- **Тест за любого игрока,** а не только за красного.
+- **KFMO.** Свой оптимизатор карт вместо w3x2lni: быстрее и не трогает тексты стандартных объектов.
+- **Тёмное оформление** окна настроек и окна покраски текста.
 
-Замерял у себя на большой карте, так что ваши цифры будут другими, но порядок разницы такой:
+<img src="docs/import-list.png" width="860" alt="Менеджер импорта, список">
 
-| | PK | KFWE |
-|---|---|---|
-| Запуск редактора | 4,1 с | 2,8 с |
-| Сохранение карты | 8,4 с | 5,3 с |
-| Переключение категорий в редакторе объектов | 10,8 с | 2,7 с |
-| Окно «Выберите способность» | около 14 с | открывается сразу |
+## KFMO отдельно
 
-За счёт чего:
+KFMO можно скачать отдельно, это `KFMO.zip` в [Releases](../../releases/latest). Выбираете карту, отмечаете, что сжимать, и получаете облегчённую копию. Удобно перед выкладкой карты.
 
-- Storm выделял память очень медленно, теперь у редактора свой менеджер памяти;
-- списки в редакторе объектов кэшируются и не пересобираются на каждый клик;
-- выпадающие списки не пересчитывают свой размер, если он не поменялся;
-- Tesh и DarkMode ставили глобальный хук на все сообщения окон, и из-за этого тормозил весь интерфейс. Теперь они работают без него;
-- карта при сохранении упаковывается через KFMO;
-- редактор больше не подгружает `.mix` от игровых модов вроде RenderEdge, которые лежат в папке игры.
+<details>
+<summary><b>Сборка из исходников</b></summary>
 
-### Поиск
-
-- В окне выбора модели появилась строка поиска, ищет сразу по всем категориям.
-- В окне выбора способности и похожих списках тоже есть поиск.
-
-### Менеджер импорта
-
-Стандартное окно заменено новым:
-
-- дерево папок и разделение по типам: иконки, текстуры, модели, звуки, прочее;
-- поиск по имени, пути и типу;
-- превью для BLP и TGA;
-- выделение рамкой, с Ctrl и Shift, сортировка по столбцам;
-- удаление и экспорт сразу нескольких файлов, при экспорте пути сохраняются;
-- копирование путей, контекстное меню и горячие клавиши.
-
-### Тест за любого игрока
-
-В меню есть пункт «Тест за игрока». Карта запускается за выбранного игрока, а не только за красного.
-
-### KFMO
-
-Оптимизатор карт, который используется при сохранении вместо w3x2lni. Выбрать, чем пользоваться, можно в настройках редактора. Есть и отдельная версия с окном, ей можно оптимизировать готовую карту перед выкладкой.
-
-Что умеет:
-
-- переводить данные объектов в SLK, карта с ними грузится быстрее;
-- удалять объекты, на которые нигде нет ссылок;
-- сжимать скрипт: короткие имена, без комментариев, результат проверяется через pjass;
-- округлять числа в моделях и убирать ключи анимации, которые ничего не меняют;
-- пережимать текстуры и ограничивать их размер, оставлять иконкам только основной размер;
-- удалять файлы, которые нужны только редактору, и превью карты.
-
-### Остальное
-
-- Тёмное окно настроек.
-- Название, ссылки и тексты поменяны на KFWE.
-
-## Сборка из исходников
-
-### KFMO
-
-Нужен [.NET 10 SDK](https://dotnet.microsoft.com/download).
-
-Консольная версия, её вызывает редактор (кладётся в `plugin\kfmo\KFMO.exe`):
+<br>
 
 ```
-dotnet publish kfmo/src -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out/kfmo
+kfmo/src      KFMO, консольная версия (её вызывает редактор)
+kfmo/gui      KFMO с окном
+kfwe/         изменённые файлы редактора, разложены как в его папке
+installer/    установщик
 ```
 
-Версия с окном:
+**KFMO** собирается через [.NET 10 SDK](https://dotnet.microsoft.com/download):
 
 ```
-dotnet publish kfmo/gui -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out/kfmo-gui
+dotnet publish kfmo/src -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o out/kfmo
+dotnet publish kfmo/gui -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o out/kfmo-gui
 ```
 
-Основные команды консольной версии:
-
-```
-KFMO optimize <карта.w3x или папка> <результат.w3x> [--test | --release]
-KFMO pack <папка карты> <результат.w3x>
-```
-
-`--test` быстро собирает карту для теста без пережатия текстур и скрипта. `--release` включает самое сильное сжатие и убирает файлы редактора, такая карта уже не откроется в редакторе, так что храните исходник.
-
-### Плагины редактора
-
-Плагины собираются как 32-битные DLL. Подойдёт любой компилятор C под x86 Windows, я собираю через zig (`pip install ziglang`):
+**Плагины** это 32-битные DLL на C. Подойдёт любой компилятор под x86 Windows, например zig (`pip install ziglang`). Из папки `kfwe/plugin`:
 
 ```
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s StormFastHeap/src/stormfastheap.c -luser32 -o StormFastHeap.dll
@@ -110,27 +68,17 @@ python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ImportPlus/src/impor
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -o kf_playas.dll
 ```
 
-Команды запускаются из папки `kfwe/plugin`.
+YDColorizer собирается через MSBuild из .NET Framework: `MSBuild.exe YDColorizer.csproj -p:Configuration=Release -p:Platform=AnyCPU`.
 
-### Где что лежит
-
-Файлы в `kfwe` разложены так же, как в папке редактора, поэтому их можно просто скопировать поверх.
+**Установщик** собирается из готовой папки редактора:
 
 ```
-kfmo/src          KFMO, консольная версия
-kfmo/gui          KFMO, версия с окном
-kfwe/plugin       плагины редактора
-kfwe/script       изменённые скрипты PK
-kfwe/share        оформление окна настроек и тексты
-kfwe/tools        скрипты, которыми правились файлы PK
+python installer/make_payload.py "путь\к\KFWE" installer/kfwe.zip
+dotnet build installer -c Release -p:Payload=kfwe.zip
 ```
 
-В скриптах из `kfwe/tools` прописаны пути под мою установку, перед запуском поправьте их под себя.
+</details>
 
 ## Благодарности
 
-- [YDWE](https://github.com/actboy168/YDWE), на нём всё построено.
-- YDWE PK, русская сборка YDWE, от которой отталкивается KFWE.
-- [w3x2lni](https://github.com/sumneko/w3x2lni), из него взяты таблицы метаданных для SLK.
-- [War3Net](https://github.com/Drake53/War3Net), LibDeflate.NET и LibJpeg.NET, на них работает KFMO.
-- pjass, которым проверяется сжатый скрипт.
+[YDWE](https://github.com/actboy168/YDWE), на котором всё построено, и YDWE PK, от которой отталкивается KFWE. [w3x2lni](https://github.com/sumneko/w3x2lni), [War3Net](https://github.com/Drake53/War3Net), LibDeflate.NET, LibJpeg.NET и pjass, на них работает KFMO.
