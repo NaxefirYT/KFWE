@@ -2,11 +2,11 @@
 
 # KFWE
 
-Быстрый редактор карт для Warcraft III 1.26 на основе YDWE PK
+Редактор Warcraft 3 нового поколения
 
 [![Release](https://img.shields.io/github/v/release/NaxefirYT/KFWE?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=7C5CFF)](../../releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/NaxefirYT/KFWE/total?label=%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9&color=2B2D33)](../../releases)
-[![Warcraft III](https://img.shields.io/badge/Warcraft_III-1.26-2B2D33)](#установка)
+[![Warcraft III](https://img.shields.io/badge/Warcraft_III-1.26a-2B2D33)](#установка)
 [![Discord](https://img.shields.io/badge/Discord-KFWE-5865F2?logo=discord&logoColor=white)](https://discord.gg/2Chc8rbXXD)
 
 **[Скачать](../../releases/latest)** · [Discord](https://discord.gg/2Chc8rbXXD)

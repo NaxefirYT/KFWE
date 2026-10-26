@@ -120,7 +120,7 @@ sealed class SetupForm : Form
         ClientSize = new Size(520, 252);
 
         var title = new Label { Text = "KFWE 1.3", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
-        var sub = new Label { Text = "Редактор карт для Warcraft III 1.26", ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
+        var sub = new Label { Text = "Редактор Warcraft 3 нового поколения", ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
         var cap = new Label { Text = "Папка Warcraft III", AutoSize = true, Location = new Point(24, 94) };
 
         path.SetBounds(24, 118, 372, 27);
@@ -193,7 +193,7 @@ sealed class SetupForm : Form
         else if (!install.Enabled)
             Hint("В этой папке нет game.dll", true);
         else if (!Installer.GameVersion(dir).StartsWith("1.26"))
-            Hint("Нужна версия 1.26, у вас " + Installer.GameVersion(dir) + ". Редактор может не запуститься", true);
+            Hint("Нужна версия 1.26a, у вас " + Installer.GameVersion(dir) + ". Редактор может не запуститься", true);
         else if (Directory.Exists(Path.Combine(dir, "KFWE")))
             Hint("KFWE уже установлен, файлы обновятся, а настройки останутся", false);
         else
