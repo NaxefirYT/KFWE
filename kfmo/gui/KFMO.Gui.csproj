@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KFMO</AssemblyName>
+    <RootNamespace>KFMO.Gui</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Product>KF Map Optimizer</Product>
+    <Version>1.0.0</Version>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="..\src\*.cs" Exclude="..\src\Program.cs" />
+    <EmbeddedResource Include="..\src\Data\*.ini" LogicalName="%(Filename)%(Extension)" />
+    <None Include="pjass.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BitMiracle.LibJpeg.NET" Version="1.5.324" />
+    <PackageReference Include="LibDeflate.NET" Version="1.19.0" />
+    <PackageReference Include="War3Net.Build.Core" Version="6.1.0" />
+    <PackageReference Include="War3Net.IO.Mpq" Version="6.0.3" />
+  </ItemGroup>
+
+</Project>

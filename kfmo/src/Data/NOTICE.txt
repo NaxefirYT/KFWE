@@ -1,0 +1,2 @@
+metadata.ini and keydata.ini are taken from w3x2lni (https://github.com/sumneko/w3x2lni), MIT License,
+Copyright (c) sumneko. Field layout tables in SlkConv.cs are ported from the same project.

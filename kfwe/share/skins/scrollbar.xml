@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ScrollbarConfig>
+  <Class name="VScrollBar" width="8" height="8" showbutton1="false" showbutton2="false"
+    button1normalimage="file='Common/kf/empty.png'" button2normalimage="file='Common/kf/empty.png'"
+    thumbnormalimage="file='Common/kf/thumb.png' corner='3,6,3,6'" thumbhotimage="file='Common/kf/thumb_hot.png' corner='3,6,3,6'" thumbpushedimage="file='Common/kf/thumb_push.png' corner='3,6,3,6'" thumbdisabledimage="file='Common/kf/thumb.png' corner='3,6,3,6'"
+    railnormalimage="file='Common/kf/empty.png'" bknormalimage="file='Common/kf/empty.png'" bkhotimage="file='Common/kf/empty.png'" bkpushedimage="file='Common/kf/empty.png'" bkdisabledimage="file='Common/kf/empty.png'"
+  />
+  <Class name="HScrollBar" width="8" height="8" showbutton1="false" showbutton2="false"
+    button1normalimage="file='Common/kf/empty.png'" button2normalimage="file='Common/kf/empty.png'"
+    thumbnormalimage="file='Common/kf/thumb.png' corner='3,6,3,6'" thumbhotimage="file='Common/kf/thumb_hot.png' corner='3,6,3,6'" thumbpushedimage="file='Common/kf/thumb_push.png' corner='3,6,3,6'" thumbdisabledimage="file='Common/kf/thumb.png' corner='3,6,3,6'"
+    railnormalimage="file='Common/kf/empty.png'" bknormalimage="file='Common/kf/empty.png'" bkhotimage="file='Common/kf/empty.png'" bkpushedimage="file='Common/kf/empty.png'" bkdisabledimage="file='Common/kf/empty.png'"
+  />
+</ScrollbarConfig>

@@ -1,0 +1,6 @@
+[Info]
+PluginName = StormFastHeap
+[Load]
+Enable = 1
+Loader = StormFastHeap.lua
+Dll    = StormFastHeap.dll

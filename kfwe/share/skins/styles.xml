@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Styles>
+  <Include source="scrollbar.xml" />
+  <Class name="Button" font="5" textcolor="#FFE4E6EB" hottextcolor="#FFFFFFFF" focusedtextcolor="#FFE4E6EB" pushedtextcolor="#FFC3C7D0" disabledtextcolor="#FF5C616C"
+    normalimage   = "file='Common/kf/btn.png' corner='9,9,9,9'"
+    hotimage      = "file='Common/kf/btn_hot.png' corner='9,9,9,9'"
+    pushedimage   = "file='Common/kf/btn_push.png' corner='9,9,9,9'"
+    disabledimage = "file='Common/kf/btn.png' corner='9,9,9,9' fade='120'"
+  />
+  <Class name="NormalRadioButton" font="2" textcolor="#FFC3C7D0" hottextcolor="#FFFFFFFF" selectedtextcolor="#FFFFFFFF" disabledtextcolor="#FF5C616C" textpadding="28,0,0,0" align="left"
+    normalimage           = "file='Common/kf/radio_off.png' dest='0,4,18,22'"
+    hotimage              = "file='Common/kf/radio_off_hot.png' dest='0,4,18,22'"
+    pushedimage           = "file='Common/kf/radio_off_hot.png' dest='0,4,18,22'"
+    disabledimage         = "file='Common/kf/radio_off.png' dest='0,4,18,22' fade='110'"
+    selectedimage         = "file='Common/kf/radio_on.png' dest='0,4,18,22'"
+    selectedhotimage      = "file='Common/kf/radio_on_hot.png' dest='0,4,18,22'"
+    selectedpushedimage   = "file='Common/kf/radio_on_hot.png' dest='0,4,18,22'"
+    selecteddisabledimage = "file='Common/kf/radio_on.png' dest='0,4,18,22' fade='110'"
+  />
+  <Class name="CheckBox" font="2" textcolor="#FFC3C7D0" hottextcolor="#FFFFFFFF" selectedtextcolor="#FFE4E6EB" disabledtextcolor="#FF5C616C" textpadding="46,0,0,0" align="left"
+    normalimage           = "file='Common/kf/switch_off.png' dest='0,3,36,23'"
+    hotimage              = "file='Common/kf/switch_off_hot.png' dest='0,3,36,23'"
+    pushedimage           = "file='Common/kf/switch_off_hot.png' dest='0,3,36,23'"
+    disabledimage         = "file='Common/kf/switch_off.png' dest='0,3,36,23' fade='110'"
+    selectedimage         = "file='Common/kf/switch_on.png' dest='0,3,36,23'"
+    selectedhotimage      = "file='Common/kf/switch_on_hot.png' dest='0,3,36,23'"
+    selectedpushedimage   = "file='Common/kf/switch_on_hot.png' dest='0,3,36,23'"
+    selecteddisabledimage = "file='Common/kf/switch_on.png' dest='0,3,36,23' fade='110'"
+  />
+  <Class name="Label" height="20" textpadding="2,-4,2,-4" textcolor="#FFC3C7D0" disabledtextcolor="#FF5C616C" font="0" align="wrap" />
+</Styles>

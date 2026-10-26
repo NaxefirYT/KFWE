@@ -1,0 +1,25 @@
+#pragma code_page(65001)
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS 0x40004
+FILETYPE 0x2
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "041904B0"
+    BEGIN
+      VALUE "CompanyName", "KFWE"
+      VALUE "FileDescription", "Тест за выбранного игрока"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "kf_playas"
+      VALUE "OriginalFilename", "kf_playas.dll"
+      VALUE "ProductName", "KFWE"
+      VALUE "ProductVersion", "1.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0419, 1200
+  END
+END

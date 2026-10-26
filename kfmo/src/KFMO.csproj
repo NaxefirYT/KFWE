@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BitMiracle.LibJpeg.NET" Version="1.5.324" />
+    <PackageReference Include="LibDeflate.NET" Version="1.19.0" />
+    <PackageReference Include="War3Net.Build.Core" Version="6.1.0" />
+    <PackageReference Include="War3Net.IO.Mpq" Version="6.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data/*.ini" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+[Info]
+PluginName = ModelSearch
+[Load]
+Enable = 1
+Loader = ModelSearch.lua
+Dll    = ModelSearch.dll

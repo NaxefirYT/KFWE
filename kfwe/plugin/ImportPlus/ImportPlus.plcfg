@@ -1,0 +1,6 @@
+[Info]
+PluginName = ImportPlus
+[Load]
+Enable = 1
+Loader = ImportPlus.lua
+Dll    = ImportPlus.dll
