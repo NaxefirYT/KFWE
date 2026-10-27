@@ -41,6 +41,10 @@ function event.EVENT_INIT_MENU(event_data)
 	menu:add(LNG.MENU_CONIFG, launch_config)
 	menu:add(LNG.MENU_LAUNCH_WAR3, launch_warcraft3)
 	require('playas').attach(menu, gui.on_command)
+	local tools = plugin.loaders.KFTools
+	if tools then
+		menu:add('Копировать координаты\tCtrl+Shift+C', tools.copy)
+	end
 	menu:add(LNG.MENU_OPEN_OFFICIAL_SITE, open_offical_site)
 
 	main_window_handle = event_data.main_window_handle

@@ -1,0 +1,6 @@
+[Info]
+PluginName = KFTools
+[Load]
+Enable = 1
+Loader = KFTools.lua
+Dll    = KFTools.dll
