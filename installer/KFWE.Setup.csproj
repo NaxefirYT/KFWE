@@ -8,7 +8,7 @@
     <AssemblyName>KFWE-Setup</AssemblyName>
     <ApplicationIcon>kfwe.ico</ApplicationIcon>
     <Product>KFWE</Product>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
     <DebugType>none</DebugType>
   </PropertyGroup>
 
