@@ -15,11 +15,13 @@ static class Optimize
         public bool StripEditor;
         public bool Slk = true;
         public bool KeepUnused;
+        public bool ReforgedSkins = true;
         public bool JassMin;
         public bool KeyReduce;
         public bool IconOneMip;
         public int TexMax;
         public bool NoPreview;
+        public bool RequireSlk;
         public int SectorShift = 7;
         public bool Textures = true;
         public Dictionary<string, string> Replace = new(StringComparer.OrdinalIgnoreCase);
@@ -63,7 +65,11 @@ static class Optimize
             Console.WriteLine($"  данные только для редактора: удалено {before - files.Count} файлов");
         }
 
-        if (o.Slk) RunSlk(files, o);
+        if (o.Slk && !RunSlk(files, o) && o.RequireSlk)
+        {
+            Console.WriteLine("SLK не сделан, карта для теста не собрана");
+            return 5;
+        }
 
         var sw0 = Stopwatch.StartNew();
         var sr = Strings.Run(files);
@@ -151,22 +157,26 @@ static class Optimize
         return 0;
     }
 
-    static void RunSlk(List<(string Name, byte[] Data)> files, Options o)
+    static bool RunSlk(List<(string Name, byte[] Data)> files, Options o)
     {
         var sw = Stopwatch.StartNew();
         byte[]? Get(string n) => files.FirstOrDefault(f => f.Name.Equals(n, StringComparison.OrdinalIgnoreCase)).Data;
         if (files.Any(f => f.Name.EndsWith(".slk", StringComparison.OrdinalIgnoreCase) && f.Name.StartsWith("units", StringComparison.OrdinalIgnoreCase)))
         {
             Console.WriteLine("  объекты: в карте уже есть SLK-таблицы, конвертация пропущена");
-            return;
+            return true;
         }
         GameFiles g;
         try { g = new GameFiles(GameFiles.DefaultDir()); }
-        catch (Exception ex) { Console.WriteLine("  объекты: не найдена игра, SLK пропущен (" + ex.Message + ")"); return; }
+        catch (Exception ex) { Console.WriteLine("  объекты: не найдена игра, SLK пропущен (" + ex.Message + ")"); return false; }
         using (g)
         {
-            var conv = SlkConv.FromGame(g);
+            foreach (var s in g.Skipped) Console.WriteLine("  игра: архив не читается, пропущен: " + s);
+            SlkConv conv;
+            try { conv = SlkConv.FromGame(g); }
+            catch (Exception ex) { Console.WriteLine("  объекты: данные игры неполные, SLK пропущен (" + ex.Message + ")"); return false; }
             conv.RemoveUnused = !o.KeepUnused;
+            conv.ReforgedSkins = o.ReforgedSkins;
             var wtsBytes = Get("war3map.wts");
             var wts = wtsBytes != null ? Strings.ParseWts(wtsBytes) : new Dictionary<int, string>();
             int next = wts.Count == 0 ? 0 : wts.Keys.Max() + 1;
@@ -186,6 +196,7 @@ static class Optimize
             Console.WriteLine($"  объекты -> SLK: правки {before / 1024} -> {after / 1024} КБ, таблицы+TXT {slkBytes / 1024} КБ, выкинуто неиспользуемых {conv.Removed} из {conv.Total}, {sw.Elapsed.TotalSeconds:F1} c");
             if (conv.UnknownParent > 0) Console.WriteLine($"    объектов с неизвестным родителем (оставлены как есть): {conv.UnknownParent}");
         }
+        return true;
     }
 
     static void RunJassMin(List<(string Name, byte[] Data)> files)

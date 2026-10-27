@@ -100,7 +100,7 @@ end
 
 return function (mode, map_path, target_path)
     if kfmo_enabled() then
-        if mode == 'slk' and kfmo('optimize', map_path:string(), target_path:string(), '--test') then
+        if mode == 'slk' and kfmo('optimize', map_path:string(), target_path:string(), '--test', '--game', fs.war3_path():string()) then
             return true
         end
         if mode == 'pack' and kfmo_can_pack(map_path, target_path) and kfmo('pack', map_path:string(), target_path:string()) then

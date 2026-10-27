@@ -55,20 +55,9 @@ static class Analyzer
         foreach (var f in files.OrderByDescending(f => f.Packed).Take(12))
             Console.WriteLine($"  {f.Packed / 1024.0,9:F0} КБ  {f.Name}");
 
-        var corpus = new StringBuilder();
-        foreach (var f in files)
-        {
-            string ext = Path.GetExtension(f.Name).ToLowerInvariant();
-            bool isText = f.Name.StartsWith("war3map", StringComparison.OrdinalIgnoreCase) || ext is ".txt" or ".slk" or ".j" or ".lua" or ".fdf" or ".toc" or ".ai";
-            if (isText || ext is ".mdx" or ".mdl")
-                corpus.Append(Encoding.Latin1.GetString(f.Data).ToLowerInvariant().Replace('/', '\\')).Append('\n');
-        }
-        string text = corpus.ToString();
-
-        var assetExt = new HashSet<string> { ".mdx", ".mdl", ".blp", ".tga", ".dds", ".wav", ".mp3", ".flac", ".ogg", ".mid" };
-        var assets = files.Where(f => assetExt.Contains(Path.GetExtension(f.Name).ToLowerInvariant())
-                                   && !f.Name.StartsWith("war3map", StringComparison.OrdinalIgnoreCase)).ToList();
-        var unused = assets.Where(f => !IsReferenced(f.Name, text)).ToList();
+        var refs = References(files.Select(f => (f.Name, f.Data)));
+        var assets = files.Where(f => IsAsset(f.Name)).ToList();
+        var unused = assets.Where(f => !IsReferenced(f.Name, refs)).ToList();
         Console.WriteLine();
         Console.WriteLine($"== Похоже не используются: {unused.Count} из {assets.Count} ресурсов, {unused.Sum(f => (long)f.Packed) / 1048576.0:F2} МБ в архиве");
         foreach (var f in unused.OrderByDescending(f => f.Packed).Take(25))
@@ -153,27 +142,84 @@ static class Analyzer
         return list;
     }
 
-    static bool IsReferenced(string name, string text)
+    static readonly HashSet<string> AssetExt = new() { ".mdx", ".mdl", ".blp", ".tga", ".dds", ".wav", ".mp3", ".flac", ".ogg", ".mid" };
+
+    static bool IsAsset(string name) =>
+        AssetExt.Contains(Path.GetExtension(name).ToLowerInvariant()) && !name.StartsWith("war3map", StringComparison.OrdinalIgnoreCase);
+
+    static HashSet<string> References(IEnumerable<(string Name, byte[] Data)> files)
+    {
+        var refs = new HashSet<string>(StringComparer.Ordinal);
+        var sb = new StringBuilder();
+        void Flush()
+        {
+            string t = sb.ToString().Trim().ToLowerInvariant();
+            sb.Clear();
+            if (t.Length < 3) return;
+            while (t.Contains("\\\\")) t = t.Replace("\\\\", "\\");
+            string noExt = t;
+            int dot = t.LastIndexOf('.');
+            if (dot > t.LastIndexOf('\\')) noExt = t[..dot];
+            for (int i = -1; ; i = noExt.IndexOf('\\', i + 1))
+            {
+                refs.Add(noExt[(i + 1)..]);
+                if (noExt.IndexOf('\\', i + 1) < 0) break;
+            }
+        }
+        foreach (var f in files)
+        {
+            if (f.Name.Equals("war3map.imp", StringComparison.OrdinalIgnoreCase)) continue;
+            string ext = Path.GetExtension(f.Name).ToLowerInvariant();
+            bool isText = f.Name.StartsWith("war3map", StringComparison.OrdinalIgnoreCase) || ext is ".txt" or ".slk" or ".j" or ".lua" or ".fdf" or ".toc" or ".ai";
+            if (!isText && ext is not (".mdx" or ".mdl")) continue;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                foreach (byte b in f.Data)
+                {
+                    char c = (char)b;
+                    if (c < ' ' || c is '"' or ',' or '=' or ';' or '|' or '\'' || b == 0x7F || (pass == 1 && b > 0x7F))
+                    {
+                        if (sb.Length > 0) Flush();
+                        continue;
+                    }
+                    if (sb.Length < 260) sb.Append(c == '/' ? '\\' : c);
+                }
+                if (sb.Length > 0) Flush();
+            }
+        }
+        return refs;
+    }
+
+    public static List<string> Unused(string path)
+    {
+        using var archive = MpqArchive.Open(path, true);
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var n in KnownNamesList) names.Add(n);
+        foreach (var n in ListFileOf(archive)) names.Add(n);
+        archive.AddFileNames(names);
+        var files = new List<(string Name, byte[] Data)>();
+        for (int i = 0; i < archive.Count; i++)
+        {
+            var e = archive[i];
+            if (e.FileName is null) continue;
+            try { using var s = archive.OpenFile(e); using var ms = new MemoryStream(); s.CopyTo(ms); files.Add((e.FileName, ms.ToArray())); }
+            catch { }
+        }
+        var refs = References(files);
+        return files.Where(f => IsAsset(f.Name) && !IsReferenced(f.Name, refs)).Select(f => f.Name).ToList();
+    }
+
+    static bool IsReferenced(string name, HashSet<string> refs)
     {
         string n = name.ToLowerInvariant().Replace('/', '\\');
         string noExt = Path.ChangeExtension(n, null)!;
-        var keys = new List<string> { n, noExt };
+        var keys = new List<string> { noExt };
         if (noExt.StartsWith("war3mapimported\\")) keys.Add(noExt.Substring(16));
         if (noExt.EndsWith("_portrait")) keys.Add(noExt[..^9]);
         string file = Path.GetFileName(noExt);
-        if (file.StartsWith("disbtn")) keys.Add("btn" + file.Substring(6));
-        if (file.StartsWith("dispas")) keys.Add("pas" + file.Substring(6));
-        foreach (var k in keys)
-        {
-            int i = 0;
-            while ((i = text.IndexOf(k, i, StringComparison.Ordinal)) >= 0)
-            {
-                char before = i > 0 ? text[i - 1] : '\0';
-                if (!char.IsLetterOrDigit(before) || k.StartsWith("btn") || k.StartsWith("pas")) return true;
-                i++;
-            }
-        }
-        return false;
+        keys.Add(file);
+        if (file.StartsWith("dis") && file.Length > 3) keys.Add(file.Substring(3));
+        return keys.Any(refs.Contains);
     }
 
     static string Category(string name)

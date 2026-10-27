@@ -4,6 +4,11 @@ using War3Net.IO.Mpq;
 
 Console.OutputEncoding = Encoding.UTF8;
 if (KFMO.Cli.Dispatch(args, out int cliRc)) return cliRc;
+if (args.Length >= 2 && args[0] == "unused")
+{
+    foreach (var n in Analyzer.Unused(args[1])) Console.WriteLine("U " + n);
+    return 0;
+}
 if (args.Length >= 2 && args[0] == "analyze") { Analyzer.Run(args[1], args.Length >= 4 && args[2] == "--names" ? args[3] : null); return 0; }
 if (args.Length >= 3 && args[0] == "extract")
 {
@@ -36,6 +41,8 @@ if (args.Length >= 3 && args[0] == "optimize")
             case "--no-slk": o.Slk = false; break;
             case "--replace": { var kv = args[++i].Split('=', 2); o.Replace[kv[0]] = kv[1]; break; }
             case "--keep-unused": o.KeepUnused = true; break;
+            case "--no-skins": o.ReforgedSkins = false; break;
+            case "--game": KFMO.GameFiles.OverrideDir = args[++i]; break;
             case "--no-listfile": o.Listfile = false; break;
             case "--level": o.Level = int.Parse(args[++i]); break;
             case "--mdx-quant": o.Quant = KFMO.MdxQuant.Bits.Release(); break;
@@ -43,7 +50,7 @@ if (args.Length >= 3 && args[0] == "optimize")
             case "--release": o.StripEditor = true; o.Quant = KFMO.MdxQuant.Bits.Release(); o.IconOneMip = true; o.KeyReduce = true; o.JassMin = true; o.SectorShift = 9; break;
             case "--keep-jass": o.JassMin = false; break;
             case "--tex-max": o.TexMax = int.Parse(args[++i]); break;
-            case "--test": o.Textures = false; o.Quant = null; o.JassMin = false; o.KeyReduce = false; o.IconOneMip = false; o.Level = 1; break;
+            case "--test": o.RequireSlk = true; o.Textures = false; o.Quant = null; o.JassMin = false; o.KeyReduce = false; o.IconOneMip = false; o.Level = 1; break;
             case "--no-preview": o.NoPreview = true; break;
             case "--sector": o.SectorShift = int.Parse(args[++i]); break;
             case "--keep-keys": o.KeyReduce = false; break;

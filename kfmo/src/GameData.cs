@@ -5,15 +5,18 @@ namespace KFMO;
 sealed class GameFiles : IDisposable
 {
     readonly List<MpqArchive> archives = new();
+    public readonly List<string> Skipped = new();
 
     public GameFiles(string war3Dir)
     {
         foreach (var name in new[] { "War3Patch.mpq", "War3xlocal.mpq", "War3x.mpq", "war3.mpq" })
         {
             var p = Path.Combine(war3Dir, name);
-            if (File.Exists(p)) archives.Add(MpqArchive.Open(p, true));
+            if (!File.Exists(p)) continue;
+            try { archives.Add(MpqArchive.Open(p, false)); }
+            catch (Exception ex) { Skipped.Add(name + ": " + ex.Message); }
         }
-        if (archives.Count == 0) throw new FileNotFoundException("Не найдены MPQ игры в " + war3Dir);
+        if (archives.Count == 0) throw new FileNotFoundException("Не найдены MPQ игры в " + war3Dir + (Skipped.Count > 0 ? " (" + string.Join("; ", Skipped) + ")" : ""));
     }
 
     public byte[]? Read(string name)
