@@ -37,6 +37,8 @@ static class Installer
         "plugin/ydhost/map.cfg", "plugin/ydhost/ydhost.cfg", "plugin/YDColorizer/YDColorizerConfig.ini",
     };
 
+    static readonly string[] Obsolete = { "bin/splash.bmp" };
+
     public static string FindWar3()
     {
         foreach (var hive in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
@@ -75,6 +77,11 @@ static class Installer
                 e.ExtractToFile(dst, true);
             }
             progress?.Report(++done * 100 / zip.Entries.Count);
+        }
+        foreach (var f in Obsolete)
+        {
+            var path = Path.Combine(target, f.Replace('/', '\\'));
+            if (File.Exists(path)) File.Delete(path);
         }
     }
 
@@ -119,7 +126,7 @@ sealed class SetupForm : Form
         Font = new Font("Segoe UI", 9.75f);
         ClientSize = new Size(520, 252);
 
-        var title = new Label { Text = "KFWE 1.3", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
+        var title = new Label { Text = "KFWE 1.4", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
         var sub = new Label { Text = "Редактор Warcraft 3 нового поколения", ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
         var cap = new Label { Text = "Папка Warcraft III", AutoSize = true, Location = new Point(24, 94) };
 
