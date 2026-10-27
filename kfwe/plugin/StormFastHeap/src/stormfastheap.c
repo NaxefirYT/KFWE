@@ -1456,6 +1456,42 @@ static BOOL WINAPI h_attrex_w(LPCWSTR p, GET_FILEEX_INFO_LEVELS lv, LPVOID out)
     return r;
 }
 
+// anything that changes the file tree must drop the caches, or a folder made a moment ago reads as missing (map save into .w3xTemp)
+static BOOL WINAPI h_mkdir_a(LPCSTR p, LPSECURITY_ATTRIBUTES sa)
+{
+    BOOL r = CreateDirectoryA(p, sa);
+    InterlockedIncrement(&g_neg_gen);
+    return r;
+}
+
+static BOOL WINAPI h_rmdir_a(LPCSTR p)
+{
+    BOOL r = RemoveDirectoryA(p);
+    InterlockedIncrement(&g_neg_gen);
+    return r;
+}
+
+static BOOL WINAPI h_del_a(LPCSTR p)
+{
+    BOOL r = DeleteFileA(p);
+    InterlockedIncrement(&g_neg_gen);
+    return r;
+}
+
+static BOOL WINAPI h_copy_a(LPCSTR a, LPCSTR b, BOOL fail)
+{
+    BOOL r = CopyFileA(a, b, fail);
+    InterlockedIncrement(&g_neg_gen);
+    return r;
+}
+
+static BOOL WINAPI h_move_a(LPCSTR a, LPCSTR b)
+{
+    BOOL r = MoveFileA(a, b);
+    InterlockedIncrement(&g_neg_gen);
+    return r;
+}
+
 static void *WINAPI h_open_xmidi(DWORD flags)
 {
     (void)flags;
@@ -1502,6 +1538,11 @@ static void apply_startup_io(void)
         n += iat_hook(mods[i], "CreateFileW", (void *)GetProcAddress(k32, "CreateFileW"), (void *)h_create_w);
         n += iat_hook(mods[i], "GetFileAttributesA", (void *)GetProcAddress(k32, "GetFileAttributesA"), (void *)h_attr_a);
         n += iat_hook(mods[i], "GetFileAttributesExW", (void *)GetProcAddress(k32, "GetFileAttributesExW"), (void *)h_attrex_w);
+        n += iat_hook(mods[i], "CreateDirectoryA", (void *)GetProcAddress(k32, "CreateDirectoryA"), (void *)h_mkdir_a);
+        n += iat_hook(mods[i], "RemoveDirectoryA", (void *)GetProcAddress(k32, "RemoveDirectoryA"), (void *)h_rmdir_a);
+        n += iat_hook(mods[i], "DeleteFileA", (void *)GetProcAddress(k32, "DeleteFileA"), (void *)h_del_a);
+        n += iat_hook(mods[i], "CopyFileA", (void *)GetProcAddress(k32, "CopyFileA"), (void *)h_copy_a);
+        n += iat_hook(mods[i], "MoveFileA", (void *)GetProcAddress(k32, "MoveFileA"), (void *)h_move_a);
     }
     if (n)
         g_patches_applied |= 1 << 15;
