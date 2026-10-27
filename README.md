@@ -32,6 +32,7 @@
 - **Поиск** в окнах выбора модели, способности и других списках.
 - **Новый менеджер импорта.** Папки, разбивка по типам, поиск, превью иконок и текстур, выделение рамкой, экспорт и удаление сразу нескольких файлов.
 - **Тест за любого игрока,** а не только за красного.
+- **Координаты в буфер.** Ctrl+Shift+C копирует точку под курсором (`x, y`), с Alt ещё и высоту. Без скриншотов.
 - **KFMO.** Свой оптимизатор карт вместо w3x2lni: быстрее и не трогает тексты стандартных объектов.
 - **Тёмное оформление** окна настроек и окна покраски текста.
 
@@ -67,6 +68,8 @@ python -m ziglang cc -target x86-windows-gnu -shared -O2 -s StormFastHeap/src/st
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ModelSearch/src/modelsearch.c -luser32 -lgdi32 -o ModelSearch.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ImportPlus/src/importplus.c -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32 -lole32 -lmsimg32 -lwindowscodecs -luuid -lgdiplus -o ImportPlus.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -o kf_playas.dll
+python -m ziglang cc -target x86-windows-gnu -shared -O2 -s Splash/src/splash.c -luser32 -lgdi32 -lgdiplus -ladvapi32 -o Splash.dll
+python -m ziglang cc -target x86-windows-gnu -shared -O2 -s KFTools/src/kftools.c -luser32 -lgdi32 -lgdiplus -o KFTools.dll
 ```
 
 YDColorizer собирается через MSBuild из .NET Framework: `MSBuild.exe YDColorizer.csproj -p:Configuration=Release -p:Platform=AnyCPU`.
