@@ -76,16 +76,16 @@ int WINAPI GdipSetClipPath(GpGraphics *, GpPath *, int);
 int WINAPI GdipResetClip(GpGraphics *);
 #define PF_PARGB 0xE200B
 
-typedef struct Thumb { wchar_t *key; GpImage *img; int w, h, state; struct Thumb *next; } Thumb;
-typedef struct { wchar_t *name, *type, *size, *path, *low, *ext; int kb, we, kind, dirlen; } Row;
-typedef struct { wchar_t *prefix, *label; int parent, count, total, depth, kids, expanded; } Fold;
+typedef struct Thumb { wchar_t *key; GpImage *img; int w, h, state, kb; struct Thumb *next; } Thumb;
+typedef struct { wchar_t *name, *type, *size, *path, *low, *ext; int kb, we, kind, dirlen, fold, unused; } Row;
+typedef struct { wchar_t *prefix, *label; int parent, count, total, shown, depth, kids, expanded; } Fold;
 typedef struct { int kind, idx; RECT rc; } SbItem;
 typedef struct { int id; const wchar_t *label; int danger; RECT rc; } Btn;
 
 typedef struct {
     HWND dlg, welv, view, edit;
     Row *rows;
-    int nrows, kcount[K_N];
+    int nrows, kcount[K_N], kshown[K_N], allshown;
     Fold *fold;
     int nfold, capfold, *forder;
     int *vis, nvis;
@@ -96,6 +96,8 @@ typedef struct {
     int drag_scroll, drag_off;
     int press, marq, marq_x0, marq_y0, marq_x1, marq_y1;
     uint8_t *sel_base;
+    int unused_f, unused_state, unused_gen, nunused, unshown;
+    uint64_t *unused;
     POINT mouse;
     int hover_kind, hover_idx;
     SbItem *sb;
@@ -115,6 +117,11 @@ typedef struct {
 } Imp;
 
 static HINSTANCE g_inst;
+static wchar_t g_map[MAX_PATH * 2];
+static volatile LONG g_map_gen = 1;
+#define WM_KF_UNUSED (WM_APP + 41)
+typedef struct { int gen, err, n; uint64_t *keys; } UnusedRes;
+typedef struct { HWND view; int gen; wchar_t map[MAX_PATH * 2], exe[MAX_PATH]; } ScanJob;
 static ULONG_PTR g_gdip;
 static HFONT f_ui, f_bold, f_small, f_title, f_badge, f_section;
 static int g_inner, g_auto;
@@ -248,6 +255,155 @@ static int add_fold(Imp *im, const wchar_t *p, const wchar_t *orig, int len)
 static Imp *g_sort_im;
 static int cmp_fold_q(const void *a, const void *b) { return wcscmp(g_sort_im->fold[*(const int *)a].prefix, g_sort_im->fold[*(const int *)b].prefix); }
 
+static uint64_t path_key(const wchar_t *s, int n)
+{
+    wchar_t buf[MAX_PATH * 2];
+    uint64_t h = 1469598103934665603ull;
+    if (n <= 0 || n >= MAX_PATH * 2)
+        return 0;
+    memcpy(buf, s, n * sizeof *buf);
+    CharLowerBuffW(buf, n);
+    for (int i = 0; i < n; i++)
+        h = (h ^ (buf[i] == L'/' ? L'\\' : buf[i])) * 1099511628211ull;
+    return h | 1;
+}
+
+static int cmp_u64(const void *a, const void *b)
+{
+    uint64_t x = *(const uint64_t *)a, y = *(const uint64_t *)b;
+    return x < y ? -1 : x > y;
+}
+
+static void mark_unused(Imp *im)
+{
+    for (int i = 0; i < im->nrows; i++) {
+        Row *r = &im->rows[i];
+        uint64_t k = path_key(r->path, (int)wcslen(r->path));
+        r->unused = im->unused_state == 2 && im->nunused && bsearch(&k, im->unused, im->nunused, sizeof k, cmp_u64);
+    }
+}
+
+static DWORD WINAPI scan_thread(void *arg)
+{
+    ScanJob *j = arg;
+    UnusedRes *res = calloc(1, sizeof *res);
+    char *out = NULL;
+    size_t len = 0, cap = 0;
+    if (!res) {
+        free(j);
+        return 0;
+    }
+    res->gen = j->gen;
+    res->err = 1;
+    SECURITY_ATTRIBUTES sa = { sizeof sa, NULL, TRUE };
+    HANDLE rd, wr;
+    if (CreatePipe(&rd, &wr, &sa, 0)) {
+        SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
+        wchar_t cmd[MAX_PATH * 4];
+        swprintf(cmd, MAX_PATH * 4, L"\"%ls\" unused \"%ls\"", j->exe, j->map);
+        STARTUPINFOW si = { sizeof si };
+        PROCESS_INFORMATION pi;
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdOutput = wr;
+        si.hStdError = wr;
+        BOOL ok = CreateProcessW(NULL, cmd, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+        CloseHandle(wr);
+        if (ok) {
+            char buf[4096];
+            DWORD got;
+            while (ReadFile(rd, buf, sizeof buf, &got, NULL) && got) {
+                if (len + got + 1 > cap) {
+                    size_t nc = (len + got + 1) * 2;
+                    char *no = realloc(out, nc);
+                    if (!no)
+                        break;
+                    out = no;
+                    cap = nc;
+                }
+                memcpy(out + len, buf, got);
+                len += got;
+            }
+            DWORD code = 1;
+            WaitForSingleObject(pi.hProcess, 120000);
+            GetExitCodeProcess(pi.hProcess, &code);
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            res->err = code != 0;
+        }
+        CloseHandle(rd);
+    }
+    if (!res->err && out) {
+        out[len] = 0;
+        int capk = 64;
+        res->keys = malloc(capk * sizeof *res->keys);
+        for (char *line = out; line && *line && res->keys;) {
+            char *end = strchr(line, '\n');
+            if (end)
+                *end = 0;
+            size_t ll = strlen(line);
+            if (ll && line[ll - 1] == '\r')
+                line[--ll] = 0;
+            if (line[0] == 'U' && line[1] == ' ') {
+                wchar_t w[MAX_PATH * 2];
+                int n = MultiByteToWideChar(CP_UTF8, 0, line + 2, -1, w, MAX_PATH * 2);
+                uint64_t k = n > 1 ? path_key(w, n - 1) : 0;
+                if (k) {
+                    if (res->n == capk) {
+                        uint64_t *nk = realloc(res->keys, capk * 2 * sizeof *nk);
+                        if (!nk)
+                            break;
+                        res->keys = nk;
+                        capk *= 2;
+                    }
+                    res->keys[res->n++] = k;
+                }
+            }
+            line = end ? end + 1 : NULL;
+        }
+        if (res->keys)
+            qsort(res->keys, res->n, sizeof *res->keys, cmp_u64);
+    }
+    free(out);
+    if (!PostMessageW(j->view, WM_KF_UNUSED, 0, (LPARAM)res)) {
+        free(res->keys);
+        free(res);
+    }
+    free(j);
+    return 0;
+}
+
+static void start_scan(Imp *im)
+{
+    if (im->unused_state == 1)
+        return;
+    if (!g_map[0]) {
+        im->unused_state = 4;
+        return;
+    }
+    ScanJob *j = calloc(1, sizeof *j);
+    if (!j)
+        return;
+    j->view = im->view;
+    j->gen = (int)g_map_gen;
+    wcscpy(j->map, g_map);
+    GetModuleFileNameW(g_inst, j->exe, MAX_PATH);
+    for (int k = 0; k < 2; k++) {
+        wchar_t *q = wcsrchr(j->exe, L'\\');
+        if (q)
+            *q = 0;
+    }
+    wcscat(j->exe, L"\\kfmo\\KFMO.exe");
+    im->unused_state = 1;
+    im->unused_gen = j->gen;
+    HANDLE t = CreateThread(NULL, 0, scan_thread, j, 0, NULL);
+    if (t)
+        CloseHandle(t);
+    else {
+        free(j);
+        im->unused_state = 3;
+    }
+}
+
 static void read_we(Imp *im)
 {
     free_rows(im);
@@ -286,9 +442,10 @@ static void read_we(Imp *im)
         for (const wchar_t *s = r->low; s < end; s++)
             if (*s == L'\\') last = (int)(s - r->low);
         r->dirlen = last + 1;
+        r->fold = -1;
         if (last >= 0) {
-            int f = add_fold(im, r->low, r->path, last + 1);
-            im->fold[f].count++;
+            r->fold = add_fold(im, r->low, r->path, last + 1);
+            im->fold[r->fold].count++;
         }
     }
     free(im->forder);
@@ -299,6 +456,7 @@ static void read_we(Imp *im)
     for (int i = 0; i < im->nfold; i++)
         for (int f = i; f >= 0; f = im->fold[f].parent)
             im->fold[f].total += im->fold[i].count;
+    mark_unused(im);
 }
 
 static int cmp_rows(const void *a, const void *b)
@@ -335,13 +493,23 @@ static void apply_filter(Imp *im)
     free(im->vis);
     im->vis = malloc((im->nrows > 0 ? im->nrows : 1) * sizeof *im->vis);
     im->nvis = 0;
+    memset(im->kshown, 0, sizeof im->kshown);
+    im->allshown = 0;
+    im->unshown = 0;
+    for (int f = 0; f < im->nfold; f++) im->fold[f].shown = 0;
     for (int i = 0; i < im->nrows; i++) {
         const Row *r = &im->rows[i];
-        if (im->kind_f != K_ALL && r->kind != im->kind_f) continue;
-        if (pre && wcsncmp(r->low, pre, pl)) continue;
         int ok = 1;
         for (int t = 0; t < nt && ok; t++) ok = wcsstr(r->low, tok[t]) != NULL;
-        if (ok) im->vis[im->nvis++] = i;
+        if (!ok) continue;
+        int in_fold = !pre || !wcsncmp(r->low, pre, pl);
+        if (in_fold) { im->kshown[K_ALL]++; im->kshown[r->kind]++; }
+        if (in_fold && r->unused) im->unshown++;
+        if (im->unused_f && !r->unused) continue;
+        if (im->kind_f != K_ALL && r->kind != im->kind_f) continue;
+        im->allshown++;
+        for (int f = r->fold; f >= 0; f = im->fold[f].parent) im->fold[f].shown++;
+        if (in_fold) im->vis[im->nvis++] = i;
     }
     uint8_t *shown = calloc(im->nrows > 0 ? im->nrows : 1, 1);
     for (int v = 0; v < im->nvis; v++) shown[im->vis[v]] = 1;
@@ -802,12 +970,13 @@ static int hovered(Imp *im, int kind, int idx) { return im->hover_kind == kind &
 static void build_sidebar(Imp *im)
 {
     free(im->sb);
-    im->sb = malloc((K_N + im->nfold + 4) * sizeof *im->sb);
+    im->sb = malloc((K_N + im->nfold + 5) * sizeof *im->sb);
     im->nsb = 0;
     int y = 16 - im->sb_y, x = im->r_side.left + 10, w = SB_W - 20;
 #define SB_ADD(k, i, h) do { SbItem *s_ = &im->sb[im->nsb++]; s_->kind = (k); s_->idx = (i); SetRect(&s_->rc, x, y, x + w, y + (h)); y += (h); } while (0)
     SB_ADD(0, 0, 26);
     for (int k = 0; k < K_N; k++) SB_ADD(1, k, 32);
+    SB_ADD(4, 0, 32);
     y += 12;
     SB_ADD(0, 1, 26);
     SB_ADD(2, -1, 32);
@@ -841,13 +1010,16 @@ static void draw_sidebar(Imp *im, Paint *pt, int pass)
             }
             continue;
         }
-        int active = (s->kind == 1 && im->kind_f == s->idx) || (s->kind == 2 && im->fold_f < 0) || (s->kind == 3 && im->fold_f == s->idx);
+        int active = (s->kind == 1 && !im->unused_f && im->kind_f == s->idx) || (s->kind == 4 && im->unused_f) || (s->kind == 2 && im->fold_f < 0) || (s->kind == 3 && im->fold_f == s->idx);
         int hov = hovered(im, 2, i);
         RECT bg = { r.left, r.top + 1, r.right, r.bottom - 1 };
         int indent = s->kind == 3 ? im->fold[s->idx].depth * 14 : 0;
-        int cnt = s->kind == 1 ? im->kcount[s->idx] : s->kind == 2 ? im->nrows : im->fold[s->idx].total;
+        int cnt = s->kind == 1 ? im->kshown[s->idx] : s->kind == 4 ? im->unshown : s->kind == 2 ? im->allshown : im->fold[s->idx].shown;
         wchar_t num[16];
-        swprintf(num, 16, L"%d", cnt);
+        if (s->kind == 4 && im->unused_state != 2)
+            wcscpy(num, im->unused_state == 1 ? L"\x2026" : L"?");
+        else
+            swprintf(num, 16, L"%d", cnt);
         SIZE nsz;
         SelectObject(pt->dc, f_small);
         GetTextExtentPoint32W(pt->dc, num, (int)wcslen(num), &nsz);
@@ -857,9 +1029,9 @@ static void draw_sidebar(Imp *im, Paint *pt, int pass)
             if (active) fill_rr(pt, bg, 7, ARGB_OF(C_SEL, 255));
             else if (hov) fill_rr(pt, bg, 7, ARGB_OF(C_HOVER, 160));
             if (active) { RECT bar = { r.left, r.top + 8, r.left + 3, r.bottom - 8 }; fill_rr(pt, bar, 1.5f, ARGB_OF(C_ACCENT, 255)); }
-            if (s->kind == 1) {
+            if (s->kind == 1 || s->kind == 4) {
                 RECT dot = { ix + 1, r.top + 12, ix + 9, r.top + 20 };
-                fill_rr(pt, dot, 4, ARGB_OF(k_color[s->idx], 255));
+                fill_rr(pt, dot, 4, ARGB_OF(s->kind == 4 ? RGB(0xF8, 0x71, 0x71) : k_color[s->idx], 255));
             } else {
                 if (s->kind == 3 && im->fold[s->idx].kids)
                     chevron(pt, ix + 2, (r.top + r.bottom) / 2, im->fold[s->idx].expanded, ARGB_OF(C_FAINT, 255));
@@ -867,9 +1039,10 @@ static void draw_sidebar(Imp *im, Paint *pt, int pass)
             }
             fill_rr(pt, pill, 7, ARGB_OF(active ? C_ACCENT : C_CARD, active ? 90 : 255));
         } else {
-            RECT tr = { s->kind == 1 ? ix + 18 : ix + 32, r.top, pill.left - 6, r.bottom };
-            const wchar_t *lb = s->kind == 1 ? k_name[s->idx] : s->kind == 2 ? L"Все папки" : im->fold[s->idx].label;
-            text(pt, lb, tr, active ? f_bold : f_ui, active ? RGB(0xFF, 0xFF, 0xFF) : C_TEXT, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+            RECT tr = { s->kind == 1 || s->kind == 4 ? ix + 18 : ix + 32, r.top, pill.left - 6, r.bottom };
+            const wchar_t *lb = s->kind == 1 ? k_name[s->idx] : s->kind == 4 ? L"Неиспользуемые" : s->kind == 2 ? L"Все папки" : im->fold[s->idx].label;
+            int dim = s->kind == 4 ? im->unused_state == 2 && !cnt : !cnt;
+            text(pt, lb, tr, active ? f_bold : f_ui, active ? RGB(0xFF, 0xFF, 0xFF) : dim ? C_FAINT : C_TEXT, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             text(pt, num, pill, f_small, active ? RGB(0xFF, 0xFF, 0xFF) : C_DIM, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
         }
     }
@@ -978,7 +1151,16 @@ static void draw_list(Imp *im, Paint *pt, int pass)
     }
     if (!im->nvis && pass) {
         RECT t = im->r_list;
-        text(pt, im->nrows ? L"Ничего не найдено" : L"В карте нет импортированных файлов", t, f_ui, C_FAINT, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        wchar_t msg[200];
+        if (!im->nrows) wcscpy(msg, L"В карте нет импортированных файлов");
+        else if (im->unused_f && im->unused_state == 1) wcscpy(msg, L"Ищу неиспользуемые файлы\x2026");
+        else if (im->unused_f && im->unused_state == 4) wcscpy(msg, L"Сохраните карту, чтобы найти неиспользуемые файлы");
+        else if (im->unused_f && im->unused_state != 2) wcscpy(msg, L"Не удалось проверить карту");
+        else if (im->unused_f && !GetWindowTextLengthW(im->edit)) wcscpy(msg, L"Неиспользуемых файлов не нашлось");
+        else if (im->kind_f != K_ALL && im->fold_f >= 0 && im->fold_f < im->nfold && !GetWindowTextLengthW(im->edit))
+            swprintf(msg, 200, L"В папке «%ls» нет файлов типа «%ls»", im->fold[im->fold_f].label, k_name[im->kind_f]);
+        else wcscpy(msg, L"Ничего не найдено");
+        text(pt, msg, t, f_ui, C_FAINT, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
     if (im->marq && pass == 0) {
         RECT mr = { im->marq_x0 < im->marq_x1 ? im->marq_x0 : im->marq_x1, (im->marq_y0 < im->marq_y1 ? im->marq_y0 : im->marq_y1) - im->list_y + im->r_list.top,
@@ -1026,7 +1208,9 @@ static void draw_status(Imp *im, Paint *pt, int pass)
     }
     int kb, n = sel_count(im, &kb);
     wchar_t s[200];
-    if (n) swprintf(s, 200, L"Показано %d из %d  ·  выделено %d (%d КБ)", im->nvis, im->nrows, n, kb);
+    if (im->unused_f && im->unused_state == 2)
+        swprintf(s, 200, L"Похоже не используются: %d  \x00B7  по сохранённой версии карты%ls", im->nvis, n ? L"  \x00B7  выделено" : L"");
+    else if (n) swprintf(s, 200, L"Показано %d из %d  ·  выделено %d (%d КБ)", im->nvis, im->nrows, n, kb);
     else swprintf(s, 200, L"Показано %d из %d", im->nvis, im->nrows);
     RECT t = { im->r_status.left + 16, im->r_status.top, im->r_status.right - 16, im->r_status.bottom };
     text(pt, s, t, f_small, C_DIM, DT_SINGLELINE | DT_VCENTER);
@@ -1230,7 +1414,9 @@ static void thumb_tick(Imp *im)
         Row *row = &im->rows[im->vis[v]];
         if (!IS_IMAGE(row)) continue;
         Thumb *th = thumb_get(im, row->low, 1);
+        if (th->state == 1 && th->kb != row->kb) { GdipDisposeImage(th->img); th->img = NULL; th->state = 0; }
         if (th->state) continue;
+        th->kb = row->kb;
         int w, h;
         wchar_t fmt[64];
         uint8_t *px = load_row_image(im, im->vis[v], &w, &h, fmt);
@@ -1271,8 +1457,18 @@ static void update_preview(Imp *im)
     InvalidateRect(im->view, NULL, FALSE);
 }
 
+static void retry_thumbs(Imp *im)
+{
+    for (int i = 0; i < 1024; i++)
+        for (Thumb *t = im->thumbs[i]; t; t = t->next)
+            if (t->state == 2) t->state = 0;
+}
+
 static void refresh(Imp *im)
 {
+    if (im->unused_f && im->unused_gen != (int)g_map_gen)
+        start_scan(im);
+    retry_thumbs(im);
     int n = sel_count(im, NULL), nk = 0;
     wchar_t **keep = n ? malloc(n * sizeof *keep) : NULL;
     for (int i = 0; i < im->nrows && nk < n; i++)
@@ -1506,7 +1702,15 @@ static void show_menu(Imp *im, POINT sp)
 static void click_sidebar(Imp *im, int i, POINT p, int dbl)
 {
     SbItem *s = &im->sb[i];
-    if (s->kind == 1) { im->kind_f = s->idx; apply_filter(im); return; }
+    if (s->kind == 1) { im->kind_f = s->idx; im->unused_f = 0; apply_filter(im); return; }
+    if (s->kind == 4) {
+        im->unused_f = 1;
+        im->kind_f = K_ALL;
+        if (im->unused_state != 2 || im->unused_gen != (int)g_map_gen)
+            start_scan(im);
+        apply_filter(im);
+        return;
+    }
     if (s->kind == 2) { im->fold_f = -1; apply_filter(im); return; }
     if (s->kind == 3) {
         Fold *f = &im->fold[s->idx];
@@ -1758,6 +1962,20 @@ static LRESULT CALLBACK view_proc(HWND h, UINT m, WPARAM w, LPARAM l)
             SendMessageW(im->edit, WM_CHAR, w, l);
         }
         return 0;
+    case WM_KF_UNUSED: {
+        UnusedRes *res = (UnusedRes *)l;
+        free(im->unused);
+        im->unused = res->keys;
+        im->nunused = res->n;
+        im->unused_state = res->err ? 3 : 2;
+        im->unused_gen = res->gen;
+        free(res);
+        mark_unused(im);
+        apply_filter(im);
+        if (im->unused_f && im->unused_gen != (int)g_map_gen)
+            start_scan(im);
+        return 0;
+    }
     case WM_TIMER:
         if (w == TIMER_REFRESH) { KillTimer(h, w); refresh(im); }
         else if (w == TIMER_SEL) { KillTimer(h, w); update_preview(im); }
@@ -1840,6 +2058,14 @@ static LRESULT CALLBACK dlg_proc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id
         free(im);
         return r;
     }
+    if (m == WM_SHOWWINDOW && w) {
+        retry_thumbs(im);
+        ensure_thumbs(im);
+        if (im->unused_f && im->unused_gen != (int)g_map_gen) {
+            start_scan(im);
+            apply_filter(im);
+        }
+    }
     (void)id;
     return fs_def(h, m, w, l);
 }
@@ -1908,6 +2134,13 @@ static void CALLBACK on_show(HWINEVENTHOOK hk, DWORD ev, HWND h, LONG obj, LONG 
 static HFONT mkfont(int px, int weight)
 {
     return CreateFontW(-px, 0, 0, 0, weight, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+}
+
+__declspec(dllexport) void ImportPlusSetMap(const char *utf8)
+{
+    if (!utf8 || !MultiByteToWideChar(CP_UTF8, 0, utf8, -1, g_map, MAX_PATH * 2))
+        g_map[0] = 0;
+    InterlockedIncrement(&g_map_gen);
 }
 
 __declspec(dllexport) int ImportPlusInit(void)
