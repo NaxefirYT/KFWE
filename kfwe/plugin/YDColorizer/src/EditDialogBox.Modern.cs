@@ -116,7 +116,7 @@ namespace YDColorizer
                 AutoSize = true,
                 ForeColor = ClrSubtext,
                 BackColor = Color.Transparent,
-                Text = "Выделите текст и нажмите на цвет. ПКМ по цвету: конец градиента. Ctrl+Enter: OK."
+                Text = "Выделите текст и нажмите на цвет. ПКМ по цвету: конец градиента. Ctrl+Enter: перенос строки."
             };
             this.Controls.Add(this.lblPalette);
             this.Controls.Add(this.palettePanel);
@@ -137,7 +137,6 @@ namespace YDColorizer
             this.modernTips.SetToolTip(this.btnGradual, "Градиент по выделенному тексту: от основного цвета к первому дополнительному");
             this.modernTips.SetToolTip(this.btnUndo, "Отменить (Ctrl+Z)");
             this.modernTips.SetToolTip(this.btnRedo, "Повторить (Ctrl+Y)");
-            this.modernTips.SetToolTip(this.btnOk, "Ctrl+Enter");
             foreach (Control c in this.palettePanel.Controls)
             {
                 this.modernTips.SetToolTip(c, (string)c.Tag + "\nЛКМ: покрасить выделение, ПКМ: конец градиента");

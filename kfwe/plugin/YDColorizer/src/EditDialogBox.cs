@@ -292,7 +292,7 @@ namespace YDColorizer
         }
 
         /// <summary>
-        /// 确定键的快捷键Ctrl+Enter
+        /// Ctrl+Enter: перенос строки, как в обычном WE
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -300,7 +300,8 @@ namespace YDColorizer
         {
             if (e.Control == true && e.KeyCode == Keys.Enter)
             {
-                btnOk_Click(btnOk, EventArgs.Empty);
+                ((TextBoxBase)sender).SelectedText = Environment.NewLine;
+                e.SuppressKeyPress = true;
             }
         }
 
