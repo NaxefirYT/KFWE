@@ -1,0 +1,6 @@
+[Info]
+PluginName = Splash
+[Load]
+Enable = 1
+Loader = Splash.lua
+Dll    = Splash.dll

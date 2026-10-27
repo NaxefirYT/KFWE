@@ -104,13 +104,16 @@ function plugin:load_directory(plugin_dir)
 end
 
 function plugin:load_all()
-	local first = fs.ydwe_path() / "plugin" / "StormFastHeap"
-	if fs.is_directory(first) then
-		self:load_directory(first)
+	local first = { splash = true, stormfastheap = true }
+	for _, name in ipairs { "Splash", "StormFastHeap" } do
+		local dir = fs.ydwe_path() / "plugin" / name
+		if fs.is_directory(dir) then
+			self:load_directory(dir)
+		end
 	end
 	for full_path in (fs.ydwe_path() / "plugin"):list_directory() do
 		if fs.is_directory(full_path) then
-			if full_path:filename():string():lower() ~= "stormfastheap" then
+			if not first[full_path:filename():string():lower()] then
 				self:load_directory(full_path)
 			end
 		elseif full_path:extension():string() == ".plcfg" then
