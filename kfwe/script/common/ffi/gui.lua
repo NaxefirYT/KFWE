@@ -33,6 +33,21 @@ end
 
 function gui.on_command(id, callback) message_map[id] = callback end
 
+local deferred = {}
+
+function gui.defer(callback)
+	deferred[#deferred + 1] = callback
+end
+
+message_map[0xBE00] = function()
+	local list = deferred
+	deferred = {}
+	for _, fn in ipairs(list) do
+		local ok, err = pcall(fn)
+		if not ok then log.error(err) end
+	end
+end
+
 function gui.menu(main_menu, name)
 	local handle = ffi.C.CreateMenu()
 	local wname = uni.u2w(name)
