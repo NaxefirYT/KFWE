@@ -65,6 +65,7 @@ loader.unload = function()
 		log.info(('StormFastHeap: combo resizes skipped=%d'):format(loader.dll.Stats(12)))
 		log.info(('StormFastHeap: CALLWNDPROC hooks replaced=%d messages delivered=%d'):format(loader.dll.Stats(13), loader.dll.Stats(14)))
 		log.info(('StormFastHeap: fast subclass windows=%d, custom list cache hits=%d builds=%d'):format(loader.dll.Stats(15), loader.dll.Stats(16), loader.dll.Stats(17)))
+		log.info(('StormFastHeap: missing file cache hits=%d misses=%d, folder cache hits=%d listings=%d'):format(loader.dll.Stats(18), loader.dll.Stats(19), loader.dll.Stats(20), loader.dll.Stats(21)))
 	end
 end
 

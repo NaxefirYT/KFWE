@@ -2,6 +2,7 @@
 #include <commctrl.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include "fastsub.h"
 
 #define TAG_LIVE 0x48465354u
@@ -1094,6 +1095,422 @@ static void apply_cwp_hook_filter(void)
         g_patches_applied |= 1 << 11;
 }
 
+#define NEG_SLOTS 16384
+#define NEG_TTL 3000
+static struct { uint64_t key; DWORD tick, err, gen; } g_neg[NEG_SLOTS];
+static SRWLOCK g_neg_lock = SRWLOCK_INIT;
+static volatile LONG g_neg_gen = 1, g_neg_hits, g_neg_adds;
+
+static uint64_t neg_mix(uint64_t h, unsigned c)
+{
+    if (c == '/')
+        c = '\\';
+    else if (c >= 'A' && c <= 'Z')
+        c += 32;
+    return (h ^ c) * 1099511628211ull;
+}
+
+static uint64_t neg_cwd(void)
+{
+    WCHAR d[MAX_PATH];
+    DWORD n = GetCurrentDirectoryW(MAX_PATH, d);
+    uint64_t h = 1469598103934665603ull;
+    for (DWORD i = 0; i < n && i < MAX_PATH; i++)
+        h = neg_mix(h, d[i]);
+    return neg_mix(h, '\\');
+}
+
+static int neg_abs(unsigned c0, unsigned c1, unsigned c2)
+{
+    return (c1 == ':' && (c2 == '\\' || c2 == '/')) || ((c0 == '\\' || c0 == '/') && (c1 == '\\' || c1 == '/'));
+}
+
+static uint64_t neg_key_a(const char *p)
+{
+    const unsigned char *u = (const unsigned char *)p;
+    uint64_t h = u[0] && neg_abs(u[0], u[1], u[1] ? u[2] : 0) ? 1469598103934665603ull : neg_cwd();
+    for (; *u; u++)
+        h = neg_mix(h, *u);
+    return h | 1;
+}
+
+static uint64_t neg_key_w(const WCHAR *p)
+{
+    uint64_t h = p[0] && neg_abs(p[0], p[1], p[1] ? p[2] : 0) ? 1469598103934665603ull : neg_cwd();
+    for (; *p; p++)
+        h = neg_mix(h, *p);
+    return h | 1;
+}
+
+static int neg_find(uint64_t k, DWORD *err)
+{
+    DWORD now = GetTickCount(), gen = (DWORD)g_neg_gen;
+    int hit = 0;
+    AcquireSRWLockShared(&g_neg_lock);
+    for (unsigned i = 0; i < 8; i++) {
+        unsigned s = (unsigned)(k + i) & (NEG_SLOTS - 1);
+        if (g_neg[s].key == k) {
+            if (g_neg[s].gen == gen && now - g_neg[s].tick < NEG_TTL) {
+                *err = g_neg[s].err;
+                hit = 1;
+            }
+            break;
+        }
+    }
+    ReleaseSRWLockShared(&g_neg_lock);
+    if (hit)
+        InterlockedIncrement(&g_neg_hits);
+    return hit;
+}
+
+static void neg_add(uint64_t k, DWORD err)
+{
+    DWORD now = GetTickCount(), gen = (DWORD)g_neg_gen;
+    AcquireSRWLockExclusive(&g_neg_lock);
+    unsigned best = (unsigned)k & (NEG_SLOTS - 1);
+    for (unsigned i = 0; i < 8; i++) {
+        unsigned s = (unsigned)(k + i) & (NEG_SLOTS - 1);
+        if (g_neg[s].key == k || g_neg[s].gen != gen || now - g_neg[s].tick >= NEG_TTL) {
+            best = s;
+            break;
+        }
+        if (now - g_neg[s].tick > now - g_neg[best].tick)
+            best = s;
+    }
+    g_neg[best].key = k;
+    g_neg[best].tick = now;
+    g_neg[best].err = err;
+    g_neg[best].gen = gen;
+    ReleaseSRWLockExclusive(&g_neg_lock);
+    InterlockedIncrement(&g_neg_adds);
+}
+
+static int neg_readonly(DWORD acc, DWORD disp)
+{
+    return disp == OPEN_EXISTING && !(acc & (GENERIC_WRITE | GENERIC_ALL | FILE_WRITE_DATA | FILE_APPEND_DATA |
+                                              FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | DELETE | WRITE_DAC | WRITE_OWNER));
+}
+
+static int neg_missing(DWORD e)
+{
+    return e == ERROR_FILE_NOT_FOUND || e == ERROR_PATH_NOT_FOUND;
+}
+
+#define DIR_SLOTS 2048
+#define DIR_MAX_NAMES 16384
+typedef struct { uint64_t key; DWORD tick, gen; int missing, cap; uint64_t *names; } dir_ent;
+static dir_ent g_dirs[DIR_SLOTS];
+static volatile LONG g_dir_hits, g_dir_lists;
+
+static uint64_t dir_hash(const WCHAR *s, int n)
+{
+    WCHAR buf[MAX_PATH * 2];
+    uint64_t h = 1469598103934665603ull;
+    if (n <= 0 || n >= MAX_PATH * 2)
+        return 0;
+    memcpy(buf, s, n * sizeof(WCHAR));
+    CharLowerBuffW(buf, n);
+    for (int i = 0; i < n; i++)
+        h = (h ^ (buf[i] == '/' ? '\\' : buf[i])) * 1099511628211ull;
+    return h | 1;
+}
+
+static int set_has(const uint64_t *set, int cap, uint64_t k)
+{
+    for (unsigned i = (unsigned)k & (cap - 1);; i = (i + 1) & (cap - 1)) {
+        if (!set[i])
+            return 0;
+        if (set[i] == k)
+            return 1;
+    }
+}
+
+static void set_put(uint64_t *set, int cap, uint64_t k)
+{
+    unsigned i = (unsigned)k & (cap - 1);
+    while (set[i] && set[i] != k)
+        i = (i + 1) & (cap - 1);
+    set[i] = k;
+}
+
+static int dir_lookup(uint64_t dk, uint64_t nk, DWORD *err)
+{
+    DWORD now = GetTickCount(), gen = (DWORD)g_neg_gen;
+    int r = -1;
+    AcquireSRWLockShared(&g_neg_lock);
+    for (unsigned i = 0; i < 8; i++) {
+        dir_ent *e = &g_dirs[((unsigned)dk + i) & (DIR_SLOTS - 1)];
+        if (e->key != dk)
+            continue;
+        if (e->gen == gen && now - e->tick < NEG_TTL) {
+            if (e->missing) {
+                *err = ERROR_PATH_NOT_FOUND;
+                r = 1;
+            } else if (!set_has(e->names, e->cap, nk)) {
+                *err = ERROR_FILE_NOT_FOUND;
+                r = 1;
+            } else
+                r = 0;
+        }
+        break;
+    }
+    ReleaseSRWLockShared(&g_neg_lock);
+    return r;
+}
+
+static void dir_store(uint64_t dk, int missing, uint64_t *names, int cap, DWORD gen)
+{
+    DWORD now = GetTickCount();
+    uint64_t *drop = NULL;
+    AcquireSRWLockExclusive(&g_neg_lock);
+    dir_ent *best = &g_dirs[(unsigned)dk & (DIR_SLOTS - 1)];
+    for (unsigned i = 0; i < 8; i++) {
+        dir_ent *e = &g_dirs[((unsigned)dk + i) & (DIR_SLOTS - 1)];
+        if (e->key == dk || !e->key || e->gen != (DWORD)g_neg_gen || now - e->tick >= NEG_TTL) {
+            best = e;
+            break;
+        }
+        if (now - e->tick > now - best->tick)
+            best = e;
+    }
+    drop = best->names;
+    best->key = dk;
+    best->tick = now;
+    best->gen = gen;
+    best->missing = missing;
+    best->names = names;
+    best->cap = cap;
+    ReleaseSRWLockExclusive(&g_neg_lock);
+    free(drop);
+}
+
+static void dir_add_name(uint64_t *set, int cap, const WCHAR *nm)
+{
+    int n = (int)wcslen(nm);
+    if (n)
+        set_put(set, cap, dir_hash(nm, n));
+}
+
+static int dir_list(const WCHAR *dir, int dlen, uint64_t dk)
+{
+    WCHAR pat[MAX_PATH * 2 + 4];
+    WIN32_FIND_DATAW fd;
+    DWORD gen = (DWORD)g_neg_gen;
+    if (dlen + 3 >= (int)(sizeof pat / sizeof *pat))
+        return 0;
+    memcpy(pat, dir, dlen * sizeof(WCHAR));
+    pat[dlen] = '\\';
+    pat[dlen + 1] = '*';
+    pat[dlen + 2] = 0;
+    InterlockedIncrement(&g_dir_lists);
+    HANDLE h = FindFirstFileExW(pat, FindExInfoStandard, &fd, FindExSearchNameMatch, NULL, 2);
+    if (h == INVALID_HANDLE_VALUE) {
+        DWORD e = GetLastError();
+        if (e == ERROR_PATH_NOT_FOUND || e == ERROR_FILE_NOT_FOUND) {
+            dir_store(dk, 1, NULL, 0, gen);
+            return 1;
+        }
+        return 0;
+    }
+    int cap = 64, n = 0;
+    uint64_t *set = calloc(cap, sizeof *set);
+    do {
+        if (!set)
+            break;
+        if ((n + 2) * 2 > cap) {
+            if (cap >= DIR_MAX_NAMES * 2) {
+                free(set);
+                set = NULL;
+                break;
+            }
+            uint64_t *big = calloc(cap * 2, sizeof *big);
+            if (!big) {
+                free(set);
+                set = NULL;
+                break;
+            }
+            for (int i = 0; i < cap; i++)
+                if (set[i])
+                    set_put(big, cap * 2, set[i]);
+            free(set);
+            set = big;
+            cap *= 2;
+        }
+        dir_add_name(set, cap, fd.cFileName);
+        if (fd.cAlternateFileName[0])
+            dir_add_name(set, cap, fd.cAlternateFileName);
+        n += 2;
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    if (!set)
+        return 0;
+    dir_store(dk, 0, set, cap, gen);
+    return 1;
+}
+
+static int dir_check_w(const WCHAR *p, DWORD *err)
+{
+    WCHAR full[MAX_PATH * 2];
+    if (!p || !p[0] || ((p[0] == '\\' || p[0] == '/') && (p[1] == '\\' || p[1] == '/')))
+        return 0;
+    DWORD n = GetFullPathNameW(p, MAX_PATH * 2, full, NULL);
+    if (!n || n >= MAX_PATH * 2 || full[1] != ':' || full[2] != '\\')
+        return 0;
+    for (DWORD i = 3; i < n; i++)
+        if (full[i] == '*' || full[i] == '?' || full[i] == ':')
+            return 0;
+    int last = (int)n - 1;
+    while (last > 2 && full[last] != '\\')
+        last--;
+    if (last < 2 || last == (int)n - 1)
+        return 0;
+    int dlen = last == 2 ? 2 : last;
+    uint64_t dk = dir_hash(full, dlen), nk = dir_hash(full + last + 1, (int)n - last - 1);
+    if (!dk || !nk)
+        return 0;
+    int r = dir_lookup(dk, nk, err);
+    if (r < 0 && dir_list(full, dlen, dk))
+        r = dir_lookup(dk, nk, err);
+    if (r == 1)
+        InterlockedIncrement(&g_dir_hits);
+    return r == 1;
+}
+
+static int dir_check_a(const char *p, DWORD *err)
+{
+    WCHAR w[MAX_PATH * 2];
+    if (!p || !MultiByteToWideChar(CP_ACP, 0, p, -1, w, MAX_PATH * 2))
+        return 0;
+    return dir_check_w(w, err);
+}
+
+static HANDLE WINAPI h_create_a(LPCSTR p, DWORD acc, DWORD share, LPSECURITY_ATTRIBUTES sa, DWORD disp, DWORD fl, HANDLE tpl)
+{
+    DWORD err;
+    if (!p || !neg_readonly(acc, disp)) {
+        InterlockedIncrement(&g_neg_gen);
+        return CreateFileA(p, acc, share, sa, disp, fl, tpl);
+    }
+    uint64_t k = neg_key_a(p);
+    if (dir_check_a(p, &err) || neg_find(k, &err)) {
+        SetLastError(err);
+        return INVALID_HANDLE_VALUE;
+    }
+    HANDLE h = CreateFileA(p, acc, share, sa, disp, fl, tpl);
+    if (h == INVALID_HANDLE_VALUE && neg_missing(err = GetLastError())) {
+        neg_add(k, err);
+        SetLastError(err);
+    }
+    return h;
+}
+
+static HANDLE WINAPI h_create_w(LPCWSTR p, DWORD acc, DWORD share, LPSECURITY_ATTRIBUTES sa, DWORD disp, DWORD fl, HANDLE tpl)
+{
+    DWORD err;
+    if (!p || !neg_readonly(acc, disp)) {
+        InterlockedIncrement(&g_neg_gen);
+        return CreateFileW(p, acc, share, sa, disp, fl, tpl);
+    }
+    uint64_t k = neg_key_w(p);
+    if (dir_check_w(p, &err) || neg_find(k, &err)) {
+        SetLastError(err);
+        return INVALID_HANDLE_VALUE;
+    }
+    HANDLE h = CreateFileW(p, acc, share, sa, disp, fl, tpl);
+    if (h == INVALID_HANDLE_VALUE && neg_missing(err = GetLastError())) {
+        neg_add(k, err);
+        SetLastError(err);
+    }
+    return h;
+}
+
+static DWORD WINAPI h_attr_a(LPCSTR p)
+{
+    DWORD err;
+    uint64_t k = p ? neg_key_a(p) : 0;
+    if (k && (dir_check_a(p, &err) || neg_find(k, &err))) {
+        SetLastError(err);
+        return INVALID_FILE_ATTRIBUTES;
+    }
+    DWORD r = GetFileAttributesA(p);
+    if (r == INVALID_FILE_ATTRIBUTES && k && neg_missing(err = GetLastError())) {
+        neg_add(k, err);
+        SetLastError(err);
+    }
+    return r;
+}
+
+static BOOL WINAPI h_attrex_w(LPCWSTR p, GET_FILEEX_INFO_LEVELS lv, LPVOID out)
+{
+    DWORD err;
+    uint64_t k = p ? neg_key_w(p) : 0;
+    if (k && (dir_check_w(p, &err) || neg_find(k, &err))) {
+        SetLastError(err);
+        return FALSE;
+    }
+    BOOL r = GetFileAttributesExW(p, lv, out);
+    if (!r && k && neg_missing(err = GetLastError())) {
+        neg_add(k, err);
+        SetLastError(err);
+    }
+    return r;
+}
+
+static void *WINAPI h_open_xmidi(DWORD flags)
+{
+    (void)flags;
+    return NULL;
+}
+
+static int iat_hook(HMODULE mod, const char *name, void *addr, void *to)
+{
+    uint8_t *b = (uint8_t *)mod;
+    if (!b || !to)
+        return 0;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(b + ((IMAGE_DOS_HEADER *)b)->e_lfanew);
+    IMAGE_DATA_DIRECTORY dd = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+    int n = 0;
+    if (!dd.VirtualAddress)
+        return 0;
+    for (IMAGE_IMPORT_DESCRIPTOR *d = (IMAGE_IMPORT_DESCRIPTOR *)(b + dd.VirtualAddress); d->Name; d++) {
+        IMAGE_THUNK_DATA32 *iat = (IMAGE_THUNK_DATA32 *)(b + d->FirstThunk);
+        IMAGE_THUNK_DATA32 *nm = d->OriginalFirstThunk ? (IMAGE_THUNK_DATA32 *)(b + d->OriginalFirstThunk) : NULL;
+        for (; iat->u1.Function; iat++, nm = nm ? nm + 1 : NULL) {
+            int match = addr && (void *)(uintptr_t)iat->u1.Function == addr;
+            if (!match && nm && !IMAGE_SNAP_BY_ORDINAL32(nm->u1.Ordinal))
+                match = !strcmp((const char *)((IMAGE_IMPORT_BY_NAME *)(b + nm->u1.AddressOfData))->Name, name);
+            DWORD old;
+            if (match && VirtualProtect(&iat->u1.Function, 4, PAGE_READWRITE, &old)) {
+                iat->u1.Function = (DWORD)(uintptr_t)to;
+                VirtualProtect(&iat->u1.Function, 4, old, &old);
+                n++;
+            }
+        }
+    }
+    return n;
+}
+
+static void apply_startup_io(void)
+{
+    HMODULE k32 = GetModuleHandleA("kernel32.dll");
+    HMODULE mods[3] = { GetModuleHandleA(NULL), GetModuleHandleA("storm.dll"), GetModuleHandleA("virtual_mpq.dll") };
+    int n = 0;
+    for (int i = 0; i < 3; i++) {
+        if (!mods[i])
+            continue;
+        n += iat_hook(mods[i], "CreateFileA", (void *)GetProcAddress(k32, "CreateFileA"), (void *)h_create_a);
+        n += iat_hook(mods[i], "CreateFileW", (void *)GetProcAddress(k32, "CreateFileW"), (void *)h_create_w);
+        n += iat_hook(mods[i], "GetFileAttributesA", (void *)GetProcAddress(k32, "GetFileAttributesA"), (void *)h_attr_a);
+        n += iat_hook(mods[i], "GetFileAttributesExW", (void *)GetProcAddress(k32, "GetFileAttributesExW"), (void *)h_attrex_w);
+    }
+    if (n)
+        g_patches_applied |= 1 << 15;
+    HMODULE mss = GetModuleHandleA("mss32.dll");
+    void *xm = mss ? (void *)GetProcAddress(mss, "_AIL_open_XMIDI_driver@4") : NULL;
+    if (xm && iat_hook(GetModuleHandleA(NULL), "_AIL_open_XMIDI_driver@4", xm, (void *)h_open_xmidi))
+        g_patches_applied |= 1 << 16;
+}
+
 __declspec(dllexport) int Initialize(void)
 {
     static int done;
@@ -1138,6 +1555,7 @@ __declspec(dllexport) int Initialize(void)
     apply_custom_list_hooks();
     apply_combo_resize_patch();
     apply_cwp_hook_filter();
+    apply_startup_io();
 #endif
 
     if (!patch_jmp(f_free, (void *)H_FREE) || !patch_jmp(f_size, (void *)H_SIZE) ||
@@ -1187,6 +1605,14 @@ __declspec(dllexport) int Stats(int which)
         return g_rb_hits;
     if (which == 17)
         return g_rb_builds;
+    if (which == 18)
+        return g_neg_hits;
+    if (which == 19)
+        return g_neg_adds;
+    if (which == 20)
+        return g_dir_hits;
+    if (which == 21)
+        return g_dir_lists;
     return which == 0 ? g_allocs : g_foreign_frees;
 }
 
