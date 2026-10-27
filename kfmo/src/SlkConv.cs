@@ -79,6 +79,13 @@ sealed partial class SlkConv
 
     static string[] S(string s) => s.Split(',');
 
+    // Reforged (1.32+) берёт модели из skin-файлов, а не из столбца file в SLK: без них юниты невидимы. 1.26 их не читает.
+    static readonly Dictionary<string, (string Path, string Kind, string[] Keys)> SkinOut = new()
+    {
+        [@"units\unitui.slk"] = (@"units\unitskin.txt", "unit", S("file,fileVerFlags,unitSound,armor,blend,scale,scaleBull,modelScale,red,green,blue,teamColor,customTeamColor,elevPts,elevRad,maxPitch,maxRoll,occH,run,walk,selZ,selCircOnWater,fogRad,unitShadow,buildingShadow,shadowW,shadowH,shadowX,shadowY,shadowOnWater,uberSplat")),
+        [@"units\itemdata.slk"] = (@"units\itemskin.txt", "item", S("file,scale,colorR,colorG,colorB,armor")),
+    };
+
     static readonly string[] YdweBuffCols = { "code", "comments", "isEffect", "version", "useInEditor", "sort", "race", "InBeta" };
     static readonly (string Id, object[] V)[] YdweBuffs =
     {
@@ -92,9 +99,10 @@ sealed partial class SlkConv
     Dictionary<string, Dictionary<string, List<string>>> txtLeft = new(StringComparer.Ordinal);
     readonly Dictionary<string, Dictionary<string, WObj>> slk = new();
     readonly Dictionary<string, Dictionary<string, WObj>> residual = new();
+    readonly Dictionary<string, string> skins = new(StringComparer.OrdinalIgnoreCase);
     public readonly List<string> Report = new();
     public int DroppedFields, UnknownParent, KeptAsObj, OverLevel, TxtEscape, Removed, Total;
-    public bool RemoveUnused = true;
+    public bool RemoveUnused = true, ReforgedSkins = true;
     Func<string, string>? saveWts;
 
     public static SlkConv FromGame(GameFiles g)
@@ -464,6 +472,10 @@ sealed partial class SlkConv
             foreach (var file in SlkFiles[type])
                 res.Write[file] = BackendSlk(type, file);
         }
+        if (ReforgedSkins)
+            foreach (var (path, text) in skins)
+                if (get(path) == null) res.Write[path] = Encoding.UTF8.GetBytes(text);
+                else Report.Add(path + ": уже есть в карте, не перезаписан");
         foreach (var f in TxtFiles) res.Write[f] = Array.Empty<byte>();
         foreach (var (type, text) in BackendTxt())
             res.Write[TxtOut[type]] = Encoding.UTF8.GetBytes(text);
@@ -702,6 +714,18 @@ sealed partial class SlkConv
             if (da != db) return da ? -1 : 1;
             return string.CompareOrdinal(a, b);
         });
+        if (SkinOut.TryGetValue(file, out var so))
+        {
+            var st = new StringBuilder();
+            foreach (var n in names)
+            {
+                st.Append('[').Append(n).Append("]\r\nskinType=").Append(so.Kind).Append("\r\n");
+                foreach (var k in so.Keys)
+                    if (rows[n].TryGetValue(k, out var v) && v.Trim('"') != "") st.Append(k).Append('=').Append(v.Trim('"')).Append("\r\n");
+                st.Append("\r\n");
+            }
+            skins[so.Path] = st.ToString();
+        }
         var sb = new StringBuilder();
         int? cx = null, cy = null;
         void Add(int x, int y, string k)

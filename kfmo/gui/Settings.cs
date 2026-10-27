@@ -6,6 +6,7 @@ sealed class Settings
 {
     public bool Slk { get; set; } = true;
     public bool RemoveUnused { get; set; } = true;
+    public bool ReforgedSkins { get; set; } = true;
     public bool StripEditor { get; set; } = true;
     public int Models { get; set; } = 0;
     public bool KeyReduce { get; set; } = true;

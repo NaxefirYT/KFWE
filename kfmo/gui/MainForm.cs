@@ -12,7 +12,7 @@ sealed class MainForm : Form
     readonly Settings st = Settings.Load();
     readonly TextBox mapBox = new(), suffixBox = new(), gameBox = new(), log = new();
     readonly Label outLabel = new(), result = new();
-    readonly CheckBox cSlk = new(), cUnused = new(), cStrip = new(), cJass = new(), cIcons = new(), cKeys = new(), cList = new(), cPreview = new();
+    readonly CheckBox cSlk = new(), cUnused = new(), cStrip = new(), cJass = new(), cIcons = new(), cKeys = new(), cList = new(), cPreview = new(), cSkins = new();
     readonly ComboBox models = new(), textures = new(), texMax = new();
     readonly Button pick = new(), run = new(), openDir = new(), pickGame = new();
     readonly ProgressBar bar = new();
@@ -77,7 +77,10 @@ sealed class MainForm : Form
         opts.Controls.Add(cSlk); opts.Controls.Add(cJass);
         opts.Controls.Add(cUnused); opts.Controls.Add(cIcons);
         opts.Controls.Add(cStrip); opts.Controls.Add(cKeys);
+        Check(cSkins, "Модели для Reforged", "Вместе с SLK пишет UnitSkin.txt и ItemSkin.txt. Без них в Reforged юниты и предметы невидимы. 1.26 эти файлы не читает.");
         opts.Controls.Add(cList); opts.Controls.Add(cPreview);
+        opts.Controls.Add(cSkins);
+        cSlk.CheckedChanged += (_, _) => cSkins.Enabled = cSlk.Checked;
 
         StyleCombo(models, "7 бит", "Бережно", "Не трогать");
         StyleCombo(textures, "Без потерь", "Качество 90", "Качество 85", "Качество 75");
@@ -85,9 +88,9 @@ sealed class MainForm : Form
         tip.SetToolTip(textures, "Без потерь: пиксели не меняются.");
         StyleCombo(texMax, "Без ограничения", "512", "256", "128");
         tip.SetToolTip(texMax, "Текстуры моделей больше этого размера уменьшаются вдвое. Интерфейс не трогается.");
-        opts.Controls.Add(Labeled("Модели:", models), 0, 4);
-        opts.Controls.Add(Labeled("Текстуры:", textures), 1, 4);
-        opts.Controls.Add(Labeled("Макс. размер текстур моделей:", texMax), 1, 5);
+        opts.Controls.Add(Labeled("Модели:", models), 0, 5);
+        opts.Controls.Add(Labeled("Текстуры:", textures), 1, 5);
+        opts.Controls.Add(Labeled("Макс. размер текстур моделей:", texMax), 1, 6);
 
         var gameRow = Row(3);
         gameRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -99,7 +102,7 @@ sealed class MainForm : Form
         tip.SetToolTip(gameBox, "Нужна для SLK и проверки скрипта.");
         StyleButton(pickGame, "…"); pickGame.Click += (_, _) => PickGame();
         gameRow.Controls.Add(gameBox, 1, 0); gameRow.Controls.Add(pickGame, 2, 0);
-        opts.Controls.Add(gameRow, 0, 6);
+        opts.Controls.Add(gameRow, 0, 7);
         opts.SetColumnSpan(gameRow, 2);
         root.Controls.Add(opts);
 
@@ -121,7 +124,7 @@ sealed class MainForm : Form
         root.Controls.Add(result);
 
         LoadSettings();
-        foreach (var c in new Control[] { cSlk, cUnused, cStrip, cJass, cIcons, cKeys, cList, cPreview }) ((CheckBox)c).CheckedChanged += (_, _) => SaveSettings();
+        foreach (var c in new Control[] { cSlk, cUnused, cStrip, cJass, cIcons, cKeys, cList, cPreview, cSkins }) ((CheckBox)c).CheckedChanged += (_, _) => SaveSettings();
         models.SelectedIndexChanged += (_, _) => SaveSettings();
         textures.SelectedIndexChanged += (_, _) => SaveSettings();
         texMax.SelectedIndexChanged += (_, _) => SaveSettings();
@@ -181,6 +184,7 @@ sealed class MainForm : Form
         textures.SelectedIndex = Math.Max(0, Array.IndexOf(TexQ, st.Textures));
         texMax.SelectedIndex = Math.Max(0, Array.IndexOf(TexSizes, st.TexMax));
         cPreview.Checked = st.NoPreview;
+        cSkins.Checked = st.ReforgedSkins; cSkins.Enabled = cSlk.Checked;
         suffixBox.Text = st.Suffix;
         mapBox.Text = st.LastMap;
         gameBox.Text = string.IsNullOrWhiteSpace(st.GameDir) ? GameFiles.DefaultDir() : st.GameDir;
@@ -190,7 +194,7 @@ sealed class MainForm : Form
     {
         st.Slk = cSlk.Checked; st.RemoveUnused = cUnused.Checked; st.StripEditor = cStrip.Checked; st.JassMin = cJass.Checked;
         st.IconOneMip = cIcons.Checked; st.KeyReduce = cKeys.Checked; st.Listfile = cList.Checked;
-        st.NoPreview = cPreview.Checked; st.TexMax = TexSizes[Math.Max(0, texMax.SelectedIndex)];
+        st.NoPreview = cPreview.Checked; st.ReforgedSkins = cSkins.Checked; st.TexMax = TexSizes[Math.Max(0, texMax.SelectedIndex)];
         st.Models = Math.Max(0, models.SelectedIndex); st.Textures = TexQ[Math.Max(0, textures.SelectedIndex)];
         st.Suffix = suffixBox.Text; st.LastMap = mapBox.Text; st.GameDir = gameBox.Text;
         st.Save();
@@ -238,7 +242,7 @@ sealed class MainForm : Form
         GameFiles.OverrideDir = gameBox.Text;
         var o = new Optimize.Options
         {
-            Input = input, Output = output, Slk = cSlk.Checked, KeepUnused = !cUnused.Checked, StripEditor = cStrip.Checked,
+            Input = input, Output = output, Slk = cSlk.Checked, KeepUnused = !cUnused.Checked, ReforgedSkins = cSkins.Checked, StripEditor = cStrip.Checked,
             JassMin = cJass.Checked, IconOneMip = cIcons.Checked, KeyReduce = cKeys.Checked, Listfile = cList.Checked,
             TexQuality = TexQ[Math.Max(0, textures.SelectedIndex)],
             TexMax = TexSizes[Math.Max(0, texMax.SelectedIndex)], NoPreview = cPreview.Checked, SectorShift = 9,
