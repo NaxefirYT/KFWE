@@ -334,6 +334,12 @@ function event.EVENT_WE_EXIT(event_data)
 			pcall(fs.remove, war3path / name)
 		end
 	end
+	local ffi = require 'ffi'
+	pcall(ffi.cdef, [[
+		void* __stdcall GetCurrentProcess();
+		int __stdcall TerminateProcess(void* process, unsigned int code);
+	]])
+	ffi.C.TerminateProcess(ffi.C.GetCurrentProcess(), 0)
 	return 0
 end
 
