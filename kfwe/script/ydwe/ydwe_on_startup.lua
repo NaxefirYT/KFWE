@@ -191,8 +191,10 @@ local function check_war3_version()
 	-- Теперь создаем если включен
 	if tostring(mapHelper) == "1" then
 		log.info("Map Helper Enabled")
-		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'MapHelper.asi', war3path / 'MapHelper.asi', true)
-		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'MapHelper.json', war3path / 'MapHelper.json', true)
+		for _, name in ipairs { 'MapHelper.asi', 'MapHelper.json' } do
+			local ok, err = pcall(fs.copy_file, ydwePath / 'plugin' / 'tesh' / 'data' / name, war3path / name, true)
+			if not ok then log.warn("Cannot copy " .. name .. ": " .. tostring(err)) end
+		end
 	else
 		log.info("Map Helper Disabled")
 	end
@@ -223,19 +225,12 @@ end
 
 -- 显示制作者和感谢信息
 function show_credit()
-	we.message_show("    ------------------------------------------------------------")
-	we.message_show("           Добро пожаловать в KFWE, лучший редактор карт!           ")
-	we.message_show("    ------------------------------------------------------------")
-	we.message_show("    Автор KFWE:           Naxefir")
-	we.message_show("    Автор оригинала PK:   Enemy1PK (discord: enemy1pk)")
-	we.message_show("    Создатели YDWE:       actboy168, sumneko")
-	we.message_show("    Последняя версия PK:  www.hiveworkshop.com/threads/ydwe-pk-world-editor.351329")
-	we.message_show("    Дискорд сервер KFWE:  https://discord.gg/2Chc8rbXXD")
-	we.message_show("    *** Особая благодарность ***")
-	we.message_show("    Dracol1ch, Prometheus, Super.Skill, sotzaii_shuen")
-	we.message_show("    ...")
-	we.message_show("    И всем пользователям & помощникам, включая")
-	we.message_show("    ВАС")
+	we.message_show("    |cff9d86ff" .. (LNG.MENU_YDWE:gsub("&", "")) .. "|r  |cff8a8f9eот Naxefir|r")
+	we.message_show(" ")
+	we.message_show("    |cff8a8f9eGitHub|r    |cffffffffgithub.com/NaxefirYT/KFWE|r")
+	we.message_show("    |cff8a8f9eDiscord|r   |cffffffffdiscord.gg/2Chc8rbXXD|r")
+	we.message_show("    |cff8a8f9eОснован на YDWE PK (Enemy1PK) и YDWE (actboy168, sumneko)|r")
+	we.message_show("    |cff8a8f9eСпасибо Dracol1ch, Prometheus, Super.Skill, sotzaii_shuen, PortusM|r")
 end
 
 local function initialize_font()
@@ -334,11 +329,10 @@ function event.EVENT_WE_EXIT(event_data)
 
 	log.debug("********************* on exit end *********************")
 	local war3path = fs.war3_path()
-	if fs.exists(war3path / 'MapHelper.asi') then
-		fs.remove(war3path / 'MapHelper.asi')
-	end
-	if fs.exists(war3path / 'MapHelper.json') then
-		fs.remove(war3path / 'MapHelper.json')
+	for _, name in ipairs { 'MapHelper.asi', 'MapHelper.json' } do
+		if fs.exists(war3path / name) then
+			pcall(fs.remove, war3path / name)
+		end
 	end
 	return 0
 end
