@@ -287,6 +287,192 @@ static void prof_dump(void)
 #define H_FREE p_free
 #define H_SIZE p_size
 #define H_REALLOC p_realloc
+#elif defined(SFH_LIVE)
+#define LIVE_BITS 21
+#define LIVE_CAP (1u << LIVE_BITS)
+static uint32_t *g_lkey, *g_lsize;
+static uint16_t *g_lsite;
+static int64_t *g_site_bytes, *g_site_prev;
+static int32_t *g_site_cnt;
+static uint32_t g_lused, g_loverflow;
+static SRWLOCK g_llock = SRWLOCK_INIT;
+static char g_logpath[MAX_PATH];
+static void log_line(HANDLE f, const char *s);
+
+static uint32_t lslot(uint32_t p) { return (p * 2654435761u) >> (32 - LIVE_BITS); }
+
+static void live_add(void *ptr, uint32_t site, uint32_t n)
+{
+    uint32_t p = (uint32_t)(uintptr_t)ptr;
+    AcquireSRWLockExclusive(&g_llock);
+    if (g_lused > LIVE_CAP / 4 * 3) {
+        g_loverflow++;
+    } else {
+        uint32_t i = lslot(p);
+        while (g_lkey[i] && g_lkey[i] != p)
+            i = (i + 1) & (LIVE_CAP - 1);
+        if (!g_lkey[i]) {
+            g_lused++;
+        } else {
+            g_site_bytes[g_lsite[i]] -= g_lsize[i];
+            g_site_cnt[g_lsite[i]]--;
+        }
+        g_lkey[i] = p; g_lsize[i] = n; g_lsite[i] = (uint16_t)site;
+        g_site_bytes[site] += n;
+        g_site_cnt[site]++;
+    }
+    ReleaseSRWLockExclusive(&g_llock);
+}
+
+static void live_del(void *ptr)
+{
+    uint32_t p = (uint32_t)(uintptr_t)ptr;
+    if (!p)
+        return;
+    AcquireSRWLockExclusive(&g_llock);
+    uint32_t i = lslot(p);
+    while (g_lkey[i] && g_lkey[i] != p)
+        i = (i + 1) & (LIVE_CAP - 1);
+    if (g_lkey[i]) {
+        g_site_bytes[g_lsite[i]] -= g_lsize[i];
+        g_site_cnt[g_lsite[i]]--;
+        g_lused--;
+        uint32_t j = i;
+        for (;;) {
+            j = (j + 1) & (LIVE_CAP - 1);
+            if (!g_lkey[j])
+                break;
+            uint32_t k = lslot(g_lkey[j]);
+            if ((j > i && (k <= i || k > j)) || (j < i && (k <= i && k > j))) {
+                g_lkey[i] = g_lkey[j]; g_lsize[i] = g_lsize[j]; g_lsite[i] = g_lsite[j];
+                i = j;
+            }
+        }
+        g_lkey[i] = 0;
+    }
+    ReleaseSRWLockExclusive(&g_llock);
+}
+
+static uint32_t site_of(const char *file, int line)
+{
+    AcquireSRWLockExclusive(&g_lock);
+    uint32_t s = pool_index(file, line);
+    ReleaseSRWLockExclusive(&g_lock);
+    return s;
+}
+
+static void *__stdcall l_alloc(uint32_t n, const char *file, int line, int flags)
+{
+    void *r = h_alloc(n, file, line, flags);
+    if (r)
+        live_add(r, site_of(file, line), n);
+    return r;
+}
+static BOOL __stdcall l_free(void *p, const char *file, int line, int d)
+{
+    live_del(p);
+    return h_free(p, file, line, d);
+}
+static uint32_t __stdcall l_size(void *p, const char *file, int line) { return h_size(p, file, line); }
+static void *__stdcall l_realloc(void *p, uint32_t n, const char *file, int line, int flags)
+{
+    void *r = h_realloc(p, n, file, line, flags);
+    if (r) {
+        live_del(p);
+        live_add(r, site_of(file, line), n);
+    }
+    return r;
+}
+
+static const char *site_name(uintptr_t s)
+{
+    if (!s || s < 0x10000 || IsBadStringPtrA((const char *)s, 300)) return "?";
+    return (const char *)s;
+}
+
+static DWORD WINAPI live_dump_thread(void *arg)
+{
+    (void)arg;
+    char path[MAX_PATH], b[700];
+    lstrcpyA(path, g_logpath);
+    int L = lstrlenA(path);
+    if (L > 9) lstrcpyA(path + L - 9, "live.log");
+    static uint32_t top[30];
+    for (;;) {
+        Sleep(30000);
+        HANDLE f = CreateFileA(path, FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+        if (f == INVALID_HANDLE_VALUE)
+            continue;
+        SYSTEMTIME t;
+        GetLocalTime(&t);
+        uint64_t pooled = 0;
+        AcquireSRWLockExclusive(&g_lock);
+        for (uint32_t i = 0; i < POOL_MAX; i++) {
+            if (!g_pools[i].used || !g_pools[i].fast) continue;
+            for (int c = 0; c < g_nclass; c++)
+                for (hdr_t *h = g_pools[i].free[c]; h; h = (hdr_t *)(uintptr_t)h->size)
+                    pooled += g_class_size[c];
+        }
+        ReleaseSRWLockExclusive(&g_lock);
+        AcquireSRWLockShared(&g_llock);
+        int64_t total = 0;
+        for (uint32_t i = 0; i < POOL_MAX; i++)
+            total += g_site_bytes[i];
+        wsprintfA(b, "=== %02d:%02d:%02d live=%dMB in %u blocks, overflow=%u, sfh pooled free=%dMB\r\n", t.wHour, t.wMinute, t.wSecond,
+                  (int)(total >> 20), g_lused, g_loverflow, (int)(pooled >> 20));
+        log_line(f, b);
+        int n = 0;
+        for (; n < 30; n++) {
+            int64_t best = 0; int bi = -1;
+            for (uint32_t i = 0; i < POOL_MAX; i++) {
+                if (g_site_bytes[i] <= best) continue;
+                int taken = 0;
+                for (int k = 0; k < n; k++) if (top[k] == i) taken = 1;
+                if (!taken) { best = g_site_bytes[i]; bi = (int)i; }
+            }
+            if (bi < 0) break;
+            top[n] = (uint32_t)bi;
+            wsprintfA(b, "%8dKB %8dKB %7d  %s:%d\r\n", (int)(g_site_bytes[bi] >> 10), (int)((g_site_bytes[bi] - g_site_prev[bi]) >> 10),
+                      g_site_cnt[bi], site_name(g_pools[bi].file), g_pools[bi].line);
+            log_line(f, b);
+        }
+        log_line(f, "  growth:\r\n");
+        for (int k = 0; k < 10; k++) {
+            int64_t best = 512 << 10; int bi = -1;
+            for (uint32_t i = 0; i < POOL_MAX; i++) {
+                int64_t d = g_site_bytes[i] - g_site_prev[i];
+                if (d <= best) continue;
+                int taken = 0;
+                for (int q = 0; q < n; q++) if (top[q] == i) taken = 1;
+                if (!taken) { best = d; bi = (int)i; }
+            }
+            if (bi < 0) break;
+            top[n < 30 ? n++ : 29] = (uint32_t)bi;
+            wsprintfA(b, "%8dKB %8dKB %7d  %s:%d\r\n", (int)(g_site_bytes[bi] >> 10), (int)(best >> 10), g_site_cnt[bi],
+                      site_name(g_pools[bi].file), g_pools[bi].line);
+            log_line(f, b);
+        }
+        memcpy(g_site_prev, g_site_bytes, sizeof(int64_t) * POOL_MAX);
+        ReleaseSRWLockShared(&g_llock);
+        CloseHandle(f);
+    }
+    return 0;
+}
+
+static int live_init(void)
+{
+    g_lkey = (uint32_t *)VirtualAlloc(NULL, LIVE_CAP * 4, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    g_lsize = (uint32_t *)VirtualAlloc(NULL, LIVE_CAP * 4, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    g_lsite = (uint16_t *)VirtualAlloc(NULL, LIVE_CAP * 2, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    g_site_bytes = (int64_t *)VirtualAlloc(NULL, POOL_MAX * 8, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    g_site_prev = (int64_t *)VirtualAlloc(NULL, POOL_MAX * 8, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    g_site_cnt = (int32_t *)VirtualAlloc(NULL, POOL_MAX * 4, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    return g_lkey && g_lsize && g_lsite && g_site_bytes && g_site_prev && g_site_cnt;
+}
+#define H_ALLOC l_alloc
+#define H_FREE l_free
+#define H_SIZE l_size
+#define H_REALLOC l_realloc
 #else
 #define H_ALLOC h_alloc
 #define H_FREE h_free
@@ -1456,7 +1642,6 @@ static BOOL WINAPI h_attrex_w(LPCWSTR p, GET_FILEEX_INFO_LEVELS lv, LPVOID out)
     return r;
 }
 
-// anything that changes the file tree must drop the caches, or a folder made a moment ago reads as missing (map save into .w3xTemp)
 static BOOL WINAPI h_mkdir_a(LPCSTR p, LPSECURITY_ATTRIBUTES sa)
 {
     BOOL r = CreateDirectoryA(p, sa);
@@ -1597,6 +1782,13 @@ __declspec(dllexport) int Initialize(void)
     apply_combo_resize_patch();
     apply_cwp_hook_filter();
     apply_startup_io();
+#endif
+#ifdef SFH_LIVE
+    if (!live_init())
+        return done = -4;
+    HANDLE dump = CreateThread(NULL, 0, live_dump_thread, NULL, 0, NULL);
+    if (dump)
+        CloseHandle(dump);
 #endif
 
     if (!patch_jmp(f_free, (void *)H_FREE) || !patch_jmp(f_size, (void *)H_SIZE) ||
