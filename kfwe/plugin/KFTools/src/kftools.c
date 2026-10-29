@@ -658,7 +658,7 @@ static int main_active(void)
 
 static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
 {
-    if (code == HC_ACTION && vk == 'C' && !(lp & 0xC0000000) && (GetKeyState(VK_CONTROL) & 0x8000) &&
+    if (code == HC_ACTION && vk == 'X' && !(lp & 0xC0000000) && (GetKeyState(VK_CONTROL) & 0x8000) &&
         (GetKeyState(VK_SHIFT) & 0x8000) && main_active()) {
         KFToolsCopy((GetKeyState(VK_MENU) & 0x8000) != 0);
         return 1;
