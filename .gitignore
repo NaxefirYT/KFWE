@@ -4,3 +4,4 @@ out/
 *.user
 __pycache__/
 installer/kfwe.zip
+kfwe/tools/
