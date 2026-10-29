@@ -15,15 +15,14 @@ local function add_classic_names(path)
     if not code then
         return
     end
-    local nl = code:find('\r\n', 1, true) and '\r\n' or '\n'
     local changed = false
     for _, n in ipairs(classic_names) do
         local s = code:find('function ' .. n[1] .. ' takes nothing returns nothing', 1, true)
-        local e = s and code:find(nl .. 'endfunction', s, true)
+        local e = s and code:find('\nendfunction', s, true)
         if e and not code:find('function ' .. n[2] .. ' takes', 1, true) then
-            e = e + #nl + #'endfunction' - 1
-            code = code:sub(1, e) .. nl .. 'function ' .. n[2] .. ' takes nothing returns nothing' .. nl
-                .. '    call ' .. n[1] .. '()' .. nl .. 'endfunction' .. code:sub(e + 1)
+            e = e + #'\nendfunction' - 1
+            code = code:sub(1, e) .. '\nfunction ' .. n[2] .. ' takes nothing returns nothing\n'
+                .. '    call ' .. n[1] .. '()\nendfunction' .. code:sub(e + 1)
             changed = true
         end
     end
@@ -31,6 +30,49 @@ local function add_classic_names(path)
         log.info('Added CreateAll* aliases for MapHelper script')
         io.save(path, code)
     end
+end
+
+local function jasshelper_cached(op)
+    local code = io.load(op.input)
+    local trigs = {}
+    if code then
+        code = code:gsub('\n[ \t]*trigger gg_trg_[%w_]+ *= *null', function (s)
+            trigs[#trigs + 1] = s
+            return ''
+        end)
+        table.sort(trigs)
+        code = code .. table.concat(trigs)
+    end
+    local key = code
+        and not code:find('//! import', 1, true)
+        and not code:find('//! external', 1, true)
+        and not code:find('//! loaddata', 1, true)
+        and table.concat({
+            tostring(op.option.enable_jasshelper),
+            tostring(op.option.enable_jasshelper_debug),
+            tostring(op.option.enable_jasshelper_optimization),
+            tostring(op.option.pjass),
+            tostring(op.option.runtime_version),
+            io.load(jasshelper:prepare_common_j(op.map_path, op.option.runtime_version)) or '',
+            io.load(jasshelper:prepare_blizzard_j(op.map_path, op.option.runtime_version)) or '',
+            code,
+        }, '\0')
+    local key_path = op.log / 'jasshelper_cache.key'
+    local cached = op.log / 'jasshelper_cache.j'
+    if key and io.load(key_path) == key and fs.exists(cached) then
+        fs.copy_file(cached, op.output, true)
+        log.info('JassHelper skipped: script unchanged')
+        return true
+    end
+    fs.remove(key_path)
+    if not jasshelper:compile(op) then
+        return false
+    end
+    if key then
+        fs.copy_file(op.output, cached, true)
+        io.save(key_path, key)
+    end
+    return true
 end
 
 local function update_script(map_path, input, process_function)
@@ -118,7 +160,7 @@ function compiler:compile(map_path, config, war3ver)
 
             compile_t.input = compile_t.output
             compile_t.output = compile_t.log / "6_vjass.j"
-            if not jasshelper:compile(compile_t) then
+            if not jasshelper_cached(compile_t) then
                 return
             end
             return compile_t.output
