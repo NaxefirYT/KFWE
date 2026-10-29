@@ -69,7 +69,7 @@ python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ModelSearch/src/mode
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ImportPlus/src/importplus.c -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32 -lole32 -lmsimg32 -lwindowscodecs -luuid -lgdiplus -o ImportPlus.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -o kf_playas.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s Splash/src/splash.c -luser32 -lgdi32 -lgdiplus -ladvapi32 -o Splash.dll
-python -m ziglang cc -target x86-windows-gnu -shared -O2 -s KFTools/src/kftools.c -luser32 -lgdi32 -lgdiplus -o KFTools.dll
+python -m ziglang cc -target x86-windows-gnu -shared -O2 -s KFTools/src/kftools.c -luser32 -lgdi32 -lgdiplus -lwinhttp -o KFTools.dll
 ```
 
 YDColorizer собирается через MSBuild из .NET Framework: `MSBuild.exe YDColorizer.csproj -p:Configuration=Release -p:Platform=AnyCPU`.

@@ -44,6 +44,7 @@ function event.EVENT_INIT_MENU(event_data)
 	local tools = plugin.loaders.KFTools
 	if tools then
 		menu:add('Копировать координаты\tCtrl+Shift+C', tools.copy)
+		menu:add('Проверить обновления', tools.check_update)
 	end
 	menu:add(LNG.MENU_OPEN_OFFICIAL_SITE, open_offical_site)
 

@@ -22,6 +22,8 @@ static class Program
             try { Installer.Install(args[1], null); return 0; }
             catch { return 1; }
         }
+        if (args.Length == 3 && args[0] == "/update")
+            return Installer.Update(args[1], int.TryParse(args[2], out var pid) ? pid : 0);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new SetupForm());
@@ -85,6 +87,26 @@ static class Installer
         }
     }
 
+    public static int Update(string target, int pid)
+    {
+        try { if (pid > 0) Process.GetProcessById(pid).WaitForExit(); }
+        catch (ArgumentException) { }
+        while (EditorRunning()) System.Threading.Thread.Sleep(500);
+        try
+        {
+            Install(target, null);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Не удалось установить обновление: " + ex.Message + "\n\nСкачайте KFWE-Setup.exe со страницы релизов и запустите вручную.",
+                "Обновление KFWE", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return 1;
+        }
+        var exe = Path.Combine(target, "YDWE.exe");
+        if (File.Exists(exe)) Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = target });
+        return 0;
+    }
+
     public static void Shortcut(string exe)
     {
         var lnkPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "KFWE.lnk");
@@ -126,7 +148,7 @@ sealed class SetupForm : Form
         Font = new Font("Segoe UI", 9.75f);
         ClientSize = new Size(520, 252);
 
-        var title = new Label { Text = "KFWE 1.4.1", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
+        var title = new Label { Text = "KFWE 1.5.0", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
         var sub = new Label { Text = "Редактор Warcraft 3 нового поколения", ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
         var cap = new Label { Text = "Папка Warcraft III", AutoSize = true, Location = new Point(24, 94) };
 

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <winhttp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -397,6 +398,258 @@ __declspec(dllexport) int KFToolsCopy(int with_z)
     return 1;
 }
 
+#define RELEASE_HOST L"api.github.com"
+#define RELEASE_PATH L"/repos/NaxefirYT/KFWE/releases/latest"
+#define BODY_MAX (1 << 20)
+#define SETUP_MIN (1 << 20)
+
+static void kfwe_dir(WCHAR *out)
+{
+    GetModuleFileNameW(g_inst, out, MAX_PATH);
+    for (int up = 0; up < 3; up++) {
+        WCHAR *s = wcsrchr(out, L'\\');
+        if (s)
+            *s = 0;
+    }
+}
+
+static int read_version(const WCHAR *dir, char *out, int cap)
+{
+    static const WCHAR *langs[] = { L"en-US", L"zh-CN" };
+    for (int i = 0; i < 2; i++) {
+        WCHAR f[MAX_PATH];
+        char buf[8192];
+        swprintf(f, MAX_PATH, L"%ls\\share\\locale\\%ls\\script.lng", dir, langs[i]);
+        FILE *fp = _wfopen(f, L"rb");
+        if (!fp)
+            continue;
+        size_t n = fread(buf, 1, sizeof buf - 1, fp);
+        fclose(fp);
+        buf[n] = 0;
+        char *v = strstr(buf, "KFWE v");
+        if (!v)
+            continue;
+        v += 6;
+        int k = 0;
+        while (k < cap - 1 && (v[k] == '.' || (v[k] >= '0' && v[k] <= '9'))) {
+            out[k] = v[k];
+            k++;
+        }
+        out[k] = 0;
+        if (k)
+            return 1;
+    }
+    return 0;
+}
+
+static int ver_cmp(const char *a, const char *b)
+{
+    while (*a || *b) {
+        long x = strtol(a, (char **)&a, 10), y = strtol(b, (char **)&b, 10);
+        if (x != y)
+            return x < y ? -1 : 1;
+        if (*a == '.')
+            a++;
+        if (*b == '.')
+            b++;
+        if ((*a && (*a < '0' || *a > '9')) || (*b && (*b < '0' || *b > '9')))
+            break;
+    }
+    return 0;
+}
+
+static int http_get(const WCHAR *url, char **buf, DWORD *len, const WCHAR *to)
+{
+    URL_COMPONENTS u = { sizeof u };
+    WCHAR host[256], path[2048];
+    u.lpszHostName = host;
+    u.dwHostNameLength = 256;
+    u.lpszUrlPath = path;
+    u.dwUrlPathLength = 2048;
+    if (!WinHttpCrackUrl(url, 0, 0, &u))
+        return 0;
+    int ok = 0;
+    HANDLE f = INVALID_HANDLE_VALUE;
+    HINTERNET s = WinHttpOpen(L"KFWE", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (!s)
+        s = WinHttpOpen(L"KFWE", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    HINTERNET c = s ? WinHttpConnect(s, host, u.nPort, 0) : NULL;
+    HINTERNET r = c ? WinHttpOpenRequest(c, L"GET", path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, u.nScheme == INTERNET_SCHEME_HTTPS ? WINHTTP_FLAG_SECURE : 0) : NULL;
+    DWORD code = 0, sz = sizeof code;
+    if (r)
+        WinHttpSetTimeouts(r, 10000, 10000, 15000, 30000);
+    if (!r || !WinHttpSendRequest(r, L"Accept: application/vnd.github+json\r\n", (DWORD)-1, NULL, 0, 0, 0) || !WinHttpReceiveResponse(r, NULL) ||
+        !WinHttpQueryHeaders(r, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &code, &sz, NULL) || code != 200)
+        goto done;
+    if (to && (f = CreateFileW(to, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL)) == INVALID_HANDLE_VALUE)
+        goto done;
+    char chunk[65536];
+    DWORD got, total = 0;
+    if (buf && !(*buf = malloc(BODY_MAX + 1)))
+        goto done;
+    while (WinHttpReadData(r, chunk, sizeof chunk, &got) && got) {
+        DWORD w;
+        if (to && (!WriteFile(f, chunk, got, &w, NULL) || w != got))
+            goto done;
+        if (buf) {
+            if (total + got > BODY_MAX)
+                goto done;
+            memcpy(*buf + total, chunk, got);
+        }
+        total += got;
+    }
+    if (buf)
+        (*buf)[total] = 0;
+    if (len)
+        *len = total;
+    ok = 1;
+done:
+    if (!ok && buf && *buf) {
+        free(*buf);
+        *buf = NULL;
+    }
+    if (f != INVALID_HANDLE_VALUE)
+        CloseHandle(f);
+    if (r)
+        WinHttpCloseHandle(r);
+    if (c)
+        WinHttpCloseHandle(c);
+    if (s)
+        WinHttpCloseHandle(s);
+    return ok;
+}
+
+static int json_str(const char *from, const char *key, char *out, int cap)
+{
+    char k[64];
+    snprintf(k, sizeof k, "\"%s\"", key);
+    const char *p = strstr(from, k);
+    if (!p)
+        return 0;
+    p += strlen(k);
+    while (*p == ' ' || *p == ':')
+        p++;
+    if (*p++ != '"')
+        return 0;
+    int n = 0;
+    while (*p && *p != '"' && n < cap - 1)
+        out[n++] = *p++;
+    out[n] = 0;
+    return *p == '"';
+}
+
+static void mark_menu(HWND m, const char *latest)
+{
+    HMENU bar = GetMenu(m);
+    WCHAR buf[64], label[64];
+    for (int i = 0, n = GetMenuItemCount(bar); i < n; i++) {
+        if (GetMenuStringW(bar, i, buf, 64, MF_BYPOSITION) && wcsstr(buf, L"KFWE v")) {
+            MENUITEMINFOW mi = { sizeof mi, MIIM_STRING };
+            swprintf(label, 64, L"Доступно обновление %hs", latest);
+            mi.dwTypeData = label;
+            SetMenuItemInfoW(bar, i, TRUE, &mi);
+            DrawMenuBar(m);
+            return;
+        }
+    }
+}
+
+static void check_update(int manual)
+{
+    WCHAR dir[MAX_PATH], cfg[MAX_PATH], url[1024], setup[MAX_PATH], cmd[MAX_PATH * 2 + 64], text[512];
+    char cur[32], tag[64] = "", asset[1024], *body = NULL;
+    HWND m = NULL;
+    kfwe_dir(dir);
+    if (!read_version(dir, cur, sizeof cur))
+        return;
+    swprintf(cfg, MAX_PATH, L"%ls\\bin\\EverConfig.cfg", dir);
+    if (!manual && GetPrivateProfileIntW(L"FeatureToggle", L"DisableAutoUpdate", 0, cfg))
+        return;
+    for (int i = 0; i < 240 && !(m = main_window()); i++)
+        Sleep(500);
+    if (!m)
+        return;
+    if (!manual)
+        Sleep(2000);
+    if (!http_get(L"https://" RELEASE_HOST RELEASE_PATH, &body, NULL, NULL)) {
+        if (manual)
+            MessageBoxW(m, L"Не удалось связаться с GitHub. Проверьте интернет и попробуйте ещё раз.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    asset[0] = 0;
+    if (json_str(body, "tag_name", tag, sizeof tag)) {
+        for (const char *p = body; (p = strstr(p, "\"browser_download_url\"")); p++) {
+            char a[1024];
+            size_t n;
+            if (json_str(p, "browser_download_url", a, sizeof a) && (n = strlen(a)) > 15 && !strcmp(a + n - 15, "/KFWE-Setup.exe")) {
+                strcpy(asset, a);
+                break;
+            }
+        }
+    }
+    free(body);
+    const char *latest = tag[0] == 'v' ? tag + 1 : tag;
+    if (!asset[0] || ver_cmp(latest, cur) <= 0 || !(m = main_window())) {
+        if (manual && (m = main_window())) {
+            swprintf(text, 512, L"У вас последняя версия KFWE %hs.", cur);
+            MessageBoxW(m, text, L"Обновление KFWE", MB_OK | MB_ICONINFORMATION);
+        }
+        return;
+    }
+    mark_menu(m, latest);
+    swprintf(text, 512, L"Вышла новая версия KFWE %hs, у вас %hs.\n\nОбновить сейчас? Редактор скачает обновление и закроется "
+                        L"(несохранённую карту он предложит сохранить), а после установки запустится снова. Настройки сохранятся.", latest, cur);
+    if (MessageBoxW(m, text, L"Обновление KFWE", MB_YESNO | MB_ICONINFORMATION | MB_SETFOREGROUND) != IDYES)
+        return;
+    toast(L"Скачиваю обновление", L"Редактор закроется сам", 0xFF7C5CFF);
+    MultiByteToWideChar(CP_UTF8, 0, asset, -1, url, 1024);
+    GetTempPathW(MAX_PATH, setup);
+    wcscat(setup, L"KFWE-Setup-update.exe");
+    DWORD got = 0;
+    char mz[2] = { 0 };
+    FILE *fp;
+    if (http_get(url, NULL, &got, setup) && got >= SETUP_MIN && (fp = _wfopen(setup, L"rb"))) {
+        fread(mz, 1, 2, fp);
+        fclose(fp);
+    }
+    if (mz[0] != 'M' || mz[1] != 'Z') {
+        DeleteFileW(setup);
+        MessageBoxW(main_window(), L"Не удалось скачать обновление. Его можно поставить вручную со страницы релизов на GitHub.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    STARTUPINFOW si = { sizeof si };
+    PROCESS_INFORMATION pi;
+    swprintf(cmd, MAX_PATH * 2 + 64, L"\"%ls\" /update \"%ls\" %lu", setup, dir, GetCurrentProcessId());
+    if (!CreateProcessW(setup, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        MessageBoxW(main_window(), L"Не удалось запустить установщик обновления.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    if ((m = main_window()))
+        PostMessageW(m, WM_CLOSE, 0, 0);
+}
+
+static volatile LONG g_checking;
+
+static DWORD WINAPI update_thread(void *arg)
+{
+    if (!InterlockedExchange(&g_checking, 1)) {
+        check_update(arg != NULL);
+        InterlockedExchange(&g_checking, 0);
+    }
+    return 0;
+}
+
+__declspec(dllexport) int KFToolsCheckUpdate(void)
+{
+    HANDLE th = CreateThread(NULL, 0, update_thread, (void *)1, 0, NULL);
+    if (!th)
+        return 0;
+    CloseHandle(th);
+    return 1;
+}
+
 static int main_active(void)
 {
     HWND fg = GetForegroundWindow(), m = main_window();
@@ -425,6 +678,9 @@ __declspec(dllexport) int KFToolsInit(void)
         return -1;
     HMODULE self;
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN, (LPCWSTR)&KFToolsInit, &self);
+    HANDLE th = CreateThread(NULL, 0, update_thread, NULL, 0, NULL);
+    if (th)
+        CloseHandle(th);
     return 1;
 }
 
