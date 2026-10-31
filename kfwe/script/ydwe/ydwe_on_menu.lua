@@ -45,6 +45,7 @@ function event.EVENT_INIT_MENU(event_data)
 	if tools then
 		menu:add('Копировать координаты\tCtrl+Shift+X', tools.copy)
 		menu:add('Проверить обновления', tools.check_update)
+		menu:add('Что нового', tools.changelog)
 	end
 	menu:add(LNG.MENU_OPEN_OFFICIAL_SITE, open_offical_site)
 

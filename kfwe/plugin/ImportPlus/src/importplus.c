@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #include <wincodec.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -18,6 +19,9 @@
 #define CMD_REPLACE 257
 #define CMD_DELETE 258
 #define CMD_COPYPATH 0x7E20
+#define CMD_IMPORT_FILES 0x7E21
+#define CMD_IMPORT_DIR 0x7E22
+#define WE_IMPORT 8
 #define PROP L"KFImportPlus"
 #define VIEW_CLASS L"KFImportView"
 #define TIMER_REFRESH 1
@@ -127,9 +131,24 @@ static HFONT f_ui, f_bold, f_small, f_title, f_badge, f_section;
 static int g_inner, g_auto;
 static char g_save_to[MAX_PATH];
 static int g_save_set;
+static char g_open_from[MAX_PATH], g_props_path[MAX_PATH];
+static int g_open_set, g_props_set;
 
 static BOOL(WINAPI *o_save)(OPENFILENAMEA *);
+static BOOL(WINAPI *o_open)(OPENFILENAMEA *);
 static int(WINAPI *o_msgbox)(HWND, LPCSTR, LPCSTR, UINT);
+
+static BOOL WINAPI h_open(OPENFILENAMEA *o)
+{
+    if (!g_open_set) return o_open(o);
+    g_open_set = 0;
+    lstrcpynA(o->lpstrFile, g_open_from, (int)o->nMaxFile);
+    char *sl = strrchr(o->lpstrFile, '\\'), *dot = strrchr(o->lpstrFile, '.');
+    o->nFileOffset = (WORD)(sl ? sl - o->lpstrFile + 1 : 0);
+    o->nFileExtension = (WORD)(dot && dot > sl ? dot - o->lpstrFile + 1 : 0);
+    if (o->lpstrFileTitle && o->nMaxFileTitle) lstrcpynA(o->lpstrFileTitle, o->lpstrFile + o->nFileOffset, (int)o->nMaxFileTitle);
+    return TRUE;
+}
 
 static BOOL WINAPI h_save(OPENFILENAMEA *o)
 {
@@ -551,20 +570,24 @@ static int focus_row(Imp *im)
     return -1;
 }
 
-static int select_we(Imp *im, int r)
+static int find_we(Imp *im, const wchar_t *path, int hint)
 {
-    if (r < 0 || r >= im->nrows) return 0;
-    int n = (int)SendMessageW(im->welv, LVM_GETITEMCOUNT, 0, 0), wi = im->rows[r].we;
-    wchar_t *t = wi < n ? lv_text(im->welv, wi, 3) : NULL;
-    if (!t || _wcsicmp(t, im->rows[r].path)) {
+    int n = (int)SendMessageW(im->welv, LVM_GETITEMCOUNT, 0, 0), wi = hint;
+    wchar_t *t = wi >= 0 && wi < n ? lv_text(im->welv, wi, 3) : NULL;
+    if (!t || _wcsicmp(t, path)) {
         wi = -1;
         for (int i = 0; i < n && wi < 0; i++) {
             wchar_t *u = lv_text(im->welv, i, 3);
-            if (!_wcsicmp(u, im->rows[r].path)) wi = i;
+            if (!_wcsicmp(u, path)) wi = i;
             free(u);
         }
     }
     free(t);
+    return wi;
+}
+
+static int select_we_at(Imp *im, int wi)
+{
     if (wi < 0) return 0;
     LVITEMW it = { 0 };
     it.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
@@ -574,11 +597,27 @@ static int select_we(Imp *im, int r)
     return 1;
 }
 
+static int select_we(Imp *im, int r)
+{
+    if (r < 0 || r >= im->nrows) return 0;
+    return select_we_at(im, find_we(im, im->rows[r].path, im->rows[r].we));
+}
+
 static void we_command(Imp *im, int cmd)
 {
     g_inner++;
     SendMessageW(im->dlg, WM_COMMAND, cmd, 0);
     g_inner--;
+}
+
+static void we_pump(void)
+{
+    MSG msg;
+    while (PeekMessageW(&msg, NULL, 0, WM_TIMER - 1, PM_REMOVE | PM_QS_POSTMESSAGE) ||
+           PeekMessageW(&msg, NULL, WM_TIMER + 1, 0xFFFFFFFF, PM_REMOVE | PM_QS_POSTMESSAGE)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
 }
 
 static uint8_t *read_file(const wchar_t *path, DWORD *len)
@@ -1226,6 +1265,8 @@ static void draw_status(Imp *im, Paint *pt, int pass)
     }
 }
 
+static void draw_btns(Imp *im, Paint *pt, int pass);
+
 static void add_btn(Imp *im, int id, const wchar_t *lb, int danger, RECT r)
 {
     Btn *b = &im->btn[im->nbtn++];
@@ -1245,12 +1286,25 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
     }
     int pad = 18, w = P.right - P.left - 2 * pad, y = 18, kb;
     int nsel = sel_count(im, &kb), r = focus_row(im);
-    if (pass == 0) im->nbtn = 0;
+    int bw = (w - 8) / 2, bh = 34, iy = P.bottom - pad - bh;
+    if (pass == 0) {
+        im->nbtn = 0;
+        add_btn(im, CMD_IMPORT_FILES, L"Импорт файлов…", 0, (RECT){ P.left + pad, iy, P.left + pad + bw, iy + bh });
+        add_btn(im, CMD_IMPORT_DIR, L"Импорт папки…", 0, (RECT){ P.left + pad + bw + 8, iy, P.right - pad, iy + bh });
+    }
     if (nsel == 0 || r < 0) {
-        if (pass) {
-            RECT t = { P.left + pad, P.top, P.right - pad, P.bottom };
-            text(pt, L"Выберите файл", t, f_ui, C_FAINT, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        RECT box = { P.left + pad, P.top + 18, P.right - pad, iy - 12 };
+        if (pass == 0) {
+            fill_rr(pt, box, 12, ARGB_OF(C_CARD, 110));
+            stroke_rr(pt, box, 12, ARGB_OF(C_ACCENT, 90), 1);
+        } else {
+            RECT t = { box.left + 12, box.top, box.right - 12, (box.top + box.bottom) / 2 - 2 };
+            text(pt, L"Перетащите файлы или папки сюда", t, f_bold, C_DIM, DT_CENTER | DT_BOTTOM | DT_SINGLELINE);
+            t.top = t.bottom + 6;
+            t.bottom = t.top + 20;
+            text(pt, L"или выберите файл в списке", t, f_small, C_FAINT, DT_CENTER | DT_TOP | DT_SINGLELINE);
         }
+        draw_btns(im, pt, pass);
         return;
     }
     const Row *row = &im->rows[r];
@@ -1330,7 +1384,6 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
         }
         y = box.bottom + 20;
     }
-    int bw = (w - 8) / 2, bh = 34;
     if (pass == 0) {
         if (nsel == 1) {
             add_btn(im, CMD_PROPS, L"Свойства", 0, (RECT){ P.left + pad, y, P.left + pad + bw, y + bh });
@@ -1341,8 +1394,15 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
         add_btn(im, CMD_COPYPATH, nsel > 1 ? L"Копировать пути" : L"Копировать путь", 0, (RECT){ P.left + pad + bw + 8, y, P.right - pad, y + bh });
         y += bh + 8;
         add_btn(im, CMD_DELETE, nsel > 1 ? L"Удалить выделенные" : L"Удалить", 1, (RECT){ P.left + pad, y, P.right - pad, y + bh });
+        if (y + bh + 12 > iy) SetRectEmpty(&im->btn[0].rc), SetRectEmpty(&im->btn[1].rc);
     }
+    draw_btns(im, pt, pass);
+}
+
+static void draw_btns(Imp *im, Paint *pt, int pass)
+{
     for (int i = 0; i < im->nbtn; i++) {
+        if (IsRectEmpty(&im->btn[i].rc)) continue;
         Btn *b = &im->btn[i];
         int hov = hovered(im, 3, i);
         if (pass == 0) {
@@ -1522,6 +1582,168 @@ static void batch_delete(Imp *im, int *rows, int n)
     refresh(im);
 }
 
+static int to_ansi(const wchar_t *w, char *a, int exact)
+{
+    BOOL lossy = FALSE;
+    if (WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, w, -1, a, MAX_PATH, NULL, &lossy) && !lossy) return 1;
+    wchar_t sh[MAX_PATH];
+    return !exact && GetShortPathNameW(w, sh, MAX_PATH) && WideCharToMultiByte(CP_ACP, 0, sh, -1, a, MAX_PATH, NULL, NULL);
+}
+
+static int import_file(Imp *im, const wchar_t *path)
+{
+    if (!to_ansi(path, g_open_from, 0)) return 0;
+    g_open_set = 1;
+    we_command(im, WE_IMPORT);
+    int ok = !g_open_set;
+    g_open_set = 0;
+    we_pump();
+    return ok;
+}
+
+static int import_as(Imp *im, const wchar_t *file, const wchar_t *target, int seq)
+{
+    if (!to_ansi(target, g_props_path, 1)) return 0;
+    const wchar_t *ext = wcsrchr(file, L'.');
+    if (!ext || wcschr(ext, L'\\') || wcslen(ext) > 15) ext = L"";
+    wchar_t tmp[MAX_PATH], name[64], def[96];
+    GetTempPathW(MAX_PATH, tmp);
+    wcscat(tmp, L"KFImport");
+    CreateDirectoryW(tmp, NULL);
+    swprintf(name, 64, L"kfimp%u_%d%ls", (unsigned)GetCurrentProcessId(), seq, ext);
+    wcscat(tmp, L"\\");
+    wcscat(tmp, name);
+    if (!CopyFileW(file, tmp, FALSE)) return 0;
+    int ok = 0;
+    swprintf(def, 96, L"war3mapImported\\%ls", name);
+    if (import_file(im, tmp) && find_we(im, def, -1) >= 0) {
+        int old = find_we(im, target, -1);
+        if (old >= 0 && select_we_at(im, old)) {
+            we_command(im, CMD_DELETE);
+            we_pump();
+        }
+        if (find_we(im, target, -1) < 0 && select_we_at(im, find_we(im, def, -1))) {
+            g_props_set = 1;
+            we_command(im, CMD_PROPS);
+            g_props_set = 0;
+            we_pump();
+            ok = find_we(im, target, -1) >= 0 && find_we(im, def, -1) < 0;
+        }
+        if (!ok && select_we_at(im, find_we(im, def, -1))) {
+            we_command(im, CMD_DELETE);
+            we_pump();
+        }
+    }
+    DeleteFileW(tmp);
+    return ok;
+}
+
+static void import_tree(Imp *im, const wchar_t *dir, const wchar_t *rel, int *done, int *fails)
+{
+    wchar_t pat[MAX_PATH * 2];
+    swprintf(pat, MAX_PATH * 2, L"%ls\\*", dir);
+    WIN32_FIND_DATAW fd;
+    HANDLE f = FindFirstFileW(pat, &fd);
+    if (f == INVALID_HANDLE_VALUE) return;
+    do {
+        if (!wcscmp(fd.cFileName, L".") || !wcscmp(fd.cFileName, L"..") || (fd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))) continue;
+        wchar_t full[MAX_PATH * 2], sub[MAX_PATH * 2];
+        swprintf(full, MAX_PATH * 2, L"%ls\\%ls", dir, fd.cFileName);
+        swprintf(sub, MAX_PATH * 2, L"%ls\\%ls", rel, fd.cFileName);
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) import_tree(im, full, sub, done, fails);
+        else if (import_as(im, full, sub, *done + *fails)) (*done)++;
+        else (*fails)++;
+    } while (FindNextFileW(f, &fd));
+    FindClose(f);
+}
+
+static void import_paths(Imp *im, wchar_t **paths, int n)
+{
+    int done = 0, fails = 0;
+    HCURSOR cur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+    g_auto++;
+    for (int i = 0; i < n; i++) {
+        wchar_t *p = paths[i];
+        size_t len = wcslen(p);
+        while (len > 3 && p[len - 1] == L'\\') p[--len] = 0;
+        DWORD at = GetFileAttributesW(p);
+        const wchar_t *base = wcsrchr(p, L'\\');
+        if (at == INVALID_FILE_ATTRIBUTES) fails++;
+        else if (!(at & FILE_ATTRIBUTE_DIRECTORY)) import_file(im, p) ? done++ : fails++;
+        else if (base && base[1]) import_tree(im, p, base + 1, &done, &fails);
+        else fails++;
+    }
+    g_auto--;
+    SetCursor(cur);
+    memset(im->sel, 0, im->nrows);
+    refresh(im);
+    if (fails) {
+        wchar_t msg[160];
+        swprintf(msg, 160, L"Импортировано: %d\nНе удалось: %d", done, fails);
+        MessageBoxW(im->dlg, msg, L"Менеджер импорта", MB_OK | MB_ICONWARNING);
+    }
+}
+
+static void import_files_dialog(Imp *im)
+{
+    DWORD cap = 1 << 16;
+    wchar_t *buf = calloc(cap, sizeof *buf);
+    OPENFILENAMEW o = { sizeof o };
+    o.hwndOwner = im->dlg;
+    o.lpstrFile = buf;
+    o.nMaxFile = cap;
+    o.lpstrTitle = L"Импорт файлов";
+    o.lpstrFilter = L"Все файлы\0*.*\0Модели и текстуры\0*.mdx;*.mdl;*.blp;*.tga;*.dds\0Звуки\0*.wav;*.mp3;*.flac\0";
+    o.Flags = OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    if (GetOpenFileNameW(&o)) {
+        wchar_t *dir = buf, *p = buf + wcslen(buf) + 1;
+        int n = 0;
+        for (wchar_t *q = p; *q; q += wcslen(q) + 1) n++;
+        if (!n) import_paths(im, &dir, 1);
+        else {
+            wchar_t **paths = malloc(n * sizeof *paths);
+            for (int i = 0; i < n; i++, p += wcslen(p) + 1) {
+                size_t len = wcslen(dir) + wcslen(p) + 2;
+                paths[i] = malloc(len * sizeof(wchar_t));
+                swprintf(paths[i], len, L"%ls\\%ls", dir, p);
+            }
+            import_paths(im, paths, n);
+            for (int i = 0; i < n; i++) free(paths[i]);
+            free(paths);
+        }
+    }
+    free(buf);
+}
+
+static void import_dir_dialog(Imp *im)
+{
+    BROWSEINFOW bi = { 0 };
+    wchar_t dir[MAX_PATH], *p = dir;
+    bi.hwndOwner = im->dlg;
+    bi.lpszTitle = L"Папка для импорта";
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+    LPITEMIDLIST id = SHBrowseForFolderW(&bi);
+    if (!id) return;
+    if (SHGetPathFromIDListW(id, dir)) import_paths(im, &p, 1);
+    CoTaskMemFree(id);
+}
+
+static void import_drop(Imp *im, HDROP d)
+{
+    int n = (int)DragQueryFileW(d, 0xFFFFFFFF, NULL, 0);
+    wchar_t **paths = malloc((n > 0 ? n : 1) * sizeof *paths);
+    for (int i = 0; i < n; i++) {
+        UINT len = DragQueryFileW(d, i, NULL, 0) + 1;
+        paths[i] = malloc(len * sizeof(wchar_t));
+        DragQueryFileW(d, i, paths[i], len);
+    }
+    DragFinish(d);
+    SetForegroundWindow(im->dlg);
+    import_paths(im, paths, n);
+    for (int i = 0; i < n; i++) free(paths[i]);
+    free(paths);
+}
+
 static void make_dirs_for(wchar_t *path)
 {
     for (wchar_t *p = path + 3; *p; p++)
@@ -1595,6 +1817,8 @@ static int on_command(Imp *im, int cmd)
         SendMessageW(im->edit, WM_KEYDOWN, VK_DELETE, 0);
         return 1;
     }
+    if (cmd == CMD_IMPORT_FILES) { import_files_dialog(im); return 1; }
+    if (cmd == CMD_IMPORT_DIR) { import_dir_dialog(im); return 1; }
     if (cmd != CMD_PROPS && cmd != CMD_REPLACE && cmd != CMD_DELETE && cmd != CMD_EXPORT && cmd != CMD_COPYPATH) return 0;
     int n = sel_count(im, NULL);
     if (n <= 0) return 1;
@@ -2042,6 +2266,10 @@ static LRESULT CALLBACK dlg_proc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id
     Imp *im = (Imp *)ref;
     if (m == WM_COMMAND && !g_inner && (!l || (HWND)l == GetDlgItem(h, IDC_WE_TOOLBAR)) && on_command(im, LOWORD(w)))
         return 0;
+    if (m == WM_DROPFILES) {
+        import_drop(im, (HDROP)w);
+        return 0;
+    }
     if (m == WM_NCDESTROY) {
         LRESULT r = fs_def(h, m, w, l);
         RemovePropW(h, PROP);
@@ -2120,6 +2348,10 @@ static void attach(HWND dlg)
     fs_set(dlg, dlg_proc, 1, (DWORD_PTR)im);
     fs_set(lv, welv_proc, 1, (DWORD_PTR)im);
     fs_set(im->edit, edit_proc, 1, (DWORD_PTR)im);
+    ChangeWindowMessageFilterEx(dlg, WM_DROPFILES, MSGFLT_ALLOW, NULL);
+    ChangeWindowMessageFilterEx(dlg, WM_COPYDATA, MSGFLT_ALLOW, NULL);
+    ChangeWindowMessageFilterEx(dlg, 0x0049, MSGFLT_ALLOW, NULL);
+    DragAcceptFiles(dlg, TRUE);
     layout(im);
     refresh(im);
 }
@@ -2127,8 +2359,18 @@ static void attach(HWND dlg)
 static void CALLBACK on_show(HWINEVENTHOOK hk, DWORD ev, HWND h, LONG obj, LONG child, DWORD tid, DWORD t)
 {
     (void)hk; (void)ev; (void)tid; (void)t;
-    if (h && obj == OBJID_WINDOW && child == CHILDID_SELF && GetClassLongW(h, GCW_ATOM) == 32770 && !(GetWindowLongW(h, GWL_STYLE) & WS_CHILD))
-        attach(h);
+    if (!h || obj != OBJID_WINDOW || child != CHILDID_SELF || GetClassLongW(h, GCW_ATOM) != 32770 || (GetWindowLongW(h, GWL_STYLE) & WS_CHILD))
+        return;
+    HWND chk = GetDlgItem(h, 13), ok = GetDlgItem(h, 10);
+    if (g_props_set && is_class(chk, L"Button") && is_class(GetDlgItem(h, 12), L"Edit") && is_class(ok, L"Button")) {
+        g_props_set = 0;
+        CheckDlgButton(h, 13, BST_CHECKED);
+        SendMessageW(h, WM_COMMAND, MAKEWPARAM(13, BN_CLICKED), (LPARAM)chk);
+        SetDlgItemTextA(h, 12, g_props_path);
+        PostMessageW(h, WM_COMMAND, MAKEWPARAM(10, BN_CLICKED), (LPARAM)ok);
+        return;
+    }
+    attach(h);
 }
 
 static HFONT mkfont(int px, int weight)
@@ -2160,7 +2402,7 @@ __declspec(dllexport) int ImportPlusInit(void)
     HMODULE we = GetModuleHandleW(NULL);
     o_save = iat_patch(we, "comdlg32.dll", "GetSaveFileNameA", (void *)h_save);
     o_msgbox = iat_patch(we, "user32.dll", "MessageBoxA", (void *)h_msgbox);
-    if (!o_save || !o_msgbox) return done = -3;
+    o_open = iat_patch(we, "comdlg32.dll", "GetOpenFileNameA", (void *)h_open);    if (!o_save || !o_msgbox) return done = -3;
     return done = SetWinEventHook(EVENT_OBJECT_SHOW, EVENT_OBJECT_SHOW, g_inst, on_show, GetCurrentProcessId(), 0, WINEVENT_INCONTEXT) ? 1 : -1;
 }
 

@@ -148,7 +148,7 @@ sealed class SetupForm : Form
         Font = new Font("Segoe UI", 9.75f);
         ClientSize = new Size(520, 252);
 
-        var title = new Label { Text = "KFWE 1.5.1", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
+        var title = new Label { Text = "KFWE 1.6.0", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
         var sub = new Label { Text = "Редактор Warcraft 3 нового поколения", ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
         var cap = new Label { Text = "Папка Warcraft III", AutoSize = true, Location = new Point(24, 94) };
 

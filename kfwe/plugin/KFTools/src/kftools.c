@@ -1,5 +1,8 @@
 #include <windows.h>
 #include <winhttp.h>
+#include <richedit.h>
+#include <uxtheme.h>
+#include <dwmapi.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -538,6 +541,358 @@ static int json_str(const char *from, const char *key, char *out, int cap)
     return *p == '"';
 }
 
+static char *json_text(const char *from, const char *key)
+{
+    char k[64];
+    snprintf(k, sizeof k, "\"%s\"", key);
+    const char *p = strstr(from, k);
+    if (!p)
+        return NULL;
+    p += strlen(k);
+    while (*p == ' ' || *p == ':')
+        p++;
+    if (*p++ != '"')
+        return NULL;
+    char *out = malloc(strlen(p) + 1), *o = out;
+    if (!out)
+        return NULL;
+    while (*p && *p != '"') {
+        if (*p != '\\') {
+            *o++ = *p++;
+            continue;
+        }
+        p++;
+        char e = *p ? *p++ : 0;
+        if (e == 'n')
+            *o++ = '\n';
+        else if (e == 't')
+            *o++ = ' ';
+        else if (e == 'u' && strlen(p) >= 4) {
+            char hex[5] = { p[0], p[1], p[2], p[3], 0 };
+            unsigned c = (unsigned)strtoul(hex, NULL, 16);
+            p += 4;
+            if (c >= 0xD800 && c < 0xDC00 && p[0] == '\\' && p[1] == 'u') {
+                char lo[5] = { p[2], p[3], p[4], p[5], 0 };
+                c = 0x10000 + ((c - 0xD800) << 10) + ((unsigned)strtoul(lo, NULL, 16) - 0xDC00);
+                p += 6;
+            }
+            if (c < 0x80)
+                *o++ = (char)c;
+            else if (c < 0x800) {
+                *o++ = (char)(0xC0 | c >> 6);
+                *o++ = (char)(0x80 | (c & 63));
+            } else if (c < 0x10000) {
+                *o++ = (char)(0xE0 | c >> 12);
+                *o++ = (char)(0x80 | ((c >> 6) & 63));
+                *o++ = (char)(0x80 | (c & 63));
+            } else {
+                *o++ = (char)(0xF0 | c >> 18);
+                *o++ = (char)(0x80 | ((c >> 12) & 63));
+                *o++ = (char)(0x80 | ((c >> 6) & 63));
+                *o++ = (char)(0x80 | (c & 63));
+            }
+        } else if (e && e != 'r')
+            *o++ = e;
+    }
+    *o = 0;
+    return out;
+}
+
+#define NOTES_W 600
+#define NOTES_H 560
+#define NOTES_CLASS L"KFToolsNotes"
+#define C_NBG RGB(0x1E, 0x1F, 0x24)
+#define C_NTEXT RGB(0xE4, 0xE6, 0xEB)
+#define C_NDIM RGB(0x8A, 0x8F, 0x9E)
+#define C_NACCENT RGB(0x9D, 0x86, 0xFF)
+#define C_NBTN RGB(0x36, 0x39, 0x44)
+#define C_NBTN_HOT RGB(0x45, 0x49, 0x59)
+
+typedef struct {
+    const WCHAR *title, *sub, *labels[2];
+    int nbtn, result, hot;
+    RECT btn[2];
+    HWND re;
+    HFONT f_title, f_sub, f_btn;
+} Notes;
+
+static WCHAR *md_render(const char *md, int **heads, int *nheads)
+{
+    int wn = MultiByteToWideChar(CP_UTF8, 0, md, -1, NULL, 0);
+    WCHAR *src = malloc((wn + 1) * sizeof(WCHAR)), *out = malloc((wn * 2 + 16) * sizeof(WCHAR));
+    *heads = malloc((wn / 2 + 2) * 3 * sizeof(int));
+    *nheads = 0;
+    MultiByteToWideChar(CP_UTF8, 0, md, -1, src, wn);
+    int o = 0, blank = 1;
+    for (WCHAR *line = src, *next; line; line = next) {
+        next = wcschr(line, L'\n');
+        if (next)
+            *next++ = 0;
+        WCHAR *s = line;
+        int indent = 0;
+        while (*s == L' ' || *s == L'\t')
+            s++, indent++;
+        size_t len = wcslen(s);
+        while (len && (s[len - 1] == L'\r' || s[len - 1] == L' '))
+            s[--len] = 0;
+        if (!len) {
+            if (!blank)
+                out[o++] = L'\r';
+            blank = 1;
+            continue;
+        }
+        if (wcsstr(s, L"KFWE-Setup.exe") || wcsstr(s, L".zip"))
+            continue;
+        int head = 0;
+        if (*s == L'#') {
+            while (*s == L'#')
+                s++;
+            while (*s == L' ')
+                s++;
+            head = 1;
+        } else if (len > 4 && !wcsncmp(s, L"**", 2) && !wcscmp(s + len - 2, L"**")) {
+            head = 2;
+        } else if ((*s == L'-' || *s == L'*') && s[1] == L' ') {
+            for (int i = 0; i < indent / 2; i++)
+                out[o++] = L' ', out[o++] = L' ', out[o++] = L' ';
+            out[o++] = L'•';
+            out[o++] = L' ';
+            out[o++] = L' ';
+            s += 2;
+        }
+        int start = o;
+        for (; *s; s++)
+            if (!((*s == L'*' || *s == L'_') && s[1] == *s) && *s != L'`')
+                out[o++] = *s;
+            else if (*s != L'`')
+                s++;
+        if (head) {
+            (*heads)[*nheads * 3] = start;
+            (*heads)[*nheads * 3 + 1] = o;
+            (*heads)[*nheads * 3 + 2] = head;
+            (*nheads)++;
+        }
+        out[o++] = L'\r';
+        blank = 0;
+    }
+    while (o && out[o - 1] == L'\r')
+        o--;
+    out[o] = 0;
+    free(src);
+    return out;
+}
+
+static void re_format(HWND re, int a, int b, int size, int bold, COLORREF color)
+{
+    CHARFORMAT2W cf = { 0 };
+    cf.cbSize = sizeof cf;
+    cf.dwMask = CFM_SIZE | CFM_BOLD | CFM_COLOR | CFM_FACE;
+    cf.yHeight = size * 20;
+    cf.dwEffects = bold ? CFE_BOLD : 0;
+    cf.crTextColor = color;
+    wcscpy(cf.szFaceName, L"Segoe UI");
+    SendMessageW(re, EM_SETSEL, a, b);
+    SendMessageW(re, EM_SETCHARFORMAT, a < 0 ? SCF_ALL : SCF_SELECTION, (LPARAM)&cf);
+}
+
+static void notes_btn_layout(Notes *n, RECT c)
+{
+    int bw = 150, bh = 36, y = c.bottom - 20 - bh, x = c.right - 24 - bw;
+    for (int i = 0; i < n->nbtn; i++, x -= bw + 10)
+        SetRect(&n->btn[i], x, y, x + bw, y + bh);
+}
+
+static LRESULT CALLBACK notes_proc(HWND h, UINT m, WPARAM w, LPARAM l)
+{
+    Notes *n = (Notes *)GetWindowLongPtrW(h, GWLP_USERDATA);
+    switch (m) {
+    case WM_NCCREATE:
+        SetWindowLongPtrW(h, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCTW *)l)->lpCreateParams);
+        break;
+    case WM_ERASEBKGND:
+        return 1;
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HDC dc = BeginPaint(h, &ps);
+        RECT c;
+        GetClientRect(h, &c);
+        HBRUSH bg = CreateSolidBrush(C_NBG);
+        FillRect(dc, &c, bg);
+        DeleteObject(bg);
+        SetBkMode(dc, TRANSPARENT);
+        RECT t = { 24, 18, c.right - 24, 52 };
+        SelectObject(dc, n->f_title);
+        SetTextColor(dc, C_NTEXT);
+        DrawTextW(dc, n->title, -1, &t, DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+        RECT s = { 24, 54, c.right - 24, 96 };
+        SelectObject(dc, n->f_sub);
+        SetTextColor(dc, C_NDIM);
+        DrawTextW(dc, n->sub, -1, &s, DT_WORDBREAK | DT_NOPREFIX);
+        SelectObject(dc, n->f_btn);
+        for (int i = 0; i < n->nbtn; i++) {
+            HBRUSH b = CreateSolidBrush(i == 0 ? (n->hot == i ? RGB(0xB3, 0xA1, 0xFF) : C_NACCENT) : (n->hot == i ? C_NBTN_HOT : C_NBTN));
+            HPEN pen = CreatePen(PS_SOLID, 1, i == 0 ? C_NACCENT : C_NBTN);
+            HGDIOBJ ob = SelectObject(dc, b), op = SelectObject(dc, pen);
+            RoundRect(dc, n->btn[i].left, n->btn[i].top, n->btn[i].right, n->btn[i].bottom, 10, 10);
+            SelectObject(dc, ob);
+            SelectObject(dc, op);
+            DeleteObject(b);
+            DeleteObject(pen);
+            SetTextColor(dc, i == 0 ? RGB(0x16, 0x16, 0x1A) : C_NTEXT);
+            DrawTextW(dc, n->labels[i], -1, &n->btn[i], DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        }
+        EndPaint(h, &ps);
+        return 0;
+    }
+    case WM_MOUSEMOVE: {
+        POINT p = { (short)LOWORD(l), (short)HIWORD(l) };
+        int hot = -1;
+        for (int i = 0; i < n->nbtn; i++)
+            if (PtInRect(&n->btn[i], p))
+                hot = i;
+        if (hot != n->hot) {
+            n->hot = hot;
+            InvalidateRect(h, NULL, FALSE);
+            TRACKMOUSEEVENT tme = { sizeof tme, TME_LEAVE, h, 0 };
+            TrackMouseEvent(&tme);
+        }
+        SetCursor(LoadCursor(NULL, hot >= 0 ? IDC_HAND : IDC_ARROW));
+        return 0;
+    }
+    case WM_MOUSELEAVE:
+        n->hot = -1;
+        InvalidateRect(h, NULL, FALSE);
+        return 0;
+    case WM_LBUTTONUP: {
+        POINT p = { (short)LOWORD(l), (short)HIWORD(l) };
+        for (int i = 0; i < n->nbtn; i++)
+            if (PtInRect(&n->btn[i], p)) {
+                n->result = i == 0;
+                DestroyWindow(h);
+                break;
+            }
+        return 0;
+    }
+    case WM_MOUSEWHEEL:
+        SendMessageW(n->re, m, w, l);
+        return 0;
+    case WM_CLOSE:
+        DestroyWindow(h);
+        return 0;
+    }
+    return DefWindowProcW(h, m, w, l);
+}
+
+static int show_notes(HWND owner, const WCHAR *title, const WCHAR *sub, const char *md, int ask)
+{
+    static int registered;
+    if (!LoadLibraryW(L"Msftedit.dll"))
+        return -1;
+    if (!registered) {
+        WNDCLASSW wc = { 0, notes_proc, 0, 0, g_inst, NULL, LoadCursor(NULL, IDC_ARROW), NULL, NULL, NOTES_CLASS };
+        registered = RegisterClassW(&wc) != 0;
+    }
+    Notes n = { title, sub, { ask ? L"Обновить" : L"Понятно", L"Позже" }, ask ? 2 : 1, 0, -1 };
+    n.f_title = CreateFontW(-24, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+    n.f_sub = CreateFontW(-14, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+    n.f_btn = CreateFontW(-15, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+    RECT wr = { 0, 0, NOTES_W, NOTES_H }, or;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    AdjustWindowRect(&wr, style, FALSE);
+    int ww = wr.right - wr.left, wh = wr.bottom - wr.top;
+    if (!owner || !GetWindowRect(owner, &or))
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &or, 0);
+    HWND h = CreateWindowExW(0, NOTES_CLASS, title, style, (or.left + or.right - ww) / 2, (or.top + or.bottom - wh) / 2, ww, wh, owner, NULL, g_inst, &n);
+    if (!h)
+        return -1;
+    BOOL dark = TRUE;
+    DwmSetWindowAttribute(h, 20, &dark, sizeof dark);
+    RECT c;
+    GetClientRect(h, &c);
+    notes_btn_layout(&n, c);
+    n.re = CreateWindowExW(0, MSFTEDIT_CLASS, L"", WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL, 24, 108,
+                           c.right - 40, n.btn[0].top - 20 - 108, h, NULL, g_inst, NULL);
+    int *heads, nheads;
+    WCHAR *text = md_render(md && *md ? md : "Список изменений не указан.", &heads, &nheads);
+    SetWindowTheme(n.re, L"DarkMode_Explorer", NULL);
+    SendMessageW(n.re, EM_SETBKGNDCOLOR, 0, C_NBG);
+    SendMessageW(n.re, EM_SETTARGETDEVICE, 0, 0);
+    SetWindowTextW(n.re, text);
+    re_format(n.re, -1, -1, 11, 0, C_NTEXT);
+    PARAFORMAT2 pf = { 0 };
+    pf.cbSize = sizeof pf;
+    pf.dwMask = PFM_SPACEAFTER;
+    pf.dySpaceAfter = 80;
+    SendMessageW(n.re, EM_SETSEL, 0, -1);
+    SendMessageW(n.re, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+    for (int i = 0; i < nheads; i++)
+        re_format(n.re, heads[i * 3], heads[i * 3 + 1], heads[i * 3 + 2] == 1 ? 14 : 11, 1, heads[i * 3 + 2] == 1 ? C_NACCENT : C_NTEXT);
+    SendMessageW(n.re, EM_SETSEL, 0, 0);
+    SendMessageW(n.re, EM_HIDESELECTION, TRUE, 0);
+    free(text);
+    free(heads);
+    ShowWindow(h, SW_SHOW);
+    SetForegroundWindow(h);
+    SetFocus(h);
+    MSG msg;
+    while (IsWindow(h) && GetMessageW(&msg, NULL, 0, 0) > 0) {
+        if (msg.message == WM_KEYDOWN && (msg.wParam == VK_ESCAPE || msg.wParam == VK_RETURN)) {
+            n.result = msg.wParam == VK_RETURN;
+            DestroyWindow(h);
+            continue;
+        }
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+    DeleteObject(n.f_title);
+    DeleteObject(n.f_sub);
+    DeleteObject(n.f_btn);
+    return n.result;
+}
+
+static char *read_text(const WCHAR *path)
+{
+    FILE *fp = _wfopen(path, L"rb");
+    if (!fp)
+        return NULL;
+    fseek(fp, 0, SEEK_END);
+    long n = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *b = n >= 0 && n < BODY_MAX ? malloc(n + 1) : NULL;
+    if (b) {
+        b[fread(b, 1, n, fp)] = 0;
+        if (!strncmp(b, "\xEF\xBB\xBF", 3))
+            memmove(b, b + 3, strlen(b + 3) + 1);
+    }
+    fclose(fp);
+    return b;
+}
+
+static void whats_new(HWND owner, const WCHAR *dir, const char *cur, int force)
+{
+    WCHAR seen_path[MAX_PATH], log_path[MAX_PATH], title[64];
+    char seen[32] = "";
+    swprintf(seen_path, MAX_PATH, L"%ls\\bin\\changelog.seen", dir);
+    FILE *fp = _wfopen(seen_path, L"rb");
+    if (fp) {
+        seen[fread(seen, 1, sizeof seen - 1, fp)] = 0;
+        fclose(fp);
+    }
+    if (!force && !strcmp(seen, cur))
+        return;
+    swprintf(log_path, MAX_PATH, L"%ls\\share\\changelog.md", dir);
+    char *md = read_text(log_path);
+    if (md) {
+        swprintf(title, 64, L"Что нового в KFWE %hs", cur);
+        show_notes(owner, title, L"Открыть снова: меню KFWE → «Что нового»", md, 0);
+        free(md);
+    }
+    if ((fp = _wfopen(seen_path, L"wb"))) {
+        fputs(cur, fp);
+        fclose(fp);
+    }
+}
+
 static void mark_menu(HWND m, const char *latest)
 {
     HMENU bar = GetMenu(m);
@@ -557,20 +912,22 @@ static void mark_menu(HWND m, const char *latest)
 static void check_update(int manual)
 {
     WCHAR dir[MAX_PATH], cfg[MAX_PATH], url[1024], setup[MAX_PATH], cmd[MAX_PATH * 2 + 64], text[512];
-    char cur[32], tag[64] = "", asset[1024], *body = NULL;
+    char cur[32], tag[64] = "", asset[1024], *body = NULL, *notes = NULL;
     HWND m = NULL;
     kfwe_dir(dir);
     if (!read_version(dir, cur, sizeof cur))
-        return;
-    swprintf(cfg, MAX_PATH, L"%ls\\bin\\EverConfig.cfg", dir);
-    if (!manual && GetPrivateProfileIntW(L"FeatureToggle", L"DisableAutoUpdate", 0, cfg))
         return;
     for (int i = 0; i < 240 && !(m = main_window()); i++)
         Sleep(500);
     if (!m)
         return;
-    if (!manual)
+    if (!manual) {
         Sleep(2000);
+        whats_new(m, dir, cur, 0);
+    }
+    swprintf(cfg, MAX_PATH, L"%ls\\bin\\EverConfig.cfg", dir);
+    if (!manual && GetPrivateProfileIntW(L"FeatureToggle", L"DisableAutoUpdate", 0, cfg))
+        return;
     if (!http_get(L"https://" RELEASE_HOST RELEASE_PATH, &body, NULL, NULL)) {
         if (manual)
             MessageBoxW(m, L"Не удалось связаться с GitHub. Проверьте интернет и попробуйте ещё раз.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
@@ -587,6 +944,7 @@ static void check_update(int manual)
             }
         }
     }
+    notes = json_text(body, "body");
     free(body);
     const char *latest = tag[0] == 'v' ? tag + 1 : tag;
     if (!asset[0] || ver_cmp(latest, cur) <= 0 || !(m = main_window())) {
@@ -594,12 +952,17 @@ static void check_update(int manual)
             swprintf(text, 512, L"У вас последняя версия KFWE %hs.", cur);
             MessageBoxW(m, text, L"Обновление KFWE", MB_OK | MB_ICONINFORMATION);
         }
+        free(notes);
         return;
     }
     mark_menu(m, latest);
-    swprintf(text, 512, L"Вышла новая версия KFWE %hs, у вас %hs.\n\nОбновить сейчас? Редактор скачает обновление и закроется "
-                        L"(несохранённую карту он предложит сохранить), а после установки запустится снова. Настройки сохранятся.", latest, cur);
-    if (MessageBoxW(m, text, L"Обновление KFWE", MB_YESNO | MB_ICONINFORMATION | MB_SETFOREGROUND) != IDYES)
+    WCHAR title[64];
+    swprintf(title, 64, L"Вышла KFWE %hs", latest);
+    swprintf(text, 512, L"У вас %hs. Редактор скачает обновление и закроется (несохранённую карту предложит сохранить), "
+                        L"после установки запустится снова. Настройки сохранятся.", cur);
+    int yes = show_notes(m, title, text, notes, 1);
+    free(notes);
+    if (yes != 1)
         return;
     toast(L"Скачиваю обновление", L"Редактор закроется сам", 0xFF7C5CFF);
     MultiByteToWideChar(CP_UTF8, 0, asset, -1, url, 1024);
@@ -644,6 +1007,26 @@ static DWORD WINAPI update_thread(void *arg)
 __declspec(dllexport) int KFToolsCheckUpdate(void)
 {
     HANDLE th = CreateThread(NULL, 0, update_thread, (void *)1, 0, NULL);
+    if (!th)
+        return 0;
+    CloseHandle(th);
+    return 1;
+}
+
+static DWORD WINAPI changelog_thread(void *arg)
+{
+    (void)arg;
+    WCHAR dir[MAX_PATH];
+    char cur[32];
+    kfwe_dir(dir);
+    if (read_version(dir, cur, sizeof cur))
+        whats_new(main_window(), dir, cur, 1);
+    return 0;
+}
+
+__declspec(dllexport) int KFToolsShowChangelog(void)
+{
+    HANDLE th = CreateThread(NULL, 0, changelog_thread, NULL, 0, NULL);
     if (!th)
         return 0;
     CloseHandle(th);

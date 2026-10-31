@@ -41,6 +41,7 @@ loader.load = function(path)
 		int KFToolsInit(void);
 		int KFToolsCopy(int with_z);
 		int KFToolsCheckUpdate(void);
+		int KFToolsShowChangelog(void);
 	]])
 	loader.dll = dll
 	local r = dll.KFToolsInit()
@@ -57,6 +58,10 @@ end
 
 loader.check_update = function()
 	loader.dll.KFToolsCheckUpdate()
+end
+
+loader.changelog = function()
+	loader.dll.KFToolsShowChangelog()
 end
 
 loader.unload = function()

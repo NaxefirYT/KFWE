@@ -915,6 +915,8 @@ static int __fastcall h_find(void *self, void *edx, uint32_t id, int exact)
         }
         h = (h + 1) & t->mask;
     }
+    for (int i = count > 8 ? count - 8 : 0; i < count; i++)
+        if (*(const uint32_t *)(data + i * 0x18 + 4) == id) { t->self = NULL; g_find_hits++; return i; }
     g_find_miss++;
     return -1;
 }

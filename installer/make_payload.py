@@ -3,7 +3,7 @@ import sys
 import zipfile
 
 SKIP_DIRS = {'YDWE', 'backups', 'logs', 'unknownui'}
-SKIP_FILES = {'bin/playas.cfg', 'bin/YDWEConfig.orig.exe'}
+SKIP_FILES = {'bin/playas.cfg', 'bin/YDWEConfig.orig.exe', 'bin/changelog.seen'}
 SKIP_EXT = ('.pdb', '.lib', '.orig')
 
 
