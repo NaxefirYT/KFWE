@@ -99,7 +99,7 @@ local function kfmo_can_pack(map_path, target_path)
 end
 
 return function (mode, map_path, target_path)
-    if kfmo_enabled() then
+    if kfmo_enabled() and map_path:filename():string() ~= '.w3x' then
         if mode == 'slk' and kfmo('optimize', map_path:string(), target_path:string(), '--test', '--game', fs.war3_path():string()) then
             return true
         end

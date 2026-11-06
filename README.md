@@ -67,7 +67,7 @@ dotnet publish kfmo/gui -c Release -r win-x64 --self-contained true -p:PublishSi
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s StormFastHeap/src/stormfastheap.c -luser32 -o StormFastHeap.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ModelSearch/src/modelsearch.c -luser32 -lgdi32 -o ModelSearch.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ImportPlus/src/importplus.c -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32 -lole32 -lmsimg32 -lwindowscodecs -luuid -lgdiplus -o ImportPlus.dll
-python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -o kf_playas.dll
+python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -luser32 -o kf_playas.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s Splash/src/splash.c -luser32 -lgdi32 -lgdiplus -ladvapi32 -o Splash.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s KFTools/src/kftools.c -luser32 -lgdi32 -lgdiplus -lwinhttp -luxtheme -ldwmapi -o KFTools.dll
 ```

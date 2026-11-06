@@ -69,6 +69,85 @@ static int install(void)
     return 1;
 }
 
+#define L_KEY_GAP_MS 1500
+typedef float (__attribute__((fastcall)) *menu_fn)(int, int, int, int, int, int);
+static menu_fn g_menu;
+static WNDPROC g_wndproc;
+static DWORD g_last_l;
+static int g_drop_l;
+static int g_auto;
+
+static void panel_speed(uint8_t *panel)
+{
+    if (!panel || !*(int *)(panel + 0x174)) return;
+    uint8_t *frame = **(uint8_t ***)(panel + 0x178);
+    if (frame) *(float *)(frame + 0x190) = 100.0f;
+}
+
+static float __attribute__((fastcall)) fast_menu(int c, int d, int a1, int a2, int a3, int a4)
+{
+    float t = g_menu(c, d, a1, a2, a3, a4);
+    uint8_t *glue = ((uint8_t *(*)(void))G(0x6F593390))();
+    if (!glue) return t;
+    panel_speed(*(uint8_t **)(glue + 0x194));
+    panel_speed(*(uint8_t **)(glue + 0x198));
+    return 0.01f;
+}
+
+static int install_fast_menu(void)
+{
+    static const uint8_t orig[5] = { 0x83, 0xEC, 0x10, 0x53, 0x55 };
+    uint8_t *fn = G(0x6F593990);
+    if (memcmp(fn, orig, 5)) return 0;
+    uint8_t *t = (uint8_t *)VirtualAlloc(NULL, 16, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!t) return 0;
+    memcpy(t, orig, 5);
+    t[5] = 0xE9; *(int32_t *)(t + 6) = (int32_t)((fn + 5) - (t + 10));
+    FlushInstructionCache(GetCurrentProcess(), t, 16);
+    g_menu = (menu_fn)t;
+    DWORD old;
+    if (!VirtualProtect(fn, 5, PAGE_EXECUTE_READWRITE, &old)) return 0;
+    fn[0] = 0xE9; *(int32_t *)(fn + 1) = (int32_t)((uint8_t *)fast_menu - (fn + 5));
+    VirtualProtect(fn, 5, old, &old);
+    FlushInstructionCache(GetCurrentProcess(), fn, 5);
+    return 1;
+}
+
+static LRESULT CALLBACK game_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
+{
+    if ((m == WM_KEYDOWN || m == WM_KEYUP) && w == 'L' && InSendMessage()) {
+        if (m == WM_KEYDOWN) {
+            DWORD now = GetTickCount();
+            g_drop_l = g_last_l && now - g_last_l < L_KEY_GAP_MS;
+            if (!g_drop_l) g_last_l = now;
+        }
+        if (g_drop_l) return 0;
+    }
+    return CallWindowProcA(g_wndproc, h, m, w, l);
+}
+
+static BOOL CALLBACK find_game_window(HWND h, LPARAM out)
+{
+    DWORD pid;
+    char cls[32];
+    GetWindowThreadProcessId(h, &pid);
+    if (pid != GetCurrentProcessId() || !GetClassNameA(h, cls, sizeof cls) || strcmp(cls, "Warcraft III")) return TRUE;
+    *(HWND *)out = h;
+    return FALSE;
+}
+
+static int install_l_filter(void)
+{
+    HWND h = NULL;
+    for (int i = 0; i < 6000 && !h; i++) {
+        EnumWindows(find_game_window, (LPARAM)&h);
+        if (!h) Sleep(10);
+    }
+    if (!h) return 0;
+    g_wndproc = (WNDPROC)SetWindowLongPtrA(h, GWLP_WNDPROC, (LONG_PTR)game_wndproc);
+    return g_wndproc != NULL;
+}
+
 static DWORD WINAPI waiter(LPVOID p)
 {
     (void)p;
@@ -76,6 +155,11 @@ static DWORD WINAPI waiter(LPVOID p)
     for (int i = 0; i < 60000 && !(g = GetModuleHandleA("game.dll")); i++) Sleep(1);
     if (!g) { logf("game.dll не загрузилась"); return 0; }
     g_game = (uint8_t *)g;
+    if (g_auto) {
+        int menu = install_fast_menu();
+        logf("автовход: меню %d, клавиша %d", menu, install_l_filter());
+        return 0;
+    }
     logf("game.dll по %p, игрок %d, перехват %d", (void *)g, g_playas, install());
     return 0;
 }
@@ -90,7 +174,8 @@ __declspec(dllexport) int Initialize(void)
     strcat(cfg, "\\bin\\playas_now.txt");
     FILE *f = fopen(cfg, "r");
     if (f) { if (fscanf(f, "%d", &g_playas) != 1) g_playas = -1; fclose(f); DeleteFileA(cfg); }
-    if (g_playas < 1 || g_playas > 11) return 1;
+    g_auto = strstr(GetCommandLineA(), "-auto") != NULL;
+    if (!g_auto && (g_playas < 1 || g_playas > 11)) return 1;
     CloseHandle(CreateThread(NULL, 0, waiter, NULL, 0, NULL));
     return 1;
 }

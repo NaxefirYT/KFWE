@@ -5,6 +5,7 @@ local map_packer = require 'w3x2lni.map_packer'
 
 local mapdump = require 'mapdump'
 local subprocess = require 'bee.subprocess'
+local sleep = require 'ffi.sleep'
 
 local mt = {}
 mt.__index = mt
@@ -96,13 +97,13 @@ local function host_save_config(curdir, mappath, autostart)
 	)
 	of:close()
 	if not ok then
-		log.error('')
+		log.error(e)
 	end
 	local tbl = {
 		lan_war3version = ver.minor,
 		bot_defaultgamename = mappath:filename():string(),
 		bot_autostart = autostart,
-		bot_mappath = fs.relative(mappath, fs.war3_path()):string(),
+		bot_mappath = fs.relative(mappath, fs.war3_path()):string():gsub('/', '\\'),
 		bot_mapcfgpath = 'map.cfg',
 	}
 	local str = ''
@@ -175,19 +176,19 @@ function event.EVENT_TEST_MAP(event_data)
 		if is_lni(current_map_path) then
 			if mapSlk then
 				if not map_packer('slk', current_map_path, mappath) then
-					log.inifo('Slk map failed!')
+					log.info('Slk map failed!')
 					return -1
 				end
 			else
 				if not map_packer('obj', current_map_path, mappath) then
-					log.inifo('Pack map failed!')
+					log.info('Pack map failed!')
 					return -1
 				end
 			end
 		else
 			if mapSlk then
 				if not map_packer('slk', current_map_path, mappath) then
-					log.inifo('Slk map failed!')
+					log.info('Slk map failed!')
 					return -1
 				end
 			end
@@ -238,6 +239,9 @@ function event.EVENT_TEST_MAP(event_data)
 			break
 		end
 		log.trace(string.format("Executed %s.", table.concat(args, ' ')))
+		if i < n then
+			sleep(2000)
+		end
 	end
 
 	log.debug("********************* on test end *********************")
