@@ -20,6 +20,7 @@
 #define C_COMMENT RGB(0x6A, 0x99, 0x55)
 #define C_STRING RGB(0xCE, 0x91, 0x78)
 #define C_NUMBER RGB(0xE0, 0xB0, 0x6C)
+#define C_DANGER RGB(0xF2, 0x5F, 0x5C)
 
 #define WE_GET_DOC 0x00524780
 #define DOC_TRIGGERS 0x38F0
@@ -42,18 +43,26 @@
 #define SCI_SCROLLCARET 2169
 #define SCI_GETSELECTIONSTART 2143
 #define SCI_GETSELECTIONEND 2145
+#define SCI_SETTARGETSTART 2190
+#define SCI_SETTARGETEND 2192
+#define SCI_REPLACETARGET 2194
 
 #define ID_EDIT 101
 #define ID_LIST 102
 #define ID_PREVIEW 103
 #define ID_CASE 104
 #define ID_WORD 105
+#define ID_REGEX 106
+#define ID_REPLACE 107
+#define ID_REPLACE_ALL 108
 #define ID_TIMER 1
 #define ID_JUMP_TIMER 2
 #define ID_SELECT_TIMER 3
+#define ID_REPLACE_TIMER 4
+#define ID_REPLACE_DONE 5
 #define MAX_HITS 20000
 #define ROW_H 24
-#define BAR_H 52
+#define BAR_H 92
 #define FOOT_H 26
 #define PV_HEAD 32
 #define PV_LINE 19
@@ -86,7 +95,7 @@ static HHOOK g_kb;
 static DWORD g_tid;
 static void *g_app;
 static void *(__attribute__((fastcall)) *g_get_doc)(void *);
-static HWND g_win, g_edit, g_list, g_preview, g_case, g_word;
+static HWND g_win, g_edit, g_list, g_preview, g_case, g_word, g_regex, g_repl, g_repl_btn;
 static WNDPROC g_edit_proc;
 static HFONT g_ui, g_mono;
 static HBRUSH g_bg, g_panel, g_input;
@@ -94,7 +103,9 @@ static Doc *g_docs;
 static int g_ndocs;
 static Hit *g_hits;
 static int g_nhits;
-static int g_case_on, g_word_on;
+static int g_case_on, g_word_on, g_rx_on, g_rx_ok = 1;
+static int g_busy;
+static int g_last_doc = -1, g_last_pos = -1;
 static int g_jump_doc = -1, g_jump_pos, g_jump_len, g_jump_tries;
 static WCHAR g_query[256];
 
@@ -234,6 +245,30 @@ static HWND main_window(void)
     return h;
 }
 
+#define MAX_COLLAPSED 512
+static WCHAR *g_collapsed[MAX_COLLAPSED];
+static int g_ncollapsed;
+
+static int collapsed_index(const WCHAR *name)
+{
+    for (int i = 0; i < g_ncollapsed; i++)
+        if (!wcscmp(g_collapsed[i], name))
+            return i;
+    return -1;
+}
+
+static void set_collapsed(Doc *d, int on)
+{
+    d->collapsed = on;
+    int i = collapsed_index(d->name);
+    if (on && i < 0 && g_ncollapsed < MAX_COLLAPSED) {
+        g_collapsed[g_ncollapsed++] = _wcsdup(d->name);
+    } else if (!on && i >= 0) {
+        free(g_collapsed[i]);
+        g_collapsed[i] = g_collapsed[--g_ncollapsed];
+    }
+}
+
 static void free_docs(void)
 {
     for (int i = 0; i < g_ndocs; i++) {
@@ -258,6 +293,7 @@ static void add_doc(int cat, int trig, WCHAR *name, WCHAR *text)
     d->cat = cat;
     d->trig = trig;
     d->item = NULL;
+    d->collapsed = name && collapsed_index(name) >= 0;
 }
 
 static void map_tree(void)
@@ -361,7 +397,7 @@ static int g_pv_doc = -1, g_pv_line, g_pv_first;
 static WNDPROC g_list_proc;
 static HFONT g_bold;
 static int g_cw = 7;
-static RECT g_box, g_info_rect;
+static RECT g_box, g_box2, g_info_rect;
 static WCHAR g_info_text[96];
 
 static const WCHAR *const k_words[] = {
@@ -386,13 +422,397 @@ static int match_at(const WCHAR *hay, int len, int pos, int qn)
     return pos + qn >= len || !is_word(hay[pos + qn]);
 }
 
-static int next_match(const WCHAR *s, int n, int from)
+enum { RX_CHAR, RX_ANY, RX_SET, RX_BOL, RX_EOL, RX_WORDB, RX_NWORDB, RX_GROUP };
+#define RX_NODES 512
+#define RX_SETS 32
+#define RX_ALTS 16
+#define RX_RANGES 24
+#define RX_STEPS 40000
+#define RX_INF 0x7FFFFFFF
+
+typedef struct RN {
+    int type;
+    WCHAR c;
+    int set;
+    int min, max, lazy;
+    int cap;
+    int nalts;
+    struct RN *alts[RX_ALTS];
+    struct RN *next;
+} RN;
+
+typedef struct {
+    int neg;
+    int n;
+    WCHAR lo[RX_RANGES], hi[RX_RANGES];
+    int digit, ndigit, word, nword, space, nspace;
+} RSet;
+
+typedef struct Cont {
+    const RN *rep;
+    int count;
+    int start;
+    const struct Cont *up;
+} Cont;
+
+static RN g_rn[RX_NODES];
+static RSet g_rs[RX_SETS];
+static int g_nrn, g_nrs, g_ncap;
+static RN *g_rx;
+static const WCHAR *g_rp;
+static int g_rx_err;
+static const WCHAR *g_rs_text;
+static int g_rs_len, g_rx_end, g_rx_steps;
+static int g_cap[10][2];
+
+static WCHAR rx_fold(WCHAR c)
+{
+    return g_case_on ? c : (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)(ULONG_PTR)c);
+}
+
+static RN *rx_node(int type)
+{
+    if (g_nrn >= RX_NODES) {
+        g_rx_err = 1;
+        return &g_rn[0];
+    }
+    RN *n = &g_rn[g_nrn++];
+    memset(n, 0, sizeof *n);
+    n->type = type;
+    n->min = n->max = 1;
+    n->cap = -1;
+    return n;
+}
+
+static void rx_class(RSet *s, WCHAR c)
+{
+    switch (c) {
+    case 'd': s->digit = 1; break;
+    case 'D': s->ndigit = 1; break;
+    case 'w': s->word = 1; break;
+    case 'W': s->nword = 1; break;
+    case 's': s->space = 1; break;
+    case 'S': s->nspace = 1; break;
+    }
+}
+
+static WCHAR rx_escape(WCHAR c)
+{
+    return c == 'n' ? '\n' : c == 't' ? '\t' : c == 'r' ? '\r' : c;
+}
+
+static int rx_new_set(void)
+{
+    if (g_nrs >= RX_SETS) {
+        g_rx_err = 1;
+        return 0;
+    }
+    memset(&g_rs[g_nrs], 0, sizeof(RSet));
+    return g_nrs++;
+}
+
+static RN *rx_parse_set(void)
+{
+    RN *n = rx_node(RX_SET);
+    n->set = rx_new_set();
+    RSet *s = &g_rs[n->set];
+    if (*g_rp == '^') {
+        s->neg = 1;
+        g_rp++;
+    }
+    int first = 1;
+    while (*g_rp && (*g_rp != ']' || first)) {
+        first = 0;
+        WCHAR lo = *g_rp++;
+        if (lo == '\\' && *g_rp) {
+            WCHAR e = *g_rp++;
+            if (wcschr(L"dDwWsS", e)) {
+                rx_class(s, e);
+                continue;
+            }
+            lo = rx_escape(e);
+        }
+        WCHAR hi = lo;
+        if (g_rp[0] == '-' && g_rp[1] && g_rp[1] != ']') {
+            g_rp++;
+            hi = *g_rp++;
+            if (hi == '\\' && *g_rp)
+                hi = rx_escape(*g_rp++);
+        }
+        if (s->n >= RX_RANGES) {
+            g_rx_err = 1;
+            return n;
+        }
+        s->lo[s->n] = rx_fold(lo);
+        s->hi[s->n++] = rx_fold(hi);
+    }
+    if (*g_rp != ']')
+        g_rx_err = 1;
+    else
+        g_rp++;
+    return n;
+}
+
+static RN *rx_parse_alt(int cap);
+
+static RN *rx_parse_atom(void)
+{
+    WCHAR c = *g_rp++;
+    RN *n;
+    switch (c) {
+    case '(': {
+        int cap = -1;
+        if (g_rp[0] == '?' && g_rp[1] == ':')
+            g_rp += 2;
+        else if (g_ncap < 9)
+            cap = ++g_ncap;
+        n = rx_parse_alt(cap);
+        if (*g_rp != ')')
+            g_rx_err = 1;
+        else
+            g_rp++;
+        return n;
+    }
+    case '[': return rx_parse_set();
+    case '.': return rx_node(RX_ANY);
+    case '^': return rx_node(RX_BOL);
+    case '$': return rx_node(RX_EOL);
+    case '*': case '+': case '?': case ')':
+        g_rx_err = 1;
+        return rx_node(RX_ANY);
+    case '\\':
+        c = *g_rp;
+        if (!c) {
+            g_rx_err = 1;
+            return rx_node(RX_ANY);
+        }
+        g_rp++;
+        if (c == 'b') return rx_node(RX_WORDB);
+        if (c == 'B') return rx_node(RX_NWORDB);
+        if (wcschr(L"dDwWsS", c)) {
+            n = rx_node(RX_SET);
+            n->set = rx_new_set();
+            rx_class(&g_rs[n->set], c);
+            return n;
+        }
+        c = rx_escape(c);
+        break;
+    }
+    n = rx_node(RX_CHAR);
+    n->c = rx_fold(c);
+    return n;
+}
+
+static void rx_parse_quant(RN *n)
+{
+    WCHAR c = *g_rp;
+    if (c == '*') { n->min = 0; n->max = RX_INF; g_rp++; }
+    else if (c == '+') { n->min = 1; n->max = RX_INF; g_rp++; }
+    else if (c == '?') { n->min = 0; n->max = 1; g_rp++; }
+    else if (c == '{' && g_rp[1] >= '0' && g_rp[1] <= '9') {
+        g_rp++;
+        int a = 0, b;
+        while (*g_rp >= '0' && *g_rp <= '9')
+            a = a * 10 + *g_rp++ - '0';
+        b = a;
+        if (*g_rp == ',') {
+            g_rp++;
+            b = RX_INF;
+            if (*g_rp >= '0' && *g_rp <= '9') {
+                b = 0;
+                while (*g_rp >= '0' && *g_rp <= '9')
+                    b = b * 10 + *g_rp++ - '0';
+            }
+        }
+        if (*g_rp != '}' || b < a)
+            g_rx_err = 1;
+        else
+            g_rp++;
+        n->min = a;
+        n->max = b;
+    } else {
+        return;
+    }
+    if (*g_rp == '?') {
+        n->lazy = 1;
+        g_rp++;
+    }
+}
+
+static RN *rx_parse_seq(void)
+{
+    RN *head = NULL, *tail = NULL;
+    while (*g_rp && *g_rp != '|' && *g_rp != ')' && !g_rx_err) {
+        RN *n = rx_parse_atom();
+        rx_parse_quant(n);
+        if (tail)
+            tail->next = n;
+        else
+            head = n;
+        tail = n;
+    }
+    return head;
+}
+
+static RN *rx_parse_alt(int cap)
+{
+    RN *g = rx_node(RX_GROUP);
+    g->cap = cap;
+    for (;;) {
+        if (g->nalts >= RX_ALTS) {
+            g_rx_err = 1;
+            return g;
+        }
+        g->alts[g->nalts++] = rx_parse_seq();
+        if (*g_rp != '|')
+            return g;
+        g_rp++;
+    }
+}
+
+static int rx_compile(const WCHAR *q)
+{
+    g_nrn = g_nrs = g_ncap = g_rx_err = 0;
+    g_rp = q;
+    g_rx = rx_parse_alt(0);
+    if (*g_rp)
+        g_rx_err = 1;
+    return !g_rx_err;
+}
+
+static int rx_is_word_at(int i)
+{
+    return i >= 0 && i < g_rs_len && (g_rs_text[i] == '_' || IsCharAlphaNumericW(g_rs_text[i]));
+}
+
+static int rx_set_has(const RSet *s, WCHAR c)
+{
+    int digit = c >= '0' && c <= '9';
+    int word = c == '_' || IsCharAlphaNumericW(c);
+    int space = c == ' ' || c == '\t' || c == '\r' || c == '\n';
+    int in = (s->digit && digit) || (s->ndigit && !digit) || (s->word && word) || (s->nword && !word) || (s->space && space) || (s->nspace && !space);
+    for (int i = 0; !in && i < s->n; i++)
+        in = c >= s->lo[i] && c <= s->hi[i];
+    return in != s->neg;
+}
+
+static int rx_one(const RN *n, int i)
+{
+    if (i >= g_rs_len)
+        return 0;
+    WCHAR c = g_rs_text[i];
+    return n->type == RX_ANY || (n->type == RX_CHAR && c == n->c) || (n->type == RX_SET && rx_set_has(&g_rs[n->set], c));
+}
+
+static int rx_m(const RN *n, int i, const Cont *k);
+
+static int rx_rep(const RN *n, int count, int i, const Cont *k)
+{
+    if (count < n->min || !n->lazy) {
+        if (count < n->max) {
+            Cont c = { n, count, i, k };
+            for (int a = 0; a < n->nalts; a++)
+                if (rx_m(n->alts[a], i, &c))
+                    return 1;
+        }
+        return count >= n->min && rx_m(n->next, i, k);
+    }
+    if (rx_m(n->next, i, k))
+        return 1;
+    if (count < n->max) {
+        Cont c = { n, count, i, k };
+        for (int a = 0; a < n->nalts; a++)
+            if (rx_m(n->alts[a], i, &c))
+                return 1;
+    }
+    return 0;
+}
+
+static int rx_m(const RN *n, int i, const Cont *k)
+{
+    if (++g_rx_steps > RX_STEPS)
+        return 0;
+    if (!n) {
+        if (!k) {
+            g_rx_end = i;
+            return 1;
+        }
+        const RN *rep = k->rep;
+        int cap = rep->cap, s0 = 0, s1 = 0;
+        if (cap >= 0) {
+            s0 = g_cap[cap][0];
+            s1 = g_cap[cap][1];
+            g_cap[cap][0] = k->start;
+            g_cap[cap][1] = i;
+        }
+        int ok = i == k->start ? (k->count + 1 >= rep->min || rep->min == RX_INF) && rx_m(rep->next, i, k->up) : rx_rep(rep, k->count + 1, i, k->up);
+        if (!ok && cap >= 0) {
+            g_cap[cap][0] = s0;
+            g_cap[cap][1] = s1;
+        }
+        return ok;
+    }
+    switch (n->type) {
+    case RX_BOL: return i == 0 && rx_m(n->next, i, k);
+    case RX_EOL: return i == g_rs_len && rx_m(n->next, i, k);
+    case RX_WORDB: return rx_is_word_at(i - 1) != rx_is_word_at(i) && rx_m(n->next, i, k);
+    case RX_NWORDB: return rx_is_word_at(i - 1) == rx_is_word_at(i) && rx_m(n->next, i, k);
+    case RX_GROUP: return rx_rep(n, 0, i, k);
+    }
+    int c = 0;
+    if (n->lazy) {
+        while (c < n->min) {
+            if (!rx_one(n, i + c))
+                return 0;
+            c++;
+        }
+        for (;;) {
+            if (rx_m(n->next, i + c, k))
+                return 1;
+            if (c >= n->max || !rx_one(n, i + c))
+                return 0;
+            c++;
+        }
+    }
+    while (c < n->max && rx_one(n, i + c))
+        c++;
+    for (; c >= n->min; c--)
+        if (rx_m(n->next, i + c, k))
+            return 1;
+    return 0;
+}
+
+static int rx_at(const WCHAR *s, int n, int i, int *end)
+{
+    g_rs_text = s;
+    g_rs_len = n;
+    g_rx_steps = 0;
+    memset(g_cap, -1, sizeof g_cap);
+    if (!rx_m(g_rx, i, NULL))
+        return 0;
+    *end = g_rx_end;
+    return 1;
+}
+
+static int find_match(const WCHAR *s, int n, int from, int *len)
 {
     if (!g_qn)
         return -1;
+    if (g_rx_on) {
+        if (!g_rx_ok)
+            return -1;
+        for (int i = from, e; i <= n; i++)
+            if (rx_at(s, n, i, &e) && e > i && match_at(s, n, i, e - i)) {
+                *len = e - i;
+                return i;
+            }
+        return -1;
+    }
     for (int i = from; i + g_qn <= n; i++)
-        if (!wcsncmp(s + i, g_qcmp, g_qn) && match_at(s, n, i, g_qn))
+        if (!wcsncmp(s + i, g_qcmp, g_qn) && match_at(s, n, i, g_qn)) {
+            *len = g_qn;
             return i;
+        }
     return -1;
 }
 
@@ -413,13 +833,33 @@ static void search_doc(int di)
         memcpy(low, d->name, (nlen + 1) * sizeof(WCHAR));
         if (!g_case_on)
             CharLowerBuffW(low, nlen);
-        int i = next_match(low, nlen, 0);
+        int ml, i = find_match(low, nlen, 0, &ml);
         if (i >= 0)
-            add_hit(di, i, g_qn, 0, 0, nlen, 1);
+            add_hit(di, i, ml, 0, 0, nlen, 1);
     }
     const WCHAR *hay = g_case_on ? d->text : d->lower;
     if (!hay)
         return;
+    if (g_rx_on) {
+        int line = 1;
+        for (int ls = 0; ls < d->len;) {
+            int le = ls;
+            while (le < d->len && d->text[le] != '\r' && d->text[le] != '\n')
+                le++;
+            int ml;
+            for (int p = find_match(hay + ls, le - ls, 0, &ml); p >= 0; p = find_match(hay + ls, le - ls, p + ml, &ml)) {
+                add_hit(di, ls + p, ml, line, ls, le - ls, 0);
+                d->count++;
+            }
+            ls = le;
+            if (ls < d->len && d->text[ls] == '\r')
+                ls++;
+            if (ls < d->len && d->text[ls] == '\n')
+                ls++;
+            line++;
+        }
+        return;
+    }
     int line = 1, ls = 0, scan = 0;
     const WCHAR *p = hay;
     while ((p = wcsstr(p, g_qcmp))) {
@@ -521,6 +961,7 @@ static void run_search(void)
     if (!g_case_on)
         CharLowerBuffW(g_qcmp, lstrlenW(g_qcmp));
     g_qn = lstrlenW(g_qcmp);
+    g_rx_ok = !g_rx_on || !g_qn || rx_compile(g_query);
     g_nhits = 0;
     if (g_qn)
         for (int i = 0; i < g_ndocs && g_nhits < MAX_HITS; i++)
@@ -543,7 +984,9 @@ static void run_search(void)
     SendMessageW(g_list, LB_SETCURSEL, first, 0);
     SendMessageW(g_list, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(g_list, NULL, TRUE);
-    if (!g_ndocs)
+    if (!g_rx_ok)
+        lstrcpyW(info, L"Ошибка в выражении");
+    else if (!g_ndocs)
         lstrcpyW(info, L"Нет данных карты");
     else if (!g_qn)
         wsprintfW(info, L"Триггеров: %d", g_ndocs - 1);
@@ -584,12 +1027,15 @@ static void select_hit(void)
     HWND sci = te ? find_child(te, L"Scintilla", 0) : NULL;
     if (sci && g_jump_doc >= 0 && g_jump_pos >= 0) {
         Doc *d = &g_docs[g_jump_doc];
+        g_last_doc = g_jump_doc;
+        g_last_pos = g_jump_pos;
         int a = utf8_offset(d->text, g_jump_pos);
         int b = utf8_offset(d->text, g_jump_pos + g_jump_len);
         SendMessageW(sci, SCI_SETSEL, a, b);
         SendMessageW(sci, SCI_SCROLLCARET, 0, 0);
-        SetFocus(sci);
     }
+    if (sci && g_jump_doc >= 0)
+        SetFocus(sci);
     g_jump_doc = -1;
 }
 
@@ -662,14 +1108,15 @@ static void draw_code(HDC dc, const WCHAR *line, int n, int x, int y, int h, int
     if (skip_to_hit) {
         while (start < m && d[start] == ' ')
             start++;
-        int first = next_match(low, m, 0);
+        int fl = 0, first = find_match(low, m, 0, &fl);
         int room = (right - x) / g_cw;
-        if (first >= 0 && first + g_qn - start > room - 4)
+        if (first >= 0 && first + fl - start > room - 4)
             start = first - room / 3;
     }
-    for (int p = next_match(low, m, 0); p >= 0; p = next_match(low, m, p + g_qn)) {
+    int ml = 0;
+    for (int p = find_match(low, m, 0, &ml); p >= 0; p = find_match(low, m, p + ml, &ml)) {
         int a = x + (p - start) * g_cw;
-        RECT r = { a < x ? x : a, y + (h - PV_LINE) / 2, a + g_qn * g_cw, y + (h + PV_LINE) / 2 };
+        RECT r = { a < x ? x : a, y + (h - PV_LINE) / 2, a + ml * g_cw, y + (h + PV_LINE) / 2 };
         if (r.left < right) {
             if (r.right > right)
                 r.right = right;
@@ -756,8 +1203,8 @@ static void draw_toggle(DRAWITEMSTRUCT *di, int on)
     HBRUSH b = CreateSolidBrush(on ? C_ACCENT : C_INPUT);
     FillRect(di->hDC, &di->rcItem, b);
     DeleteObject(b);
-    WCHAR t[8];
-    GetWindowTextW(di->hwndItem, t, 8);
+    WCHAR t[24];
+    GetWindowTextW(di->hwndItem, t, 24);
     SetBkMode(di->hDC, TRANSPARENT);
     SetTextColor(di->hDC, on ? RGB(255, 255, 255) : C_DIM);
     SelectObject(di->hDC, g_ui);
@@ -852,14 +1299,223 @@ static void layout(HWND h)
     int w = c.right, ht = c.bottom;
     int left = w * 45 / 100;
     int body = ht - BAR_H - FOOT_H;
-    g_box = (RECT){ 12, 10, w - 12 - 72 - 170, 42 };
-    MoveWindow(g_edit, g_box.left + 10, g_box.top + 8, g_box.right - g_box.left - 20, 18, TRUE);
-    MoveWindow(g_case, w - 12 - 170 - 64, 10, 30, 32, TRUE);
-    MoveWindow(g_word, w - 12 - 170 - 32, 10, 30, 32, TRUE);
-    g_info_rect = (RECT){ w - 12 - 160, 10, w - 12, 42 };
+    g_box = (RECT){ 12, 10, w - 12 - 104 - 210, 42 };
+    g_box2 = (RECT){ 12, 50, w - 12 - 104 - 210, 82 };
+    MoveWindow(g_edit, g_box.left + 78, g_box.top + 8, g_box.right - g_box.left - 88, 18, TRUE);
+    MoveWindow(g_repl, g_box2.left + 78, g_box2.top + 8, g_box2.right - g_box2.left - 88, 18, TRUE);
+    MoveWindow(g_case, w - 12 - 210 - 96, 10, 30, 32, TRUE);
+    MoveWindow(g_word, w - 12 - 210 - 64, 10, 30, 32, TRUE);
+    MoveWindow(g_regex, w - 12 - 210 - 32, 10, 30, 32, TRUE);
+    MoveWindow(g_repl_btn, w - 12 - 210 - 96, 50, 94, 32, TRUE);
+    g_info_rect = (RECT){ w - 12 - 200, 10, w - 12, 42 };
     MoveWindow(g_list, 0, BAR_H, left, body, TRUE);
     MoveWindow(g_preview, left + 1, BAR_H, w - left - 1, body, TRUE);
     InvalidateRect(h, NULL, TRUE);
+}
+
+static WCHAR **g_rep_new;
+static int g_rep_i, g_rep_state, g_rep_tries, g_rep_done, g_rep_hits, g_rep_skipped;
+static HTREEITEM g_rep_prev;
+
+static void buf_add(WCHAR **b, int *n, int *cap, const WCHAR *s, int len)
+{
+    if (*n + len + 1 > *cap) {
+        *cap = (*n + len + 1) * 2;
+        *b = realloc(*b, *cap * sizeof(WCHAR));
+    }
+    memcpy(*b + *n, s, len * sizeof(WCHAR));
+    *n += len;
+    (*b)[*n] = 0;
+}
+
+static void add_replacement(WCHAR **b, int *n, int *cap, const WCHAR *rep, Doc *d, Hit *h)
+{
+    if (!g_rx_on) {
+        buf_add(b, n, cap, rep, lstrlenW(rep));
+        return;
+    }
+    const WCHAR *hay = (g_case_on ? d->text : d->lower) + h->line_start;
+    int e;
+    if (!rx_at(hay, h->line_len, h->pos - h->line_start, &e)) {
+        buf_add(b, n, cap, d->text + h->pos, h->len);
+        return;
+    }
+    const WCHAR *line = d->text + h->line_start;
+    for (const WCHAR *p = rep; *p; p++) {
+        if (*p == '$' && p[1] == '$') {
+            buf_add(b, n, cap, p, 1);
+            p++;
+        } else if (*p == '$' && p[1] >= '0' && p[1] <= '9' && p[1] - '0' <= g_ncap) {
+            int g = p[1] - '0';
+            if (g == 0)
+                buf_add(b, n, cap, d->text + h->pos, h->len);
+            else if (g_cap[g][0] >= 0)
+                buf_add(b, n, cap, line + g_cap[g][0], g_cap[g][1] - g_cap[g][0]);
+            p++;
+        } else {
+            buf_add(b, n, cap, p, 1);
+        }
+    }
+}
+
+static int build_replacements(const WCHAR *rep)
+{
+    int docs = 0;
+    g_rep_new = calloc(g_ndocs, sizeof(WCHAR *));
+    if (!g_rep_new)
+        return 0;
+    for (int i = 0; i < g_nhits;) {
+        int di = g_hits[i].doc, from = 0, n = 0, cap = 0, any = 0;
+        Doc *d = &g_docs[di];
+        WCHAR *b = NULL;
+        for (; i < g_nhits && g_hits[i].doc == di; i++) {
+            Hit *h = &g_hits[i];
+            if (h->name_hit)
+                continue;
+            buf_add(&b, &n, &cap, d->text + from, h->pos - from);
+            add_replacement(&b, &n, &cap, rep, d, h);
+            from = h->pos + h->len;
+            any = 1;
+        }
+        if (any) {
+            buf_add(&b, &n, &cap, d->text + from, d->len - from);
+            g_rep_new[di] = b;
+            docs++;
+        }
+    }
+    return docs;
+}
+
+static void free_replacements(void)
+{
+    if (g_rep_new)
+        for (int i = 0; i < g_ndocs; i++)
+            free(g_rep_new[i]);
+    free(g_rep_new);
+    g_rep_new = NULL;
+}
+
+static void finish_replace(void)
+{
+    KillTimer(g_win, ID_REPLACE_TIMER);
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    if (tree && g_rep_prev)
+        TreeView_SelectItem(tree, g_rep_prev);
+    SetTimer(g_win, ID_REPLACE_DONE, 200, NULL);
+}
+
+static void replace_done(void)
+{
+    WCHAR info[96];
+    KillTimer(g_win, ID_REPLACE_DONE);
+    free_replacements();
+    g_busy = 0;
+    EnableWindow(g_win, TRUE);
+    build_index();
+    run_search();
+    wsprintfW(info, L"Заменено: %d в %d, пропущено %d", g_rep_hits, g_rep_done, g_rep_skipped);
+    lstrcpyW(g_info_text, info);
+    InvalidateRect(g_win, &g_info_rect, FALSE);
+}
+
+static void replace_step(void)
+{
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    HWND sci = te ? find_child(te, L"Scintilla", 0) : NULL;
+    if (!tree || !sci) {
+        g_rep_skipped += g_ndocs - g_rep_i;
+        finish_replace();
+        return;
+    }
+    while (g_rep_i < g_ndocs && !g_rep_new[g_rep_i])
+        g_rep_i++;
+    if (g_rep_i >= g_ndocs) {
+        finish_replace();
+        return;
+    }
+    Doc *d = &g_docs[g_rep_i];
+    if (!g_rep_state) {
+        if (!d->item) {
+            g_rep_skipped++;
+            g_rep_i++;
+            return;
+        }
+        TreeView_SelectItem(tree, d->item);
+        g_rep_state = 1;
+        g_rep_tries = 0;
+        return;
+    }
+    int n = (int)SendMessageW(sci, SCI_GETLENGTH, 0, 0);
+    char *buf = malloc(n + 1);
+    if (!buf)
+        return;
+    SendMessageW(sci, SCI_GETTEXT, n + 1, (LPARAM)buf);
+    WCHAR *w = decode(buf, n);
+    free(buf);
+    int same = w && !wcscmp(w, d->text);
+    free(w);
+    if (!same) {
+        if (++g_rep_tries > 30) {
+            g_rep_skipped++;
+            g_rep_i++;
+            g_rep_state = 0;
+        }
+        return;
+    }
+    const WCHAR *nw = g_rep_new[g_rep_i];
+    int un = WideCharToMultiByte(CP_UTF8, 0, nw, -1, NULL, 0, NULL, NULL);
+    char *u = malloc(un);
+    if (u) {
+        WideCharToMultiByte(CP_UTF8, 0, nw, -1, u, un, NULL, NULL);
+        SendMessageW(sci, SCI_SETTARGETSTART, 0, 0);
+        SendMessageW(sci, SCI_SETTARGETEND, n, 0);
+        SendMessageW(sci, SCI_REPLACETARGET, un - 1, (LPARAM)u);
+        free(u);
+        g_rep_done++;
+        for (int i = 0; i < g_nhits; i++)
+            if (g_hits[i].doc == g_rep_i && !g_hits[i].name_hit)
+                g_rep_hits++;
+    }
+    g_rep_i++;
+    g_rep_state = 0;
+}
+
+static void start_replace(void)
+{
+    WCHAR rep[256], msg[256];
+    if (g_busy)
+        return;
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    if (!tree) {
+        MessageBoxW(g_win, L"Откройте редактор триггеров.", L"Поиск по триггерам", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+    build_index();
+    run_search();
+    if (g_nhits >= MAX_HITS) {
+        MessageBoxW(g_win, L"Слишком много совпадений. Уточните запрос.", L"Поиск по триггерам", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    GetWindowTextW(g_repl, rep, 256);
+    int total = 0;
+    for (int i = 0; i < g_nhits; i++)
+        total += !g_hits[i].name_hit;
+    if (!total)
+        return;
+    int docs = build_replacements(rep);
+    wsprintfW(msg, L"Заменить %d совпадений в %d триггерах?\n\nПо всем сразу отменить нельзя. Карта изменится только после сохранения.", total, docs);
+    if (!docs || MessageBoxW(g_win, msg, L"Поиск по триггерам", MB_OKCANCEL | MB_ICONWARNING | MB_DEFBUTTON2) != IDOK) {
+        free_replacements();
+        return;
+    }
+    g_rep_prev = TreeView_GetSelection(tree);
+    g_rep_i = g_rep_state = g_rep_done = g_rep_hits = g_rep_skipped = 0;
+    g_busy = 1;
+    EnableWindow(g_win, FALSE);
+    SetTimer(g_win, ID_REPLACE_TIMER, 15, NULL);
 }
 
 static void toggle(int *flag, HWND button)
@@ -873,7 +1529,10 @@ static void toggle(int *flag, HWND button)
 static int common_key(WPARAM w)
 {
     switch (w) {
-    case VK_RETURN: jump(1); return 1;
+    case VK_RETURN:
+        if (GetFocus() != g_repl)
+            jump(1);
+        return 1;
     case VK_ESCAPE: ShowWindow(g_win, SW_HIDE); return 1;
     case VK_F3: step(GetKeyState(VK_SHIFT) & 0x8000 ? -1 : 1); return 1;
     }
@@ -890,7 +1549,12 @@ static LRESULT CALLBACK edit_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         case VK_UP: step(-1); return 0;
         case VK_NEXT: step(15); return 0;
         case VK_PRIOR: step(-15); return 0;
+        case VK_TAB: SetFocus(h == g_edit ? g_repl : g_edit); return 0;
         }
+    }
+    if (m == WM_SYSKEYDOWN && w == 'R') {
+        toggle(&g_rx_on, g_regex);
+        return 0;
     }
     if (m == WM_SYSKEYDOWN && w == 'C') {
         toggle(&g_case_on, g_case);
@@ -900,7 +1564,7 @@ static LRESULT CALLBACK edit_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         toggle(&g_word_on, g_word);
         return 0;
     }
-    if ((m == WM_CHAR && (w == '\r' || w == 27)) || m == WM_SYSCHAR)
+    if ((m == WM_CHAR && (w == '\r' || w == 27 || w == '\t')) || m == WM_SYSCHAR)
         return 0;
     return CallWindowProcW(g_edit_proc, h, m, w, l);
 }
@@ -915,7 +1579,7 @@ static LRESULT CALLBACK list_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         LRESULT it = SendMessageW(h, LB_ITEMFROMPOINT, 0, l);
         int r = LOWORD(it);
         if (!HIWORD(it) && r < g_nrows && g_rows[r].hit < 0 && (short)LOWORD(l) < 28 && g_docs[g_rows[r].doc].count) {
-            g_docs[g_rows[r].doc].collapsed = !g_docs[g_rows[r].doc].collapsed;
+            set_collapsed(&g_docs[g_rows[r].doc], !g_docs[g_rows[r].doc].collapsed);
             rebuild_rows();
             SendMessageW(h, LB_SETCURSEL, r, 0);
             InvalidateRect(h, NULL, TRUE);
@@ -933,17 +1597,22 @@ static void paint_window(HWND h)
     GetClientRect(h, &c);
     FillRect(dc, &c, g_bg);
     FillRect(dc, &g_box, g_input);
+    FillRect(dc, &g_box2, g_input);
     RECT line = { g_box.left, g_box.bottom - 2, g_box.right, g_box.bottom };
-    HBRUSH b = CreateSolidBrush(C_ACCENT);
+    HBRUSH b = CreateSolidBrush(g_rx_ok ? C_ACCENT : C_DANGER);
     FillRect(dc, &line, b);
     DeleteObject(b);
     RECT foot = { 12, c.bottom - FOOT_H, c.right - 12, c.bottom };
     SelectObject(dc, g_ui);
     SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, C_DIM);
+    RECT l1 = { g_box.left + 10, g_box.top, g_box.left + 76, g_box.bottom }, l2 = { g_box2.left + 10, g_box2.top, g_box2.left + 76, g_box2.bottom };
+    SetTextColor(dc, C_FAINT);
+    DrawTextW(dc, L"Найти", -1, &l1, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    DrawTextW(dc, L"Заменить", -1, &l2, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    SetTextColor(dc, g_rx_ok ? C_DIM : C_DANGER);
     DrawTextW(dc, g_info_text, -1, &g_info_rect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
     SetTextColor(dc, C_FAINT);
-    DrawTextW(dc, L"Enter  перейти      ↑↓  по результатам      F3  следующее      Alt+C  регистр      Alt+W  слово целиком      Esc  закрыть", -1, &foot,
+    DrawTextW(dc, L"Enter  перейти      ↑↓  по результатам      F3  следующее      Alt+C  регистр      Alt+W  слово      Alt+R  регулярка      Tab  поле замены      Esc  закрыть", -1, &foot,
               DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     EndPaint(h, &ps);
 }
@@ -979,7 +1648,7 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         if (di->CtlID == ID_LIST)
             draw_row(di);
         else
-            draw_toggle(di, di->CtlID == ID_CASE ? g_case_on : g_word_on);
+            draw_toggle(di, di->CtlID == ID_CASE ? g_case_on : di->CtlID == ID_WORD ? g_word_on : di->CtlID == ID_REGEX ? g_rx_on : 0);
         return TRUE;
     }
     case WM_COMMAND:
@@ -1000,12 +1669,23 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         case ID_WORD:
             toggle(&g_word_on, g_word);
             break;
+        case ID_REGEX:
+            toggle(&g_rx_on, g_regex);
+            InvalidateRect(h, &g_box, FALSE);
+            break;
+        case ID_REPLACE_ALL:
+            start_replace();
+            break;
         }
         return 0;
     case WM_TIMER:
         if (w == ID_TIMER) {
             KillTimer(h, ID_TIMER);
             run_search();
+        } else if (w == ID_REPLACE_TIMER) {
+            replace_step();
+        } else if (w == ID_REPLACE_DONE) {
+            replace_done();
         } else if (w == ID_SELECT_TIMER) {
             KillTimer(h, ID_SELECT_TIMER);
             select_hit();
@@ -1014,7 +1694,7 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         }
         return 0;
     case WM_ACTIVATE:
-        if (LOWORD(w) != WA_INACTIVE && g_jump_doc < 0) {
+        if (LOWORD(w) != WA_INACTIVE && g_jump_doc < 0 && !g_busy) {
             build_index();
             run_search();
             SetFocus(g_edit);
@@ -1069,9 +1749,12 @@ static int create_window(void)
     DwmSetWindowAttribute(g_win, 20, &dark, sizeof dark);
     g_edit = child(L"EDIT", L"", ES_AUTOHSCROLL, 0, ID_EDIT);
     g_edit_proc = (WNDPROC)SetWindowLongPtrW(g_edit, GWLP_WNDPROC, (LONG_PTR)edit_proc);
-    SendMessageW(g_edit, EM_SETCUEBANNER, TRUE, (LPARAM)L"Поиск по всем триггерам");
     g_case = child(L"BUTTON", L"Aa", BS_OWNERDRAW, 0, ID_CASE);
     g_word = child(L"BUTTON", L"W", BS_OWNERDRAW, 0, ID_WORD);
+    g_regex = child(L"BUTTON", L".*", BS_OWNERDRAW, 0, ID_REGEX);
+    g_repl = child(L"EDIT", L"", ES_AUTOHSCROLL, 0, ID_REPLACE);
+    SetWindowLongPtrW(g_repl, GWLP_WNDPROC, (LONG_PTR)edit_proc);
+    g_repl_btn = child(L"BUTTON", L"Заменить всё", BS_OWNERDRAW, 0, ID_REPLACE_ALL);
     g_list = child(L"LISTBOX", L"", WS_VSCROLL | LBS_NOTIFY | LBS_NODATA | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT, 0, ID_LIST);
     g_list_proc = (WNDPROC)SetWindowLongPtrW(g_list, GWLP_WNDPROC, (LONG_PTR)list_proc);
     g_preview = child(L"KFScriptPreview", L"", 0, 0, ID_PREVIEW);
@@ -1102,6 +1785,8 @@ static void open_search(void)
 {
     if (!g_win && !create_window())
         return;
+    if (g_busy)
+        return;
     WCHAR sel[256];
     selected_text(sel, 256);
     if (sel[0] && !wcschr(sel, '\n'))
@@ -1124,27 +1809,38 @@ static int focus_in_scintilla(void)
 
 static void next_in_code(int dir)
 {
-    int cur = (int)SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    int cur_doc = g_last_doc, cur_pos = g_last_pos;
     build_index();
     run_search();
-    if (!g_nrows)
-        return;
-    if (cur >= g_nrows)
-        cur = 0;
-    SendMessageW(g_list, LB_SETCURSEL, cur, 0);
-    for (int n = 0; n < g_nrows; n++) {
-        cur = (cur + dir + g_nrows) % g_nrows;
-        if (g_rows[cur].hit >= 0) {
-            select_row(cur);
-            jump(0);
-            return;
+    int at = -1;
+    if (cur_doc >= 0)
+        for (int i = 0; i < g_nhits; i++) {
+            Hit *h = &g_hits[i];
+            if (h->name_hit)
+                continue;
+            if (h->doc < cur_doc || (h->doc == cur_doc && h->pos <= cur_pos))
+                at = i;
         }
+    for (int n = 0; n < g_nhits; n++) {
+        at = (at + dir + g_nhits) % g_nhits;
+        Hit *h = &g_hits[at];
+        if (h->name_hit || (dir < 0 && h->doc == cur_doc && h->pos == cur_pos))
+            continue;
+        for (int r = 0; r < g_nrows; r++)
+            if (g_rows[r].hit == at)
+                select_row(r);
+        g_jump_doc = h->doc;
+        g_jump_pos = h->pos;
+        g_jump_len = h->len;
+        if (!finish_jump())
+            g_jump_doc = -1;
+        return;
     }
 }
 
 static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
 {
-    if (code == HC_ACTION && vk == VK_F3 && !(lp & 0xC0000000) && g_win && g_query[0] && focus_in_scintilla()) {
+    if (code == HC_ACTION && vk == VK_F3 && !(lp & 0xC0000000) && g_win && !g_busy && g_query[0] && focus_in_scintilla()) {
         next_in_code(GetKeyState(VK_SHIFT) & 0x8000 ? -1 : 1);
         return 1;
     }
