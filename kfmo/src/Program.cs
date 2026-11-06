@@ -50,7 +50,7 @@ if (args.Length >= 3 && args[0] == "optimize")
             case "--release": o.StripEditor = true; o.Quant = KFMO.MdxQuant.Bits.Release(); o.IconOneMip = true; o.KeyReduce = true; o.JassMin = true; o.SectorShift = 9; break;
             case "--keep-jass": o.JassMin = false; break;
             case "--tex-max": o.TexMax = int.Parse(args[++i]); break;
-            case "--test": o.RequireSlk = true; o.Textures = false; o.Quant = null; o.JassMin = false; o.KeyReduce = false; o.IconOneMip = false; o.Level = 1; break;
+            case "--test": o.RequireSlk = true; o.KeepUnused = true; o.Textures = false; o.Quant = null; o.JassMin = false; o.KeyReduce = false; o.IconOneMip = false; o.Level = 1; break;
             case "--no-preview": o.NoPreview = true; break;
             case "--sector": o.SectorShift = int.Parse(args[++i]); break;
             case "--keep-keys": o.KeyReduce = false; break;
