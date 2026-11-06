@@ -34,6 +34,7 @@
 - **Тест за любого игрока,** а не только за красного.
 - **Координаты в буфер.** Ctrl+Shift+X копирует точку под курсором (`x, y`), с Alt ещё и высоту. Без скриншотов.
 - **KFMO.** Свой оптимизатор карт вместо w3x2lni: быстрее и не трогает тексты стандартных объектов.
+- **Поиск по триггерам.** Ctrl+F в коде ищет сразу по всем триггерам и заголовку карты, с предпросмотром и переходом к строке.
 - **Тёмное оформление** окна настроек и окна покраски текста.
 
 <img src="docs/import-list.png" width="860" alt="Менеджер импорта, список">
@@ -68,6 +69,7 @@ python -m ziglang cc -target x86-windows-gnu -shared -O2 -s StormFastHeap/src/st
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ModelSearch/src/modelsearch.c -luser32 -lgdi32 -o ModelSearch.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ImportPlus/src/importplus.c -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32 -lole32 -lmsimg32 -lwindowscodecs -luuid -lgdiplus -o ImportPlus.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s warcraft3/kf_playas/kf_playas.c warcraft3/kf_playas/kf_playas.rc -luser32 -o kf_playas.dll
+python -m ziglang cc -target x86-windows-gnu -shared -O2 -s ScriptSearch/src/scriptsearch.c -luser32 -lgdi32 -lcomctl32 -ldwmapi -o ScriptSearch.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s Splash/src/splash.c -luser32 -lgdi32 -lgdiplus -ladvapi32 -o Splash.dll
 python -m ziglang cc -target x86-windows-gnu -shared -O2 -s KFTools/src/kftools.c -luser32 -lgdi32 -lgdiplus -lwinhttp -luxtheme -ldwmapi -o KFTools.dll
 ```

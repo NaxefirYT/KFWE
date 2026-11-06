@@ -1,0 +1,6 @@
+[Info]
+PluginName = ScriptSearch
+[Load]
+Enable = 1
+Loader = ScriptSearch.lua
+Dll    = ScriptSearch.dll
