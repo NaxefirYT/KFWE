@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "../../common/src/kflang.h"
 
 typedef struct { UINT32 ver; void *cb; BOOL nothread, nocodecs; } GdipInput;
 typedef void GpGraphics, GpBrush, GpPath, GpPen, GpImage, GpFontFamily, GpFont, GpStringFormat;
@@ -384,9 +385,9 @@ __declspec(dllexport) int KFToolsCopy(int with_z)
     if (!g_have) {
         WCHAR raw[128];
         if (g_raw[0] && MultiByteToWideChar(CP_ACP, 0, g_raw, -1, raw, 128))
-            toast(L"Не разобрал строку координат", raw, 0xFFFF7A7A);
+            toast(TR(L"Не разобрал строку координат"), raw, 0xFFFF7A7A);
         else
-            toast(L"Координаты не скопированы", L"Наведите курсор на карту", 0xFFFF7A7A);
+            toast(TR(L"Координаты не скопированы"), TR(L"Наведите курсор на карту"), 0xFFFF7A7A);
         return 0;
     }
     if (with_z)
@@ -394,10 +395,10 @@ __declspec(dllexport) int KFToolsCopy(int with_z)
     else
         swprintf(value, 128, L"%hs, %hs", g_pt[0], g_pt[1]);
     if (!set_clipboard(value, main_window())) {
-        toast(L"Не удалось открыть буфер обмена", value, 0xFFFF7A7A);
+        toast(TR(L"Не удалось открыть буфер обмена"), value, 0xFFFF7A7A);
         return 0;
     }
-    toast(L"Координаты скопированы", value, 0xFF7C5CFF);
+    toast(TR(L"Координаты скопированы"), value, 0xFF7C5CFF);
     return 1;
 }
 
@@ -418,8 +419,8 @@ static void kfwe_dir(WCHAR *out)
 
 static int read_version(const WCHAR *dir, char *out, int cap)
 {
-    static const WCHAR *langs[] = { L"en-US", L"zh-CN" };
-    for (int i = 0; i < 2; i++) {
+    static const WCHAR *langs[] = { L"ru", L"en-US", L"zh-CN" };
+    for (int i = 0; i < 3; i++) {
         WCHAR f[MAX_PATH];
         char buf[8192];
         swprintf(f, MAX_PATH, L"%ls\\share\\locale\\%ls\\script.lng", dir, langs[i]);
@@ -641,7 +642,7 @@ static WCHAR *md_render(const char *md, int **heads, int *nheads)
             blank = 1;
             continue;
         }
-        if (wcsstr(s, L"KFWE-Setup.exe") || wcsstr(s, L".zip"))
+        if (wcsstr(s, L"KFWE-Setup.exe") || wcsstr(s, L".zip") || !wcsncmp(s, L"![", 2) || !_wcsnicmp(s, L"<img", 4))
             continue;
         int head = 0;
         if (*s == L'#') {
@@ -792,7 +793,7 @@ static int show_notes(HWND owner, const WCHAR *title, const WCHAR *sub, const ch
         WNDCLASSW wc = { 0, notes_proc, 0, 0, g_inst, NULL, LoadCursor(NULL, IDC_ARROW), NULL, NULL, NOTES_CLASS };
         registered = RegisterClassW(&wc) != 0;
     }
-    Notes n = { title, sub, { ask ? L"Обновить" : L"Понятно", L"Позже" }, ask ? 2 : 1, 0, -1 };
+    Notes n = { title, sub, { ask ? TR(L"Обновить") : TR(L"Понятно"), TR(L"Позже") }, ask ? 2 : 1, 0, -1 };
     n.f_title = CreateFontW(-24, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     n.f_sub = CreateFontW(-14, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     n.f_btn = CreateFontW(-15, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
@@ -880,11 +881,19 @@ static void whats_new(HWND owner, const WCHAR *dir, const char *cur, int force)
     }
     if (!force && !strcmp(seen, cur))
         return;
-    swprintf(log_path, MAX_PATH, L"%ls\\share\\changelog.md", dir);
-    char *md = read_text(log_path);
+    WCHAR code[32];
+    char *md = NULL;
+    if (kfl_language(code, 32)) {
+        swprintf(log_path, MAX_PATH, L"%ls\\share\\changelog.%ls.md", dir, code);
+        md = read_text(log_path);
+    }
+    if (!md) {
+        swprintf(log_path, MAX_PATH, L"%ls\\share\\changelog.md", dir);
+        md = read_text(log_path);
+    }
     if (md) {
-        swprintf(title, 64, L"Что нового в KFWE %hs", cur);
-        show_notes(owner, title, L"Открыть снова: меню KFWE → «Что нового»", md, 0);
+        swprintf(title, 64, TR(L"Что нового в KFWE %hs"), cur);
+        show_notes(owner, title, TR(L"Открыть снова: меню KFWE → «Что нового»"), md, 0);
         free(md);
     }
     if ((fp = _wfopen(seen_path, L"wb"))) {
@@ -900,7 +909,7 @@ static void mark_menu(HWND m, const char *latest)
     for (int i = 0, n = GetMenuItemCount(bar); i < n; i++) {
         if (GetMenuStringW(bar, i, buf, 64, MF_BYPOSITION) && wcsstr(buf, L"KFWE v")) {
             MENUITEMINFOW mi = { sizeof mi, MIIM_STRING };
-            swprintf(label, 64, L"Доступно обновление %hs", latest);
+            swprintf(label, 64, TR(L"Доступно обновление %hs"), latest);
             mi.dwTypeData = label;
             SetMenuItemInfoW(bar, i, TRUE, &mi);
             DrawMenuBar(m);
@@ -930,7 +939,7 @@ static void check_update(int manual)
         return;
     if (!http_get(L"https://" RELEASE_HOST RELEASE_PATH, &body, NULL, NULL)) {
         if (manual)
-            MessageBoxW(m, L"Не удалось связаться с GitHub. Проверьте интернет и попробуйте ещё раз.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+            MessageBoxW(m, TR(L"Не удалось связаться с GitHub. Проверьте интернет и попробуйте ещё раз."), TR(L"Обновление KFWE"), MB_OK | MB_ICONWARNING);
         return;
     }
     asset[0] = 0;
@@ -949,22 +958,21 @@ static void check_update(int manual)
     const char *latest = tag[0] == 'v' ? tag + 1 : tag;
     if (!asset[0] || ver_cmp(latest, cur) <= 0 || !(m = main_window())) {
         if (manual && (m = main_window())) {
-            swprintf(text, 512, L"У вас последняя версия KFWE %hs.", cur);
-            MessageBoxW(m, text, L"Обновление KFWE", MB_OK | MB_ICONINFORMATION);
+            swprintf(text, 512, TR(L"У вас последняя версия KFWE %hs."), cur);
+            MessageBoxW(m, text, TR(L"Обновление KFWE"), MB_OK | MB_ICONINFORMATION);
         }
         free(notes);
         return;
     }
     mark_menu(m, latest);
     WCHAR title[64];
-    swprintf(title, 64, L"Вышла KFWE %hs", latest);
-    swprintf(text, 512, L"У вас %hs. Редактор скачает обновление и закроется (несохранённую карту предложит сохранить), "
-                        L"после установки запустится снова. Настройки сохранятся.", cur);
+    swprintf(title, 64, TR(L"Вышла KFWE %hs"), latest);
+    swprintf(text, 512, TR(L"У вас %hs. Редактор скачает обновление и закроется (несохранённую карту предложит сохранить), после установки запустится снова. Настройки сохранятся."), cur);
     int yes = show_notes(m, title, text, notes, 1);
     free(notes);
     if (yes != 1)
         return;
-    toast(L"Скачиваю обновление", L"Редактор закроется сам", 0xFF7C5CFF);
+    toast(TR(L"Скачиваю обновление"), TR(L"Редактор закроется сам"), 0xFF7C5CFF);
     MultiByteToWideChar(CP_UTF8, 0, asset, -1, url, 1024);
     GetTempPathW(MAX_PATH, setup);
     wcscat(setup, L"KFWE-Setup-update.exe");
@@ -977,14 +985,14 @@ static void check_update(int manual)
     }
     if (mz[0] != 'M' || mz[1] != 'Z') {
         DeleteFileW(setup);
-        MessageBoxW(main_window(), L"Не удалось скачать обновление. Его можно поставить вручную со страницы релизов на GitHub.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+        MessageBoxW(main_window(), TR(L"Не удалось скачать обновление. Его можно поставить вручную со страницы релизов на GitHub."), TR(L"Обновление KFWE"), MB_OK | MB_ICONWARNING);
         return;
     }
     STARTUPINFOW si = { sizeof si };
     PROCESS_INFORMATION pi;
     swprintf(cmd, MAX_PATH * 2 + 64, L"\"%ls\" /update \"%ls\" %lu", setup, dir, GetCurrentProcessId());
     if (!CreateProcessW(setup, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        MessageBoxW(main_window(), L"Не удалось запустить установщик обновления.", L"Обновление KFWE", MB_OK | MB_ICONWARNING);
+        MessageBoxW(main_window(), TR(L"Не удалось запустить установщик обновления."), TR(L"Обновление KFWE"), MB_OK | MB_ICONWARNING);
         return;
     }
     CloseHandle(pi.hThread);
@@ -1049,10 +1057,97 @@ static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
     return CallNextHookEx(g_kb, code, vk, lp);
 }
 
+#define WE_CDS_SAVE_SITE 0x0055CFF1
+#define WE_CDS_SAVE 0x0051B5B0
+#define WE_OE_NEW_SITE 0x00594327
+#define WE_OE_NEW 0x005935E0
+#define WE_OE_FREE_SITE 0x0059442D
+#define WE_OE_FREE 0x005938F0
+#define WE_CD_LOAD 0x005B7270
+#define WE_PANE_REFRESH 0x0064D4E0
+
+typedef int (__fastcall *cds_save_fn)(void *, void *, const char *, int);
+typedef void *(__fastcall *oe_new_fn)(void *, void *, void *, int);
+typedef void (__fastcall *oe_free_fn)(void *, void *);
+typedef int (__fastcall *cd_load_fn)(void *, void *, const char *);
+typedef int (__fastcall *pane_refresh_fn)(void *, void *);
+
+static uint8_t *g_cds, *g_oe;
+static int g_cd_hooks;
+
+static int __fastcall h_cds_save(uint8_t *cds, void *edx, const char *path, int flag)
+{
+    g_cds = cds;
+    return ((cds_save_fn)WE_CDS_SAVE)(cds, edx, path, flag);
+}
+
+static void *__fastcall h_oe_new(uint8_t *oe, void *edx, void *owner, int unk)
+{
+    g_oe = oe;
+    return ((oe_new_fn)WE_OE_NEW)(oe, edx, owner, unk);
+}
+
+static void __fastcall h_oe_free(uint8_t *oe, void *edx)
+{
+    if (oe == g_oe)
+        g_oe = NULL;
+    ((oe_free_fn)WE_OE_FREE)(oe, edx);
+}
+
+static int call_site_ok(uintptr_t site, uintptr_t target, const char *before, int n)
+{
+    uint8_t *s = (uint8_t *)site;
+    return !IsBadReadPtr(s - n, n + 5) && !memcmp(s - n, before, n) && s[0] == 0xE8 &&
+           (uintptr_t)(s + 5 + *(int32_t *)(s + 1)) == target;
+}
+
+static int retarget_call(uintptr_t site, void *fn)
+{
+    uint8_t *s = (uint8_t *)site;
+    DWORD old;
+    if (!VirtualProtect(s, 5, PAGE_EXECUTE_READWRITE, &old))
+        return 0;
+    *(int32_t *)(s + 1) = (int32_t)((uint8_t *)fn - (s + 5));
+    VirtualProtect(s, 5, old, &old);
+    FlushInstructionCache(GetCurrentProcess(), s, 5);
+    return 1;
+}
+
+static void install_customdata_hooks(void)
+{
+    if ((uintptr_t)GetModuleHandleA(NULL) != 0x400000 ||
+        !call_site_ok(WE_CDS_SAVE_SITE, WE_CDS_SAVE, "\x8B\x8E\xF8\x38\x00\x00\x53\x8D\x95\xF4\xFE\xFF\xFF\x52", 14) ||
+        !call_site_ok(WE_OE_NEW_SITE, WE_OE_NEW, "\x6A\x0B\x56\x8B\xC8", 5) ||
+        !call_site_ok(WE_OE_FREE_SITE, WE_OE_FREE, "\x8B\xCF", 2))
+        return;
+    g_cd_hooks = retarget_call(WE_OE_FREE_SITE, (void *)h_oe_free) && retarget_call(WE_OE_NEW_SITE, (void *)h_oe_new) &&
+                 retarget_call(WE_CDS_SAVE_SITE, (void *)h_cds_save);
+}
+
+__declspec(dllexport) int KFToolsImportCustomData(int type, const char *path)
+{
+    if (!g_cd_hooks)
+        return -1;
+    if (!g_cds || type < 0 || type > 6 || !path)
+        return 0;
+    uint8_t *cd = *(uint8_t **)(g_cds + 4 + type * 4);
+    WCHAR w[MAX_PATH];
+    char a[MAX_PATH * 2];
+    if (!cd || !MultiByteToWideChar(CP_UTF8, 0, path, -1, w, MAX_PATH) ||
+        !WideCharToMultiByte(CP_ACP, 0, w, -1, a, sizeof(a), NULL, NULL))
+        return 0;
+    ((cd_load_fn)WE_CD_LOAD)(cd, NULL, a);
+    uint8_t *pane = g_oe ? *(uint8_t **)(g_oe + 0x20 + type * 4) : NULL;
+    if (pane && *(uint8_t **)(pane + 4) == g_cds)
+        ((pane_refresh_fn)WE_PANE_REFRESH)(pane, NULL);
+    return 1;
+}
+
 __declspec(dllexport) int KFToolsInit(void)
 {
     if (g_kb)
         return 1;
+    install_customdata_hooks();
     g_tid = GetCurrentThreadId();
     if (!hook_settext())
         return -2;

@@ -1,5 +1,3 @@
-local stormlib = require 'ffi.stormlib'
-local w3x2lni = require 'compiler.w3x2lni.init'
 local ev = require 'ev'
 local map_packer = require 'w3x2lni.map_packer'
 
@@ -40,32 +38,6 @@ end
 
 local ydhost = setmetatable({}, mt)
 
-local function getplayernum(mappath)
-	local ok, result = pcall(function()
-		local map = stormlib.open(mappath, true)
-		if not map then
-    		return 0
-		end
-		local w3i = map:load_file('war3map.w3i')
-		local w2l = w3x2lni()
-		local tbl = w2l:frontend_w3i(w3i)
-		local n = 0
-		if tbl.CONFIG.FIX_FORCE_SETTING == 0 then
-			n = tbl.PLAYER.PLAYER_COUNT
-		else
-			for i = 1, tbl.PLAYER.PLAYER_COUNT do
-    			if tbl['PLAYER'..i].TYPE == 1 then
-					n = n + 1
-				end
-			end
-		end
-		map:close()
-		return n
-	end)
-	if ok then return result end
-	return 0
-end
-
 local function single_test(mappath)
 	local args = {}
 	args[#args + 1] = (fs.ydwe_path() / 'ydwe.exe'):string()
@@ -80,7 +52,9 @@ local function host_copy_dll(curdir)
 	pcall(fs.copy_file, fs.ydwe_path() / 'bin' / 'msvcp140.dll', curdir / 'msvcp140.dll', true)
 end
 
-local function host_save_config(curdir, mappath, autostart)
+local SLOT = '^(map_slot%d+ = %d+ %d+ )(%d+)( %d+ %d+ )(%d+)'
+
+local function host_save_config(curdir, mappath, autostart, playas)
 	local ver = global_config_war3_version()
 	local jasspath
 	local mapsave_number = tonumber(global_config["MapSave"]["Option"])
@@ -89,16 +63,30 @@ local function host_save_config(curdir, mappath, autostart)
 	else
 		jasspath = fs.ydwe_path() / "compiler" / "jass" / "24"
 	end
-	local of = io.open(curdir / 'map.cfg', 'wb')
+	local lines = {}
 	local ok, e = pcall(mapdump, mappath, jasspath,
 		function(s)
-			of:write(s .. '\n')
+			lines[#lines + 1] = s
 		end
 	)
-	of:close()
 	if not ok then
 		log.error(e)
 	end
+	local found
+	for _, s in ipairs(lines) do
+		local _, status, _, colour = s:match(SLOT)
+		found = found or status == '0' and tonumber(colour) == playas
+	end
+	local open = 0
+	for i, s in ipairs(lines) do
+		local a, status, b, colour = s:match(SLOT)
+		if status == '0' and found and tonumber(colour) ~= playas then
+			lines[i] = s:gsub(SLOT, a .. '1' .. b .. colour, 1)
+		elseif status == '0' then
+			open = open + 1
+		end
+	end
+	io.save(curdir / 'map.cfg', table.concat(lines, '\n') .. '\n')
 	local tbl = {
 		lan_war3version = ver.minor,
 		bot_defaultgamename = mappath:filename():string(),
@@ -111,14 +99,15 @@ local function host_save_config(curdir, mappath, autostart)
 		str = str .. tostring(k) .. ' = ' .. tostring(v) .. '\n'
 	end
 	io.save(curdir / 'ydhost.cfg', str)
+	return open
 end
 
-local function host_test(mappath)
+local function host_test(mappath, playas)
 	local args = {}
 	local host_test = tonumber(global_config["HostTest"]["Option"])
 	local curdir = fs.ydwe_path() / 'plugin' / 'ydhost'
 	host_copy_dll(curdir)
-	host_save_config(curdir, mappath, host_test + 1)
+	local open = host_save_config(curdir, mappath, host_test + 1, host_test == 0 and playas or nil)
 	ydhost:process_create(curdir / 'ydhost.exe', curdir)
 
 	args[#args + 1] = (fs.ydwe_path() / 'ydwe.exe'):string()
@@ -127,7 +116,7 @@ local function host_test(mappath)
 	if host_test == 0 then
 		return args, 1
 	end
-	return args, getplayernum(mappath)
+	return args, open
 end
 
 local function is_lni(path)
@@ -217,15 +206,18 @@ function event.EVENT_TEST_MAP(event_data)
 
 	log.debug("Testing " .. tostring(global_config["MapTest"]["EnableHost"]))
 	local playas = require('playas').for_test(current_map_path)
+	local host = global_config["MapTest"]["EnableHost"] == "1"
 	local playas_file = fs.ydwe_path() / 'bin' / 'playas_now.txt'
 	if playas then
 		log.info('Test as player', playas)
+	end
+	if playas and not host then
 		io.save(playas_file, tostring(playas))
 	else
 		pcall(fs.remove, playas_file)
 	end
-	if global_config["MapTest"]["EnableHost"] == "1" and not playas then
-		args, n = host_test(mappath)
+	if host then
+		args, n = host_test(mappath, playas)
 	else
 		args, n = single_test(mappath), 1
 	end

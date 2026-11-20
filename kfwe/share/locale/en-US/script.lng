@@ -1,58 +1,59 @@
+-- kflang e482a602
 [UNKNOWN]
-Неизвестно
+Unknown
 [ERROR]
-Ошибка
+Error
 [OK]
-Ок
+OK
 [CANCEL]
-Отмена
+Cancel
 [PREPEOCESSOR_FAILED]
-Ошибка препроцессора:
+Preprocessor error:
 
 %s
 [PREPEOCESSOR_LAUNCH_FAILED]
-Не получилось запустить препроцессор.
+Could not start the preprocessor.
 [EXPORT_FILE]
-Экспортироать файл
+Export file
 [SAVE_FILE]
-Сохранить файл
+Save file
 [MENU_YDWE]
-&KFWE v1.7.0
+&KFWE v1.8.0
 [MENU_CONIFG]
-&Конфиг
+&Config
 [MENU_LAUNCH_WAR3]
-Запустить &Warcraft3
+Launch &Warcraft3
 [MENU_SHOW_LAST_COMPILE_RESULT]
-Показать последний результат компиляции
+Show the last compile result
 [MENU_SHOW_JASSHELPER_VERSION]
-Показать версию JassHelper
+Show JassHelper version
 [MENU_SHOW_CJASS_VERSION]
-Показать версию cJass
+Show cJass version
 [MENU_OPEN_OFFICIAL_SITE]
-Открыть Discord сервер KFWE
+Open the KFWE Discord server
 [MENU_CREDITS]
-Благодарности
+Credits
 [NEW_OBJECT_ID]
-Новый ID объекта
+New object ID
 [INPUT_OBJECT_ID]
-Введите новый ID объекта, или отмените чтобы использовать стандартный.
+Enter a new object ID, or cancel to use the default one.
 [ERROR_OBJECT_ID]
-ID должен содержать 4 символа. Нельзя использовать символы, которые не указаны в ASCII. 
+The ID must be 4 characters long. Only ASCII characters are allowed.
 [EXISTS_OBJECT_ID]
-Вы ввели ID который уже существует.
+This ID already exists.
 [REMOVE_MAP_READONLY]
-Удалять ли атрибут «только для чтения» из "%s"?
+Remove the read-only attribute from "%s"?
 [DELETE_DANGER_DIR]
-KFWE обнаружил, что существует каталог с именем "%s" в каталоге установки Warcraft 3. Это может помешать работе KFWE. Вы хотите удалить его?
+KFWE found a folder named "%s" in the Warcraft 3 folder. It may interfere with KFWE. Delete it?
 [ERROR_WAR3_VERSION]
-KFWE обнаружил, что ваш game.dll и war3patch.mpq не соответствуют. Это может быть вызвано так называемым «Конвертером версий Warcraft». Эта ситуация приведет к сбою при сохранении и тестировании карт. Настоятельно рекомендуется использовать официальное исправление, предоставленное Blizzard.
+KFWE found that your game.dll and war3patch.mpq do not match. This is usually caused by a “Warcraft version switcher”. Saving and testing maps will fail. Use the official Blizzard patch instead.
 [USE_DEFAULT]
-Стандартный
+Default
 [UNSUPPORTED_WAR3_VERSION]
-Warcraft %d.%d не поддерживается.
+Warcraft %d.%d is not supported.
 [PARSE_UNKNOWN_UI]
-Эта карта содержит GUI функции, которых нет в этой версии KFWE. Однако KFWE может имитировать эти функции, что позволит вам открыть карту, но функции не будут рабочими и чтобы сохранить карту вам придется удалить/заменить их.
-Добавленные функции будут находиться в папке «unknownui».
-Вы хотите продолжить? (Перезапустит KFWE)
+This map uses GUI functions that this KFWE version does not have. KFWE can add placeholders so the map opens, but they will not work, and you will have to remove or replace them to save the map.
+The placeholders go to the “unknownui” folder.
+Continue? (KFWE will restart)
 [UNSUPORTED_SAVE_TYPE]
-Сохранение как %s не поддерживается.
+Saving as %s is not supported.

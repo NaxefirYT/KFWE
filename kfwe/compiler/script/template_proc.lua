@@ -23,11 +23,18 @@ function template:compile(op)
     }
     if not process then
         log.error("Template process did not start.")
-        gui.error_message(nil, "Не удалось запустить компиляцию шаблонов (bin\\lua.exe).")
+        gui.error_message(nil, TR("Не удалось запустить компиляцию шаблонов (bin\\lua.exe)."))
         return false
     end
-    process.stdout:read 'a'
-    local err = process.stderr:read 'a'
+    if process.stdout then
+        process.stdout:read 'a'
+        process.stdout:close()
+    end
+    local err = ''
+    if process.stderr then
+        err = process.stderr:read 'a' or ''
+        process.stderr:close()
+    end
     local exit_code = process:wait()
     local chunk = loadfile(result_path:string())
     local res = chunk and chunk()
@@ -43,9 +50,15 @@ function template:compile(op)
     if res.report then
         gui.message(nil, res.report)
     end
+    local tools = plugin.loaders.KFTools
     for _, imp in ipairs(res.imports) do
         log.info('Import customdata', imp[1], imp[2])
-        we.import_customdata(imp[1], fs.path(imp[2]))
+        local r = tools and tools.import_customdata and tools.import_customdata(imp[1], imp[2]) or -1
+        if r < 0 then
+            we.import_customdata(imp[1], fs.path(imp[2]))
+        elseif r == 0 then
+            log.error('Import customdata failed', imp[1], imp[2])
+        end
     end
     if res.ok then
         log.debug("Template compilation succeeded.")

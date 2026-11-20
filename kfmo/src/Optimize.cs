@@ -38,21 +38,21 @@ static class Optimize
         var files = ReadAll(o, out byte[]? hm3w, out int unnamed);
         if (unnamed > 0)
         {
-            Console.WriteLine($"В карте {unnamed} файлов без имени (нет в listfile). Чтобы их не потерять, укажите --names <исходная карта с listfile>.");
+            Console.WriteLine(KfLang.F("В карте {0} файлов без имени (нет в listfile). Чтобы их не потерять, укажите --names <исходная карта с listfile>.", unnamed));
             return 2;
         }
         long inSize = Directory.Exists(o.Input) ? files.Sum(f => (long)f.Data.Length) : new FileInfo(o.Input).Length;
-        Console.WriteLine($"Вход: {Path.GetFileName(o.Input)} {inSize / 1048576.0:F2} МБ, файлов {files.Count}, чтение {total.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("Вход: {0} {1:F2} МБ, файлов {2}, чтение {3:F1} c", Path.GetFileName(o.Input), inSize / 1048576.0, files.Count, total.Elapsed.TotalSeconds));
 
         foreach (var (rn, rp) in o.Replace)
         {
             files.RemoveAll(f => f.Name.Equals(rn, StringComparison.OrdinalIgnoreCase));
             files.Add((rn, File.ReadAllBytes(rp)));
-            Console.WriteLine($"  подменён {rn}");
+            Console.WriteLine(KfLang.F("  подменён {0}", rn));
         }
 
         if (o.NoPreview && files.RemoveAll(f => f.Name.Equals("war3mapPreview.tga", StringComparison.OrdinalIgnoreCase)) > 0)
-            Console.WriteLine("  превью карты удалено");
+            Console.WriteLine(KfLang.T("  превью карты удалено"));
 
         if (o.StripEditor)
         {
@@ -62,19 +62,19 @@ static class Optimize
             bool hasScript = files.Any(f => f.Name.Equals("war3map.j", StringComparison.OrdinalIgnoreCase) || f.Name.Equals(@"scripts\war3map.j", StringComparison.OrdinalIgnoreCase));
             if (hasScript && SlkConv.W3iFlags(w3i) is int fl && (fl & 4) == 0)
                 files.RemoveAll(f => f.Name.Equals("war3mapUnits.doo", StringComparison.OrdinalIgnoreCase));
-            Console.WriteLine($"  данные только для редактора: удалено {before - files.Count} файлов");
+            Console.WriteLine(KfLang.F("  данные только для редактора: удалено {0} файлов", before - files.Count));
         }
 
         if (o.Slk && !RunSlk(files, o) && o.RequireSlk)
         {
-            Console.WriteLine("SLK не сделан, карта для теста не собрана");
+            Console.WriteLine(KfLang.T("SLK не сделан, карта для теста не собрана"));
             return 5;
         }
 
         var sw0 = Stopwatch.StartNew();
         var sr = Strings.Run(files);
         if (sr != null)
-            Console.WriteLine($"  строки: встроено {sr.Inlined} ссылок в данные объектов, wts {sr.Before} -> {sr.After} строк ({sr.BytesBefore / 1024} -> {sr.BytesAfter / 1024} КБ), {sw0.Elapsed.TotalSeconds:F1} c");
+            Console.WriteLine(KfLang.F("  строки: встроено {0} ссылок в данные объектов, wts {1} -> {2} строк ({3} -> {4} КБ), {5:F1} c", sr.Inlined, sr.Before, sr.After, sr.BytesBefore / 1024, sr.BytesAfter / 1024, sw0.Elapsed.TotalSeconds));
 
         if (o.JassMin) RunJassMin(files);
 
@@ -86,7 +86,7 @@ static class Optimize
             var data = (byte[])files[i].Data.Clone();
             if (MdxClean.Clean(data, out int z)) { files[i] = (files[i].Name, data); Interlocked.Increment(ref mdxCleaned); Interlocked.Add(ref mdxBytes, z); }
         });
-        Console.WriteLine($"  модели: зачищено {mdxCleaned} файлов ({mdxBytes / 1024} КБ мусора в строковых полях), {sw.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("  модели: зачищено {0} файлов ({1} КБ мусора в строковых полях), {2:F1} c", mdxCleaned, mdxBytes / 1024, sw.Elapsed.TotalSeconds));
         if (o.KeyReduce)
         {
             var ks = new MdxKeys.Stats(); int kf = 0;
@@ -96,7 +96,7 @@ static class Optimize
                 var r = MdxKeys.Apply(files[i].Data, ks);
                 if (r != null) { files[i] = (files[i].Name, r); kf++; }
             }
-            Console.WriteLine($"  модели: лишние ключи анимации: {ks.Before} -> {ks.After} ({kf} моделей)");
+            Console.WriteLine(KfLang.F("  модели: лишние ключи анимации: {0} -> {1} ({2} моделей)", ks.Before, ks.After, kf));
         }
         if (o.Quant != null)
         {
@@ -107,7 +107,7 @@ static class Optimize
                 var data = (byte[])files[i].Data.Clone();
                 if (MdxQuant.Apply(data, o.Quant, st)) { files[i] = (files[i].Name, data); ok++; } else fail++;
             }
-            Console.WriteLine($"  модели: округление (нормали {o.Quant.Normals}, поворот {o.Quant.Rotation}, перемещение {o.Quant.Translation}, масштаб {o.Quant.Scaling} бит): {ok} моделей, нормалей {st.Normals}, ключей {st.Keys}, не распознано {fail}");
+            Console.WriteLine(KfLang.F("  модели: округление (нормали {0}, поворот {1}, перемещение {2}, масштаб {3} бит): {4} моделей, нормалей {5}, ключей {6}, не распознано {7}", o.Quant.Normals, o.Quant.Rotation, o.Quant.Translation, o.Quant.Scaling, ok, st.Normals, st.Keys, fail));
         }
 
         sw.Restart();
@@ -138,22 +138,24 @@ static class Optimize
                 }
                 else { Interlocked.Increment(ref texSkipped); Interlocked.Add(ref texAfter, src.Length); }
             });
-            string q = o.TexQuality > 0 && psnr.Count > 0 ? $", PSNR среднее {psnr.Average():F1} дБ, минимум {psnr.Min():F1}" : ", без потерь (проверено попиксельно)";
-            Console.WriteLine($"  текстуры: {texBefore / 1048576.0:F2} -> {texAfter / 1048576.0:F2} МБ, изменено {texChanged}, оставлено {texSkipped}{q}{(o.IconOneMip ? $", иконок без мипмапов {icons}" : "")}{(o.TexMax > 0 ? $", уменьшено до {o.TexMax}px: {shrunk}" : "")}, {sw.Elapsed.TotalSeconds:F1} c");
+            string q = o.TexQuality > 0 && psnr.Count > 0 ? KfLang.F(", PSNR среднее {0:F1} дБ, минимум {1:F1}", psnr.Average(), psnr.Min()) : KfLang.T(", без потерь (проверено попиксельно)");
+            Console.WriteLine(KfLang.F("  текстуры: {0:F2} -> {1:F2} МБ, изменено {2}, оставлено {3}", texBefore / 1048576.0, texAfter / 1048576.0, texChanged, texSkipped) + q
+                + (o.IconOneMip ? KfLang.F(", иконок без мипмапов {0}", icons) : "") + (o.TexMax > 0 ? KfLang.F(", уменьшено до {0}px: {1}", o.TexMax, shrunk) : "")
+                + KfLang.F(", {0:F1} с", sw.Elapsed.TotalSeconds));
         }
 
         sw.Restart();
         var bytes = MpqWriter.Write(files, hm3w, o.Level, o.Listfile, o.SectorShift);
         File.WriteAllBytes(o.Output, bytes);
-        Console.WriteLine($"  упаковка (libdeflate {o.Level}): одинаковых файлов хранится один раз: {MpqWriter.Deduplicated}, {sw.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("  упаковка (libdeflate {0}): одинаковых файлов хранится один раз: {1}, {2:F1} c", o.Level, MpqWriter.Deduplicated, sw.Elapsed.TotalSeconds));
 
         sw.Restart();
         int bad = Verify(o.Output, files);
-        Console.WriteLine($"  проверка: {(bad == 0 ? "все файлы читаются и совпадают" : $"ОШИБОК: {bad}")}, {sw.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("  проверка: {0}, {1:F1} c", bad == 0 ? KfLang.T("все файлы читаются и совпадают") : KfLang.F("ОШИБОК: {0}", bad), sw.Elapsed.TotalSeconds));
         if (bad != 0) { File.Delete(o.Output); return 3; }
 
         long outSize = new FileInfo(o.Output).Length;
-        Console.WriteLine($"Выход: {Path.GetFileName(o.Output)} {outSize / 1048576.0:F2} МБ ({100.0 * (inSize - outSize) / inSize:F1}% меньше), всего {total.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("Выход: {0} {1:F2} МБ ({2:F1}% меньше), всего {3:F1} c", Path.GetFileName(o.Output), outSize / 1048576.0, 100.0 * (inSize - outSize) / inSize, total.Elapsed.TotalSeconds));
         return 0;
     }
 
@@ -163,18 +165,18 @@ static class Optimize
         byte[]? Get(string n) => files.FirstOrDefault(f => f.Name.Equals(n, StringComparison.OrdinalIgnoreCase)).Data;
         if (files.Any(f => f.Name.EndsWith(".slk", StringComparison.OrdinalIgnoreCase) && f.Name.StartsWith("units", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("  объекты: в карте уже есть SLK-таблицы, конвертация пропущена");
+            Console.WriteLine(KfLang.T("  объекты: в карте уже есть SLK-таблицы, конвертация пропущена"));
             return true;
         }
         GameFiles g;
         try { g = new GameFiles(GameFiles.DefaultDir()); }
-        catch (Exception ex) { Console.WriteLine("  объекты: не найдена игра, SLK пропущен (" + ex.Message + ")"); return false; }
+        catch (Exception ex) { Console.WriteLine(KfLang.T("  объекты: не найдена игра, SLK пропущен (") + ex.Message + ")"); return false; }
         using (g)
         {
-            foreach (var s in g.Skipped) Console.WriteLine("  игра: архив не читается, пропущен: " + s);
+            foreach (var s in g.Skipped) Console.WriteLine(KfLang.T("  игра: архив не читается, пропущен: ") + s);
             SlkConv conv;
             try { conv = SlkConv.FromGame(g); }
-            catch (Exception ex) { Console.WriteLine("  объекты: данные игры неполные, SLK пропущен (" + ex.Message + ")"); return false; }
+            catch (Exception ex) { Console.WriteLine(KfLang.T("  объекты: данные игры неполные, SLK пропущен (") + ex.Message + ")"); return false; }
             conv.RemoveUnused = !o.KeepUnused;
             conv.ReforgedSkins = o.ReforgedSkins;
             var wtsBytes = Get("war3map.wts");
@@ -193,8 +195,8 @@ static class Optimize
                 if (wi >= 0) files[wi] = (files[wi].Name, nw); else files.Add(("war3map.wts", nw));
             }
             long slkBytes = r.Write.Where(p => !p.Key.StartsWith("war3map", StringComparison.OrdinalIgnoreCase)).Sum(p => (long)p.Value.Length);
-            Console.WriteLine($"  объекты -> SLK: правки {before / 1024} -> {after / 1024} КБ, таблицы+TXT {slkBytes / 1024} КБ, выкинуто неиспользуемых {conv.Removed} из {conv.Total}, {sw.Elapsed.TotalSeconds:F1} c");
-            if (conv.UnknownParent > 0) Console.WriteLine($"    объектов с неизвестным родителем (оставлены как есть): {conv.UnknownParent}");
+            Console.WriteLine(KfLang.F("  объекты -> SLK: правки {0} -> {1} КБ, таблицы+TXT {2} КБ, выкинуто неиспользуемых {3} из {4}, {5:F1} c", before / 1024, after / 1024, slkBytes / 1024, conv.Removed, conv.Total, sw.Elapsed.TotalSeconds));
+            if (conv.UnknownParent > 0) Console.WriteLine(KfLang.F("    объектов с неизвестным родителем (оставлены как есть): {0}", conv.UnknownParent));
         }
         return true;
     }
@@ -212,14 +214,15 @@ static class Optimize
             if (c != null && b != null) { common = Encoding.UTF8.GetString(c); bj = Encoding.UTF8.GetString(b); }
         }
         catch { }
-        if (common == null || bj == null) { Console.WriteLine("  скрипт: нет common.j/Blizzard.j игры, сжатие пропущено"); return; }
+        if (common == null || bj == null) { Console.WriteLine(KfLang.T("  скрипт: нет common.j/Blizzard.j игры, сжатие пропущено")); return; }
         var src = Encoding.UTF8.GetString(files[ji].Data);
         var min = JassMin.Minify(src, JassMin.Words(common).Concat(JassMin.Words(bj)), out var r);
         if (min == null) return;
         var check = Pjass(common, bj, min);
-        if (check == false) { Console.WriteLine("  скрипт: сжатый вариант не прошёл pjass, оставлен исходный"); return; }
+        if (check == false) { Console.WriteLine(KfLang.T("  скрипт: сжатый вариант не прошёл pjass, оставлен исходный")); return; }
         var bytes = Encoding.UTF8.GetBytes(min);
-        Console.WriteLine($"  скрипт: {files[ji].Data.Length / 1024} -> {bytes.Length / 1024} КБ, переименовано функций {r.Functions}, глобальных {r.Globals}, локальных {r.Locals}{(check == null ? " (pjass не найден, без проверки)" : ", pjass: ок")}, {sw.Elapsed.TotalSeconds:F1} c");
+        Console.WriteLine(KfLang.F("  скрипт: {0} -> {1} КБ, переименовано функций {2}, глобальных {3}, локальных {4}", files[ji].Data.Length / 1024, bytes.Length / 1024, r.Functions, r.Globals, r.Locals)
+            + (check == null ? KfLang.T(" (pjass не найден, без проверки)") : KfLang.T(", pjass: ок")) + KfLang.F(", {0:F1} с", sw.Elapsed.TotalSeconds));
         files[ji] = (files[ji].Name, bytes);
     }
 
@@ -280,15 +283,15 @@ static class Optimize
     public static int Pack(string input, string output, int level)
     {
         var sw = Stopwatch.StartNew();
-        if (!Directory.Exists(input)) { Console.WriteLine("нет папки " + input); return 1; }
+        if (!Directory.Exists(input)) { Console.WriteLine(KfLang.T("нет папки ") + input); return 1; }
         var files = ReadAll(new Options { Input = input }, out _, out _);
         var hm3w = MapHeader(files);
-        if (hm3w == null) { Console.WriteLine("не разобран war3map.w3i"); return 4; }
+        if (hm3w == null) { Console.WriteLine(KfLang.T("не разобран war3map.w3i")); return 4; }
         var bytes = MpqWriter.Write(files, hm3w, level, true, 7, dedup: false);
         File.WriteAllBytes(output, bytes);
         int bad = Verify(output, files);
-        if (bad != 0) { File.Delete(output); Console.WriteLine($"проверка: ОШИБОК {bad}"); return 3; }
-        Console.WriteLine($"упаковано {files.Count} файлов, {files.Sum(f => (long)f.Data.Length) / 1048576.0:F2} -> {bytes.Length / 1048576.0:F2} МБ, {sw.Elapsed.TotalSeconds:F1} c");
+        if (bad != 0) { File.Delete(output); Console.WriteLine(KfLang.F("проверка: ОШИБОК {0}", bad)); return 3; }
+        Console.WriteLine(KfLang.F("упаковано {0} файлов, {1:F2} -> {2:F2} МБ, {3:F1} c", files.Count, files.Sum(f => (long)f.Data.Length) / 1048576.0, bytes.Length / 1048576.0, sw.Elapsed.TotalSeconds));
         return 0;
     }
 
@@ -393,9 +396,9 @@ static class Optimize
                 using var s = a.OpenFile(name);
                 using var ms = new MemoryStream();
                 s.CopyTo(ms);
-                if (!ms.ToArray().AsSpan().SequenceEqual(data)) { bad++; Console.WriteLine($"    не совпадает: {name}"); }
+                if (!ms.ToArray().AsSpan().SequenceEqual(data)) { bad++; Console.WriteLine(KfLang.F("    не совпадает: {0}", name)); }
             }
-            catch (Exception ex) { bad++; Console.WriteLine($"    не читается: {name}: {ex.Message}"); }
+            catch (Exception ex) { bad++; Console.WriteLine(KfLang.F("    не читается: {0}: {1}", name, ex.Message)); }
         }
         return bad;
     }

@@ -53,12 +53,30 @@ namespace YDColorizer
         {
             if (IsConfigExists() == true)
             {
-                if (WinApi.Ini.GetInt(GetConfigPath(), "Application", "RememberSize") != 0)
+                if (WinApi.Ini.GetInt(GetConfigPath(), "Application", "RememberSize") != 0 && form.WindowState == FormWindowState.Normal)
                 {
                     WinApi.Ini.SetInt(GetConfigPath(), "Application", "Width", form.Width);
                     WinApi.Ini.SetInt(GetConfigPath(), "Application", "Height", form.Height);
+                    WinApi.Ini.SetInt(GetConfigPath(), "Application", "Left", form.Left);
+                    WinApi.Ini.SetInt(GetConfigPath(), "Application", "Top", form.Top);
                 }
             }
+        }
+
+        public static bool LoadDialogPosition(Form form)
+        {
+            if (IsConfigExists() == false || WinApi.Ini.GetInt(GetConfigPath(), "Application", "RememberSize") == 0)
+            {
+                return false;
+            }
+            int x, y;
+            if (int.TryParse(WinApi.Ini.GetString(GetConfigPath(), "Application", "Left"), out x) == false
+                || int.TryParse(WinApi.Ini.GetString(GetConfigPath(), "Application", "Top"), out y) == false)
+            {
+                return false;
+            }
+            form.Location = new Point(x, y);
+            return true;
         }
 
         /// <summary>

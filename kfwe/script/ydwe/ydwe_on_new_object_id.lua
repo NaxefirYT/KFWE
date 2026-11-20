@@ -83,18 +83,18 @@ function event.EVENT_NEW_OBJECT_ID(event_data)
 		return default_id
 	end
 	local dialog = require 'gui_newobjectid'
-	local res = dialog(from_objectid(default_id), type_names[object_type] or 'Объект', function(r)
+	local res = dialog(from_objectid(default_id), TR(type_names[object_type] or 'Объект'), function(r)
 		if #r ~= 4 then
-			return 'Нужно ровно 4 символа'
+			return TR('Нужно ровно 4 символа')
 		end
 		if not r:match('^[%w_]+$') then
-			return 'Только латиница, цифры и _'
+			return TR('Только латиница, цифры и _')
 		end
 		if object:custom_has(object_type, r) then
-			return r .. ' занят стандартным объектом'
+			return r .. TR(' занят стандартным объектом')
 		end
 		if object:original_has(event_data.class, r) then
-			return r .. ' уже есть на карте'
+			return r .. TR(' уже есть на карте')
 		end
 	end)
 	return to_objectid(res)

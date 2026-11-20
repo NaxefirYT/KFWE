@@ -3,6 +3,7 @@ local main_window_handle = nil
 
 -- Start configuration dialog
 local function launch_config()
+	pcall(kflang.sync)
 	sys.spawn {
 		(fs.ydwe_path() / "bin" / "YDWEConfig.exe"):string(),
 		cwd = fs.ydwe_path(),
@@ -17,6 +18,22 @@ local function launch_warcraft3()
 		"-war3",
 		cwd = fs.ydwe_path(),
 	}
+end
+
+local function close_warcraft3()
+	local ffi = require 'ffi'
+	pcall(ffi.cdef, [[
+		void* OpenEventA(unsigned long dwDesiredAccess, int bInheritHandle, const char* lpName);
+		int SetEvent(void* hEvent);
+		int ResetEvent(void* hEvent);
+		int CloseHandle(void* hObject);
+	]])
+	local ev = ffi.C.OpenEventA(0x0002, 0, 'KFWE_close_war3')
+	if ev == nil then return end
+	ffi.C.SetEvent(ev)
+	require 'ffi.sleep' (500)
+	ffi.C.ResetEvent(ev)
+	ffi.C.CloseHandle(ev)
 end
 
 -- 打开官网
@@ -40,12 +57,13 @@ function event.EVENT_INIT_MENU(event_data)
 	local menu = gui.menu(event_data.main_menu_handle, LNG.MENU_YDWE)
 	menu:add(LNG.MENU_CONIFG, launch_config)
 	menu:add(LNG.MENU_LAUNCH_WAR3, launch_warcraft3)
+	menu:add(TR('Закрыть все окна WC3'), close_warcraft3)
 	require('playas').attach(menu, gui.on_command)
 	local tools = plugin.loaders.KFTools
 	if tools then
-		menu:add('Копировать координаты\tCtrl+Shift+X', tools.copy)
-		menu:add('Проверить обновления', tools.check_update)
-		menu:add('Что нового', tools.changelog)
+		menu:add(TR('Копировать координаты\tCtrl+Shift+X'), tools.copy)
+		menu:add(TR('Проверить обновления'), tools.check_update)
+		menu:add(TR('Что нового'), tools.changelog)
 	end
 	menu:add(LNG.MENU_OPEN_OFFICIAL_SITE, open_offical_site)
 

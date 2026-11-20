@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../common/src/kflang.h"
 
 typedef struct { UINT32 ver; void *cb; BOOL nothread, nocodecs; } GdipInput;
 typedef void GpGraphics, GpBrush, GpPath, GpPen, GpImage, GpFontFamily, GpFont, GpStringFormat;
@@ -164,8 +165,8 @@ static void render_base(void)
 
     float tx = mx + ms + px(22);
     text(L"KFWE", L"Segoe UI", px(46), 1, 0xFFFFFFFF, (RectF){ tx, my - px(10), px(330), px(58) }, 0);
-    text(L"Редактор Warcraft 3 нового поколения", L"Segoe UI", px(15), 0, 0xFF9CA1AF, (RectF){ tx + px(2), my + px(44), px(360), px(24) }, 0);
-    text(L"Загрузка редактора", L"Segoe UI", px(13), 0, 0xFF8B90A0, (RectF){ cx + px(44), cy + ch - px(70), px(260), px(22) }, 0);
+    text(TR(L"Редактор Warcraft 3 нового поколения"), L"Segoe UI", px(15), 0, 0xFF9CA1AF, (RectF){ tx + px(2), my + px(44), px(360), px(24) }, 0);
+    text(TR(L"Загрузка редактора"), L"Segoe UI", px(13), 0, 0xFF8B90A0, (RectF){ cx + px(44), cy + ch - px(70), px(260), px(22) }, 0);
     if (g_version[0])
         text(g_version, L"Segoe UI", px(13), 0, 0xFF6B7080, (RectF){ cx + cw - px(304), cy + ch - px(70), px(260), px(22) }, 2);
     memcpy(g_base, g_bits, (size_t)W * H * 4);

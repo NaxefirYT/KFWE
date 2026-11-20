@@ -16,7 +16,7 @@ sealed class GameFiles : IDisposable
             try { archives.Add(MpqArchive.Open(p, false)); }
             catch (Exception ex) { Skipped.Add(name + ": " + ex.Message); }
         }
-        if (archives.Count == 0) throw new FileNotFoundException("Не найдены MPQ игры в " + war3Dir + (Skipped.Count > 0 ? " (" + string.Join("; ", Skipped) + ")" : ""));
+        if (archives.Count == 0) throw new FileNotFoundException(KfLang.T("Не найдены MPQ игры в ") + war3Dir + (Skipped.Count > 0 ? " (" + string.Join("; ", Skipped) + ")" : ""));
     }
 
     public byte[]? Read(string name)

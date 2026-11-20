@@ -8,6 +8,7 @@ static uint8_t *g_game;
 static char g_log[MAX_PATH];
 static HMODULE g_self;
 static int g_playas = -1;
+static int g_auto;
 
 static void logf(const char *fmt, ...)
 {
@@ -19,12 +20,20 @@ static void logf(const char *fmt, ...)
 
 static void __cdecl fix_slots(uint8_t *setup, const int32_t *slot_player)
 {
-    int target = g_playas;
-    g_playas = -1;
-    if (target < 1 || target > 11 || !setup || !slot_player) return;
+    if (!setup || !slot_player) return;
     int n = *(int *)(setup + 4);
     uint8_t *s = *(uint8_t **)(setup + 8);
     if (n <= 0 || n > 12 || !s) return;
+    if (g_auto) {
+        for (int i = 0; i < n; i++) {
+            uint8_t *r = s + i * 9;
+            if (r[2] == 2 && r[5] < 12 && slot_player[i] >= 0 && slot_player[i] < 12) r[5] = (uint8_t)slot_player[i];
+        }
+        return;
+    }
+    int target = g_playas;
+    g_playas = -1;
+    if (target < 1 || target > 11) return;
     int red = -1, dst = -1;
     for (int i = 0; i < n; i++) {
         uint8_t *r = s + i * 9;
@@ -75,7 +84,6 @@ static menu_fn g_menu;
 static WNDPROC g_wndproc;
 static DWORD g_last_l;
 static int g_drop_l;
-static int g_auto;
 
 static void panel_speed(uint8_t *panel)
 {
@@ -113,6 +121,21 @@ static int install_fast_menu(void)
     return 1;
 }
 
+#define JOIN_GAP_MS 4000
+static volatile LONG *g_join_tick;
+static int g_drop_j;
+
+static int join_allowed(void)
+{
+    if (!g_join_tick) return 1;
+    for (;;) {
+        LONG last = *g_join_tick;
+        DWORD now = GetTickCount();
+        if (last && now - (DWORD)last < JOIN_GAP_MS) return 0;
+        if (InterlockedCompareExchange(g_join_tick, (LONG)now, last) == last) return 1;
+    }
+}
+
 static LRESULT CALLBACK game_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
     if ((m == WM_KEYDOWN || m == WM_KEYUP) && w == 'L' && InSendMessage()) {
@@ -122,6 +145,10 @@ static LRESULT CALLBACK game_wndproc(HWND h, UINT m, WPARAM w, LPARAM l)
             if (!g_drop_l) g_last_l = now;
         }
         if (g_drop_l) return 0;
+    }
+    if ((m == WM_KEYDOWN || m == WM_KEYUP) && w == 'J' && InSendMessage()) {
+        if (m == WM_KEYDOWN) g_drop_j = !join_allowed();
+        if (g_drop_j) return 0;
     }
     return CallWindowProcA(g_wndproc, h, m, w, l);
 }
@@ -156,16 +183,27 @@ static DWORD WINAPI waiter(LPVOID p)
     if (!g) { logf("game.dll не загрузилась"); return 0; }
     g_game = (uint8_t *)g;
     if (g_auto) {
-        int menu = install_fast_menu();
-        logf("автовход: меню %d, клавиша %d", menu, install_l_filter());
+        HANDLE map = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(LONG), "KFWE_join_tick");
+        if (map) g_join_tick = (volatile LONG *)MapViewOfFile(map, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LONG));
+        int menu = install_fast_menu(), slots = install();
+        logf("автовход: меню %d, слоты %d, клавиша %d", menu, slots, install_l_filter());
         return 0;
     }
     logf("game.dll по %p, игрок %d, перехват %d", (void *)g, g_playas, install());
     return 0;
 }
 
+static DWORD WINAPI closer(LPVOID ev)
+{
+    WaitForSingleObject((HANDLE)ev, INFINITE);
+    TerminateProcess(GetCurrentProcess(), 0);
+    return 0;
+}
+
 __declspec(dllexport) int Initialize(void)
 {
+    HANDLE ev = CreateEventA(NULL, TRUE, FALSE, "KFWE_close_war3");
+    if (ev) CloseHandle(CreateThread(NULL, 0, closer, ev, 0, NULL));
     GetModuleFileNameA(NULL, g_log, MAX_PATH);
     char *s = strrchr(g_log, '\\'); if (s) strcpy(s + 1, "Logs\\kf_playas.log");
     char cfg[MAX_PATH];

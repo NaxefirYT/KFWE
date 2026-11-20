@@ -16,6 +16,13 @@ def wanted(rel):
     return '.bak' not in parts[-1] and '.old-running' not in parts[-1]
 
 
+def large_address_aware(data):
+    pe = int.from_bytes(data[0x3C:0x40], 'little')
+    assert data[pe:pe + 4] == b'PE\0\0', 'worldedit.exe не PE'
+    flags = int.from_bytes(data[pe + 22:pe + 24], 'little') | 0x20
+    return data[:pe + 22] + flags.to_bytes(2, 'little') + data[pe + 24:]
+
+
 def main():
     src, out = sys.argv[1], sys.argv[2]
     n = 0
@@ -25,9 +32,14 @@ def main():
             for f in sorted(files):
                 full = os.path.join(root, f)
                 rel = os.path.relpath(full, src).replace(os.sep, '/')
-                if wanted(rel):
+                if not wanted(rel):
+                    continue
+                if rel == 'bin/worldedit.exe':
+                    with open(full, 'rb') as fh:
+                        z.writestr(zipfile.ZipInfo.from_file(full, rel), large_address_aware(fh.read()), zipfile.ZIP_DEFLATED, 9)
+                else:
                     z.write(full, rel)
-                    n += 1
+                n += 1
     assert n and 'YDWE.exe' in zipfile.ZipFile(out).namelist(), 'в папке нет YDWE.exe'
     print(n, 'файлов,', os.path.getsize(out) // 1048576, 'МБ')
 

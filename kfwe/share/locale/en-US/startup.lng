@@ -1,0 +1,15 @@
+-- kflang 09345943
+[CHOOSE_WAR3_DIR]
+Choose the Warcraft 3 installation folder.
+[ERROR_DEL_YDDLLFIXER]
+Cannot delete YDDllFixer.dll in the war3 folder.
+[ERROR_WE_EXE]
+Cannot find the World Editor executable in the YDWE/bin folder.
+[ERROR_LAUNCH_WE]
+Failed to launch the World Editor.
+[ERROR_UNKNOWN]
+Unknown error
+[ERROR]
+Error
+[ERROR_YDWE_DIR]
+Invalid YDWE folder.

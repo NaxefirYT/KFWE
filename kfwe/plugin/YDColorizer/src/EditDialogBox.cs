@@ -124,7 +124,10 @@ namespace YDColorizer
 
             #region Initialize Window
             WinApi.Window window = new WinApi.Window(this.hWnd);// 创建原窗口实例
-            this.Location = window.Location;// 设置模拟窗口的位置在原窗口的位置上
+            if (Config.LoadDialogPosition(this) == false)
+            {
+                this.Location = window.Location;// 设置模拟窗口的位置在原窗口的位置上
+            }
 
             if (Config.LoadDialogSize(this) == false)
             {
@@ -154,7 +157,7 @@ namespace YDColorizer
             #region examine'}'
             if (this.txtEdit.Text.Contains("}") == true)// 存在'}'
             {
-                if (MessageBox.Show("Текст после символа }:" + Environment.NewLine + this.txtEdit.Text.Substring(this.txtEdit.Text.IndexOf('}')) + Environment.NewLine + "будет потерян редактором. Всё равно сохранить?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                if (MessageBox.Show(KfLang.T("Текст после символа }:") + Environment.NewLine + this.txtEdit.Text.Substring(this.txtEdit.Text.IndexOf('}')) + Environment.NewLine + KfLang.T("будет потерян редактором. Всё равно сохранить?"), KfLang.T("Внимание"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                 {
                     return;
                 }
@@ -315,18 +318,18 @@ namespace YDColorizer
             if (e.Button == MouseButtons.Right)
             {
                 ContextMenu cm = new ContextMenu();
-                cm.MenuItems.Add(new MenuItem("Отменить", new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtEdit.Undo(); })) { Enabled = (this.txtEdit.undoStack.Count > 0) });
-                cm.MenuItems.Add(new MenuItem("Вырезать", new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.Cut(); })) { Enabled = (this.txtPreview.SelectionLength > 0) });
-                cm.MenuItems.Add(new MenuItem("Копировать", new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.Copy(); })) { Enabled = (this.txtPreview.SelectionLength > 0) });
-                cm.MenuItems.Add(new MenuItem("Вставить", new EventHandler((object object_sender, EventArgs EventArgs_e) =>
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Отменить"), new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtEdit.Undo(); })) { Enabled = (this.txtEdit.undoStack.Count > 0) });
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Вырезать"), new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.Cut(); })) { Enabled = (this.txtPreview.SelectionLength > 0) });
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Копировать"), new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.Copy(); })) { Enabled = (this.txtPreview.SelectionLength > 0) });
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Вставить"), new EventHandler((object object_sender, EventArgs EventArgs_e) =>
                 {
                     this.txtPreview.lockTextChange = true;
                     this.txtPreview.Paste();
                     TextConvert.ConvertToEditTextBox(this.txtPreview, this.txtEdit);
                     this.txtPreview.lockTextChange = false;
                 })));
-                cm.MenuItems.Add(new MenuItem("Удалить", new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.SelectedText = string.Empty; })) { Enabled = (this.txtPreview.SelectionLength > 0) });
-                cm.MenuItems.Add(new MenuItem("Выделить всё", new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.SelectAll(); })));
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Удалить"), new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.SelectedText = string.Empty; })) { Enabled = (this.txtPreview.SelectionLength > 0) });
+                cm.MenuItems.Add(new MenuItem(KfLang.T("Выделить всё"), new EventHandler((object object_sender, EventArgs EventArgs_e) => { this.txtPreview.SelectAll(); })));
                 cm.Show(this.txtPreview, e.Location);
             }
         }

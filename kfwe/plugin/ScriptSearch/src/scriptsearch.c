@@ -2,8 +2,10 @@
 #include <commctrl.h>
 #include <dwmapi.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../common/src/kflang.h"
 
 #define C_BG RGB(0x17, 0x18, 0x1C)
 #define C_PANEL RGB(0x1E, 0x1F, 0x24)
@@ -46,6 +48,7 @@
 #define SCI_SETTARGETSTART 2190
 #define SCI_SETTARGETEND 2192
 #define SCI_REPLACETARGET 2194
+#define SCI_LINEDELETE 2338
 
 #define ID_EDIT 101
 #define ID_LIST 102
@@ -55,6 +58,8 @@
 #define ID_REGEX 106
 #define ID_REPLACE 107
 #define ID_REPLACE_ALL 108
+#define ID_REPLACE_ONE 110
+#define ID_SCOPE 111
 #define ID_TIMER 1
 #define ID_JUMP_TIMER 2
 #define ID_SELECT_TIMER 3
@@ -77,6 +82,7 @@ typedef struct {
     int trig;
     int count;
     int collapsed;
+    int custom;
     HTREEITEM item;
 } Doc;
 
@@ -95,7 +101,7 @@ static HHOOK g_kb;
 static DWORD g_tid;
 static void *g_app;
 static void *(__attribute__((fastcall)) *g_get_doc)(void *);
-static HWND g_win, g_edit, g_list, g_preview, g_case, g_word, g_regex, g_repl, g_repl_btn;
+static HWND g_win, g_edit, g_list, g_preview, g_case, g_word, g_regex, g_repl, g_repl_btn, g_repl_one, g_scope_btn[3];
 static WNDPROC g_edit_proc;
 static HFONT g_ui, g_mono;
 static HBRUSH g_bg, g_panel, g_input;
@@ -103,11 +109,14 @@ static Doc *g_docs;
 static int g_ndocs;
 static Hit *g_hits;
 static int g_nhits;
-static int g_case_on, g_word_on, g_rx_on, g_rx_ok = 1;
+static int g_case_on, g_word_on, g_rx_on, g_scope, g_rx_ok = 1;
 static int g_busy;
 static int g_last_doc = -1, g_last_pos = -1;
-static int g_jump_doc = -1, g_jump_pos, g_jump_len, g_jump_tries;
+static int g_jump_doc = -1, g_jump_pos, g_jump_len, g_jump_line, g_jump_col, g_jump_tries;
+static int g_sel_hit = -1, g_bc_doc = -1, g_bc_pos, g_bc_blk;
 static WCHAR g_query[256];
+static WCHAR g_ini[MAX_PATH];
+static int g_max;
 
 static void *__attribute__((fastcall)) get_doc_hook(void *app)
 {
@@ -245,6 +254,40 @@ static HWND main_window(void)
     return h;
 }
 
+static void save_placement(void)
+{
+    WINDOWPLACEMENT wp = { sizeof wp };
+    WCHAR v[64];
+    if (!g_win || !g_ini[0] || !GetWindowPlacement(g_win, &wp))
+        return;
+    RECT r = wp.rcNormalPosition;
+    wsprintfW(v, L"%d %d %d %d %d", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom, IsZoomed(g_win) ? 1 : 0);
+    WritePrivateProfileStringW(L"Window", L"Placement", v, g_ini);
+}
+
+static void load_placement(void)
+{
+    WINDOWPLACEMENT wp = { sizeof wp };
+    WCHAR v[64];
+    int x, y, r, b, max;
+    GetPrivateProfileStringW(L"Window", L"Placement", L"", v, 64, g_ini);
+    if (swscanf(v, L"%d %d %d %d %d", &x, &y, &r, &b, &max) != 5 || r - x < 200 || b - y < 150)
+        return;
+    RECT rc = { x, y, r, b };
+    if (!MonitorFromRect(&rc, MONITOR_DEFAULTTONULL) || !GetWindowPlacement(g_win, &wp))
+        return;
+    wp.rcNormalPosition = rc;
+    wp.showCmd = SW_HIDE;
+    SetWindowPlacement(g_win, &wp);
+    g_max = max;
+}
+
+static void hide_window(void)
+{
+    save_placement();
+    ShowWindow(g_win, SW_HIDE);
+}
+
 #define MAX_COLLAPSED 512
 static WCHAR *g_collapsed[MAX_COLLAPSED];
 static int g_ncollapsed;
@@ -281,7 +324,7 @@ static void free_docs(void)
     g_ndocs = 0;
 }
 
-static void add_doc(int cat, int trig, WCHAR *name, WCHAR *text)
+static void add_doc(int cat, int trig, int custom, WCHAR *name, WCHAR *text)
 {
     Doc *d = &g_docs[g_ndocs++];
     d->name = name;
@@ -292,6 +335,7 @@ static void add_doc(int cat, int trig, WCHAR *name, WCHAR *text)
         CharLowerBuffW(d->lower, d->len);
     d->cat = cat;
     d->trig = trig;
+    d->custom = custom;
     d->item = NULL;
     d->collapsed = name && collapsed_index(name) >= 0;
 }
@@ -329,7 +373,7 @@ static void apply_live_text(void)
         return;
     HTREEITEM cur = TreeView_GetSelection(tree);
     for (int i = 0; i < g_ndocs; i++) {
-        if (g_docs[i].item != cur)
+        if (g_docs[i].item != cur || !g_docs[i].custom)
             continue;
         int n = (int)SendMessageW(sci, SCI_GETLENGTH, 0, 0);
         char *buf = malloc(n + 1);
@@ -353,6 +397,7 @@ static void apply_live_text(void)
 
 static void build_index(void)
 {
+    g_bc_doc = -1;
     free_docs();
     uint8_t *td = trigger_data();
     if (!td)
@@ -365,7 +410,7 @@ static void build_index(void)
     g_docs = calloc(total, sizeof(Doc));
     if (!g_docs)
         return;
-    add_doc(-1, 0, _wcsdup(L"Заголовок карты"), decode(*(char **)(td + TD_HEADER), *(int *)(td + TD_HEADER_SIZE)));
+    add_doc(-1, 0, 1, _wcsdup(TR(L"Заголовок карты")), decode(*(char **)(td + TD_HEADER), *(int *)(td + TD_HEADER_SIZE)));
     for (int c = 0; c < ncat; c++) {
         int n = *(int *)(cats[c] + CAT_TRIG_COUNT);
         uint8_t **trigs = *(uint8_t ***)(cats[c] + CAT_TRIGS);
@@ -377,7 +422,7 @@ static void build_index(void)
             const char *text = size > 0 ? *(const char **)(tr + TRIG_TEXT) : NULL;
             if (size > 0 && text && !text[size - 1])
                 size--;
-            add_doc(c, t, decode(name, (int)strlen(name)), decode(text, size));
+            add_doc(c, t, custom, decode(name, (int)strlen(name)), decode(text, size));
         }
     }
     map_tree();
@@ -953,6 +998,31 @@ static void step(int delta)
         select_row(r);
 }
 
+static int current_doc(int *cat)
+{
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    HTREEITEM cur = tree ? TreeView_GetSelection(tree) : NULL;
+    *cat = -2;
+    for (int i = 0; cur && i < g_ndocs; i++)
+        if (g_docs[i].item == cur) {
+            *cat = g_docs[i].cat;
+            return i;
+        }
+    int ci = 0;
+    for (HTREEITEM c = cur ? TreeView_GetChild(tree, TreeView_GetRoot(tree)) : NULL; c; c = TreeView_GetNextSibling(tree, c), ci++)
+        if (c == cur) {
+            *cat = ci;
+            break;
+        }
+    return -1;
+}
+
+static int in_scope(int i, int doc, int cat)
+{
+    return g_scope == 0 || (g_scope == 1 ? g_docs[i].cat == cat : i == doc);
+}
+
 static void run_search(void)
 {
     WCHAR info[96];
@@ -963,9 +1033,13 @@ static void run_search(void)
     g_qn = lstrlenW(g_qcmp);
     g_rx_ok = !g_rx_on || !g_qn || rx_compile(g_query);
     g_nhits = 0;
-    if (g_qn)
+    g_sel_hit = -1;
+    int cat = -2, doc = g_scope ? current_doc(&cat) : -1;
+    int lost = g_scope == 1 ? cat == -2 : g_scope == 2 && doc < 0;
+    if (g_qn && !lost)
         for (int i = 0; i < g_ndocs && g_nhits < MAX_HITS; i++)
-            search_doc(i);
+            if (in_scope(i, doc, cat))
+                search_doc(i);
     SendMessageW(g_list, WM_SETREDRAW, FALSE, 0);
     rebuild_rows();
     int files = 0, last = -1, lines = 0;
@@ -985,15 +1059,17 @@ static void run_search(void)
     SendMessageW(g_list, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(g_list, NULL, TRUE);
     if (!g_rx_ok)
-        lstrcpyW(info, L"Ошибка в выражении");
+        lstrcpyW(info, TR(L"Ошибка в выражении"));
     else if (!g_ndocs)
-        lstrcpyW(info, L"Нет данных карты");
+        lstrcpyW(info, TR(L"Нет данных карты"));
+    else if (lost)
+        lstrcpyW(info, g_scope == 1 ? TR(L"Не выбрана папка") : TR(L"Не выбран триггер"));
     else if (!g_qn)
-        wsprintfW(info, L"Триггеров: %d", g_ndocs - 1);
+        wsprintfW(info, TR(L"Триггеров: %d"), g_ndocs - 1);
     else if (!g_nhits)
-        lstrcpyW(info, L"Ничего не найдено");
+        lstrcpyW(info, TR(L"Ничего не найдено"));
     else
-        wsprintfW(info, L"%s%d в %d", g_nhits >= MAX_HITS ? L"Больше " : L"", lines, files);
+        wsprintfW(info, TR(L"%s%d в %d"), g_nhits >= MAX_HITS ? TR(L"Больше ") : L"", lines, files);
     lstrcpyW(g_info_text, info);
     InvalidateRect(g_win, &g_info_rect, FALSE);
     show_preview();
@@ -1003,6 +1079,21 @@ static int utf8_offset(const WCHAR *s, int pos)
 {
     return pos ? WideCharToMultiByte(CP_UTF8, 0, s, pos, NULL, 0, NULL, NULL) : 0;
 }
+
+static WCHAR *sci_text(HWND sci)
+{
+    int n = (int)SendMessageW(sci, SCI_GETLENGTH, 0, 0);
+    char *buf = malloc(n + 1);
+    if (!buf)
+        return NULL;
+    SendMessageW(sci, SCI_GETTEXT, n + 1, (LPARAM)buf);
+    WCHAR *w = decode(buf, n);
+    free(buf);
+    return w;
+}
+
+static WCHAR *g_jump_prev;
+static int g_sel_tries;
 
 static int finish_jump(void)
 {
@@ -1014,29 +1105,56 @@ static int finish_jump(void)
     Doc *d = &g_docs[g_jump_doc];
     if (!d->item)
         return 0;
+    HWND sci = find_child(te, L"Scintilla", 0);
+    free(g_jump_prev);
+    g_jump_prev = sci ? sci_text(sci) : NULL;
     TreeView_SelectItem(tree, d->item);
     TreeView_EnsureVisible(tree, d->item);
     SetForegroundWindow(te);
-    SetTimer(g_win, ID_SELECT_TIMER, 80, NULL);
+    g_sel_tries = 60;
+    SetTimer(g_win, ID_SELECT_TIMER, 50, NULL);
     return 1;
 }
 
-static void select_hit(void)
+static int select_hit(void)
 {
     HWND te = trigger_editor();
     HWND sci = te ? find_child(te, L"Scintilla", 0) : NULL;
-    if (sci && g_jump_doc >= 0 && g_jump_pos >= 0) {
-        Doc *d = &g_docs[g_jump_doc];
+    if (g_jump_doc < 0)
+        return 1;
+    Doc *d = &g_docs[g_jump_doc];
+    WCHAR *live = sci && g_jump_pos >= 0 ? sci_text(sci) : NULL;
+    int ready = g_jump_pos < 0 || (live && ((d->text && !wcscmp(live, d->text)) || (live[0] && g_jump_prev && wcscmp(live, g_jump_prev))));
+    if (!ready && --g_sel_tries > 0) {
+        free(live);
+        return 0;
+    }
+    if (sci && ready && g_jump_pos >= 0) {
         g_last_doc = g_jump_doc;
         g_last_pos = g_jump_pos;
-        int a = utf8_offset(d->text, g_jump_pos);
-        int b = utf8_offset(d->text, g_jump_pos + g_jump_len);
-        SendMessageW(sci, SCI_SETSEL, a, b);
-        SendMessageW(sci, SCI_SCROLLCARET, 0, 0);
+        const WCHAR *t = d->text;
+        int pos = g_jump_pos, end = g_jump_pos + g_jump_len;
+        if (live && (!t || wcscmp(live, t))) {
+            Doc tmp = { .text = live, .len = lstrlenW(live) };
+            int ls = line_offset(&tmp, g_jump_line), le = ls;
+            while (le < tmp.len && live[le] != '\r' && live[le] != '\n')
+                le++;
+            pos = ls + g_jump_col < le ? ls + g_jump_col : le;
+            end = pos + g_jump_len < le ? pos + g_jump_len : le;
+            t = live;
+        }
+        if (t) {
+            SendMessageW(sci, SCI_SETSEL, utf8_offset(t, pos), utf8_offset(t, end));
+            SendMessageW(sci, SCI_SCROLLCARET, 0, 0);
+        }
     }
-    if (sci && g_jump_doc >= 0)
+    if (sci)
         SetFocus(sci);
+    free(live);
+    free(g_jump_prev);
+    g_jump_prev = NULL;
     g_jump_doc = -1;
+    return 1;
 }
 
 static void jump(int hide)
@@ -1045,11 +1163,14 @@ static void jump(int hide)
     if (r < 0 || r >= g_nrows)
         return;
     Row *row = &g_rows[r];
+    Hit *h = row->hit >= 0 ? &g_hits[row->hit] : NULL;
     g_jump_doc = row->doc;
-    g_jump_pos = row->hit >= 0 ? g_hits[row->hit].pos : -1;
-    g_jump_len = row->hit >= 0 ? g_hits[row->hit].len : 0;
+    g_jump_pos = h ? h->pos : -1;
+    g_jump_len = h ? h->len : 0;
+    g_jump_line = h ? h->line : 1;
+    g_jump_col = h ? h->pos - h->line_start : 0;
     if (hide)
-        ShowWindow(g_win, SW_HIDE);
+        hide_window();
     if (finish_jump())
         return;
     HWND m = main_window();
@@ -1097,7 +1218,46 @@ static COLORREF word_color(const WCHAR *s, int n)
     return C_TEXT;
 }
 
-static void draw_code(HDC dc, const WCHAR *line, int n, int x, int y, int h, int right, int skip_to_hit)
+static int block_scan(const WCHAR *s, int n, int blk)
+{
+    for (int i = 0; i < n; i++) {
+        WCHAR c = s[i];
+        if (blk) {
+            if (c == '*' && i + 1 < n && s[i + 1] == '/') {
+                blk = 0;
+                i++;
+            }
+        } else if (c == '/' && i + 1 < n && s[i + 1] == '/') {
+            while (i + 1 < n && s[i + 1] != '\r' && s[i + 1] != '\n')
+                i++;
+        } else if (c == '/' && i + 1 < n && s[i + 1] == '*') {
+            blk = 1;
+            i++;
+        } else if (c == '"' || c == '\'') {
+            while (i + 1 < n && s[i + 1] != c && s[i + 1] != '\r' && s[i + 1] != '\n')
+                i += s[i + 1] == '\\' ? 2 : 1;
+            i++;
+        }
+    }
+    return blk;
+}
+
+static int block_at(int di, int pos)
+{
+    Doc *d = &g_docs[di];
+    if (!d->text)
+        return 0;
+    if (di != g_bc_doc || pos < g_bc_pos) {
+        g_bc_doc = di;
+        g_bc_pos = 0;
+        g_bc_blk = 0;
+    }
+    g_bc_blk = block_scan(d->text + g_bc_pos, pos - g_bc_pos, g_bc_blk);
+    g_bc_pos = pos;
+    return g_bc_blk;
+}
+
+static void draw_code(HDC dc, const WCHAR *line, int n, int x, int y, int h, int right, int skip_to_hit, int blk)
 {
     static WCHAR d[1024], low[1024];
     int m = expand_line(line, n, d, 1024);
@@ -1130,7 +1290,14 @@ static void draw_code(HDC dc, const WCHAR *line, int n, int x, int y, int h, int
         int j = i;
         COLORREF color = C_TEXT;
         WCHAR c = d[i];
-        if (c == '/' && d[i + 1] == '/') {
+        if (blk || (c == '/' && d[i + 1] == '*')) {
+            j = blk ? i : i + 2;
+            while (j < m && !(d[j] == '*' && d[j + 1] == '/'))
+                j++;
+            blk = j >= m;
+            j = j < m ? j + 2 : m;
+            color = C_COMMENT;
+        } else if (c == '/' && d[i + 1] == '/') {
             j = m;
             color = C_COMMENT;
         } else if (c == '"' || c == '\'') {
@@ -1186,7 +1353,7 @@ static void draw_row(DRAWITEMSTRUCT *di)
         GetTextExtentPoint32W(dc, d->name, n, &sz);
         put_text(dc, d->name, n, r.left + 28, r.top + 4, r.right - 50, C_TEXT);
         SelectObject(dc, g_ui);
-        int cn = d->count ? wsprintfW(count, L"%d", d->count) : wsprintfW(count, L"имя");
+        int cn = d->count ? wsprintfW(count, L"%d", d->count) : wsprintfW(count, TR(L"имя"));
         put_text(dc, count, cn, r.left + 28 + sz.cx + 10, r.top + 4, r.right - 6, C_FAINT);
         return;
     }
@@ -1195,7 +1362,7 @@ static void draw_row(DRAWITEMSTRUCT *di)
     SelectObject(dc, g_mono);
     int nn = wsprintfW(num, L"%d", h->line);
     put_text(dc, num, nn, r.left + 62 - nn * g_cw, r.top + 3, r.left + 66, C_FAINT);
-    draw_code(dc, d->text + h->line_start, h->line_len, r.left + 76, r.top, ROW_H, r.right - 8, 1);
+    draw_code(dc, d->text + h->line_start, h->line_len, r.left + 76, r.top, ROW_H, r.right - 8, 1, block_at(row->doc, h->line_start));
 }
 
 static void draw_toggle(DRAWITEMSTRUCT *di, int on)
@@ -1225,7 +1392,7 @@ static void paint_preview(HWND h)
     if (g_pv_doc < 0 || g_pv_doc >= g_ndocs) {
         SelectObject(dc, g_ui);
         SetTextColor(dc, C_FAINT);
-        DrawTextW(dc, g_qn ? L"Ничего не найдено" : L"Начните вводить текст", -1, &c, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        DrawTextW(dc, g_qn ? TR(L"Ничего не найдено") : TR(L"Начните вводить текст"), -1, &c, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     } else {
         Doc *d = &g_docs[g_pv_doc];
         RECT head = { 0, 0, c.right, PV_HEAD };
@@ -1237,6 +1404,7 @@ static void paint_preview(HWND h)
         SelectObject(dc, g_mono);
         int y = PV_HEAD + 4, line = g_pv_first;
         int i = line_offset(d, line);
+        int blk = block_at(g_pv_doc, i);
         while (y < c.bottom && (i < d->len || line == g_pv_first)) {
             int e = i;
             while (e < d->len && d->text[e] != '\r' && d->text[e] != '\n')
@@ -1250,8 +1418,10 @@ static void paint_preview(HWND h)
             WCHAR num[16];
             int nn = wsprintfW(num, L"%d", line);
             put_text(dc, num, nn, 52 - nn * g_cw, y + 1, 58, line == g_pv_line ? C_TEXT : C_FAINT);
-            if (d->text)
-                draw_code(dc, d->text + i, e - i, 68, y, PV_LINE, c.right - 8, 0);
+            if (d->text) {
+                draw_code(dc, d->text + i, e - i, 68, y, PV_LINE, c.right - 8, 0, blk);
+                blk = block_scan(d->text + i, e - i, blk);
+            }
             i = e;
             if (i < d->len && d->text[i] == '\r')
                 i++;
@@ -1264,7 +1434,7 @@ static void paint_preview(HWND h)
             RECT note = { 0, PV_HEAD, c.right, c.bottom };
             SelectObject(dc, g_ui);
             SetTextColor(dc, C_FAINT);
-            DrawTextW(dc, L"Триггер на GUI, совпало имя", -1, &note, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW(dc, TR(L"Триггер на GUI, совпало имя"), -1, &note, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
     }
     BitBlt(wdc, 0, 0, c.right, c.bottom, dc, 0, 0, SRCCOPY);
@@ -1299,15 +1469,19 @@ static void layout(HWND h)
     int w = c.right, ht = c.bottom;
     int left = w * 45 / 100;
     int body = ht - BAR_H - FOOT_H;
-    g_box = (RECT){ 12, 10, w - 12 - 104 - 210, 42 };
-    g_box2 = (RECT){ 12, 50, w - 12 - 104 - 210, 82 };
+    int p = w - 12 - 444;
+    g_box = (RECT){ 12, 10, p - 8, 42 };
+    g_box2 = (RECT){ 12, 50, p - 8, 82 };
     MoveWindow(g_edit, g_box.left + 78, g_box.top + 8, g_box.right - g_box.left - 88, 18, TRUE);
     MoveWindow(g_repl, g_box2.left + 78, g_box2.top + 8, g_box2.right - g_box2.left - 88, 18, TRUE);
-    MoveWindow(g_case, w - 12 - 210 - 96, 10, 30, 32, TRUE);
-    MoveWindow(g_word, w - 12 - 210 - 64, 10, 30, 32, TRUE);
-    MoveWindow(g_regex, w - 12 - 210 - 32, 10, 30, 32, TRUE);
-    MoveWindow(g_repl_btn, w - 12 - 210 - 96, 50, 94, 32, TRUE);
-    g_info_rect = (RECT){ w - 12 - 200, 10, w - 12, 42 };
+    MoveWindow(g_case, p, 10, 30, 32, TRUE);
+    MoveWindow(g_word, p + 32, 10, 30, 32, TRUE);
+    MoveWindow(g_regex, p + 64, 10, 30, 32, TRUE);
+    g_info_rect = (RECT){ p + 104, 10, w - 12, 42 };
+    MoveWindow(g_repl_one, p, 50, 104, 32, TRUE);
+    MoveWindow(g_repl_btn, p + 108, 50, 118, 32, TRUE);
+    for (int i = 0; i < 3; i++)
+        MoveWindow(g_scope_btn[i], p + 234 + i * 70, 50, 68, 32, TRUE);
     MoveWindow(g_list, 0, BAR_H, left, body, TRUE);
     MoveWindow(g_preview, left + 1, BAR_H, w - left - 1, body, TRUE);
     InvalidateRect(h, NULL, TRUE);
@@ -1315,6 +1489,7 @@ static void layout(HWND h)
 
 static WCHAR **g_rep_new;
 static int g_rep_i, g_rep_state, g_rep_tries, g_rep_done, g_rep_hits, g_rep_skipped;
+static int g_rep_one = -1, g_rep_one_doc, g_rep_one_end;
 static HTREEITEM g_rep_prev;
 
 static void buf_add(WCHAR **b, int *n, int *cap, const WCHAR *s, int len)
@@ -1358,7 +1533,7 @@ static void add_replacement(WCHAR **b, int *n, int *cap, const WCHAR *rep, Doc *
     }
 }
 
-static int build_replacements(const WCHAR *rep)
+static int build_replacements(const WCHAR *rep, int only)
 {
     int docs = 0;
     g_rep_new = calloc(g_ndocs, sizeof(WCHAR *));
@@ -1370,12 +1545,14 @@ static int build_replacements(const WCHAR *rep)
         WCHAR *b = NULL;
         for (; i < g_nhits && g_hits[i].doc == di; i++) {
             Hit *h = &g_hits[i];
-            if (h->name_hit)
+            if (h->name_hit || (only >= 0 && i != only))
                 continue;
             buf_add(&b, &n, &cap, d->text + from, h->pos - from);
             add_replacement(&b, &n, &cap, rep, d, h);
             from = h->pos + h->len;
             any = 1;
+            if (i == only)
+                g_rep_one_end = n;
         }
         if (any) {
             buf_add(&b, &n, &cap, d->text + from, d->len - from);
@@ -1405,6 +1582,18 @@ static void finish_replace(void)
     SetTimer(g_win, ID_REPLACE_DONE, 200, NULL);
 }
 
+static void show_in_code(int hi)
+{
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    HWND sci = te ? find_child(te, L"Scintilla", 0) : NULL;
+    Doc *d = &g_docs[g_hits[hi].doc];
+    if (!tree || !sci || !d->text || !d->item || TreeView_GetSelection(tree) != d->item)
+        return;
+    SendMessageW(sci, SCI_SETSEL, utf8_offset(d->text, g_hits[hi].pos), utf8_offset(d->text, g_hits[hi].pos + g_hits[hi].len));
+    SendMessageW(sci, SCI_SCROLLCARET, 0, 0);
+}
+
 static void replace_done(void)
 {
     WCHAR info[96];
@@ -1414,9 +1603,29 @@ static void replace_done(void)
     EnableWindow(g_win, TRUE);
     build_index();
     run_search();
-    wsprintfW(info, L"Заменено: %d в %d, пропущено %d", g_rep_hits, g_rep_done, g_rep_skipped);
+    wsprintfW(info, TR(L"Заменено: %d в %d, пропущено %d"), g_rep_hits, g_rep_done, g_rep_skipped);
     lstrcpyW(g_info_text, info);
     InvalidateRect(g_win, &g_info_rect, FALSE);
+    if (g_rep_one < 0)
+        return;
+    g_rep_one = -1;
+    int next = -1;
+    for (int i = 0; i < g_nhits && next < 0; i++)
+        if (!g_hits[i].name_hit && (g_hits[i].doc > g_rep_one_doc || (g_hits[i].doc == g_rep_one_doc && g_hits[i].pos >= g_rep_one_end)))
+            next = i;
+    for (int i = 0; i < g_nhits && next < 0; i++)
+        if (!g_hits[i].name_hit)
+            next = i;
+    if (next >= 0) {
+        for (int r = 0; r < g_nrows; r++)
+            if (g_rows[r].hit >= 0 && g_rows[r].doc == g_hits[next].doc && g_hits[g_rows[r].hit].line == g_hits[next].line) {
+                select_row(r);
+                break;
+            }
+        g_sel_hit = next;
+        show_in_code(next);
+    }
+    SetFocus(g_repl);
 }
 
 static void replace_step(void)
@@ -1457,7 +1666,7 @@ static void replace_step(void)
     int same = w && !wcscmp(w, d->text);
     free(w);
     if (!same) {
-        if (++g_rep_tries > 30) {
+        if (++g_rep_tries > 200) {
             g_rep_skipped++;
             g_rep_i++;
             g_rep_state = 0;
@@ -1475,7 +1684,7 @@ static void replace_step(void)
         free(u);
         g_rep_done++;
         for (int i = 0; i < g_nhits; i++)
-            if (g_hits[i].doc == g_rep_i && !g_hits[i].name_hit)
+            if (g_hits[i].doc == g_rep_i && !g_hits[i].name_hit && (g_rep_one < 0 || i == g_rep_one))
                 g_rep_hits++;
     }
     g_rep_i++;
@@ -1490,13 +1699,13 @@ static void start_replace(void)
     HWND te = trigger_editor();
     HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
     if (!tree) {
-        MessageBoxW(g_win, L"Откройте редактор триггеров.", L"Поиск по триггерам", MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(g_win, TR(L"Откройте редактор триггеров."), TR(L"Поиск по триггерам"), MB_OK | MB_ICONINFORMATION);
         return;
     }
     build_index();
     run_search();
     if (g_nhits >= MAX_HITS) {
-        MessageBoxW(g_win, L"Слишком много совпадений. Уточните запрос.", L"Поиск по триггерам", MB_OK | MB_ICONWARNING);
+        MessageBoxW(g_win, TR(L"Слишком много совпадений. Уточните запрос."), TR(L"Поиск по триггерам"), MB_OK | MB_ICONWARNING);
         return;
     }
     GetWindowTextW(g_repl, rep, 256);
@@ -1505,13 +1714,56 @@ static void start_replace(void)
         total += !g_hits[i].name_hit;
     if (!total)
         return;
-    int docs = build_replacements(rep);
-    wsprintfW(msg, L"Заменить %d совпадений в %d триггерах?\n\nПо всем сразу отменить нельзя. Карта изменится только после сохранения.", total, docs);
-    if (!docs || MessageBoxW(g_win, msg, L"Поиск по триггерам", MB_OKCANCEL | MB_ICONWARNING | MB_DEFBUTTON2) != IDOK) {
+    g_rep_one = -1;
+    int docs = build_replacements(rep, -1);
+    wsprintfW(msg, TR(L"Заменить %d совпадений в %d триггерах?\n\nПо всем сразу отменить нельзя. Карта изменится только после сохранения."), total, docs);
+    if (!docs || MessageBoxW(g_win, msg, TR(L"Поиск по триггерам"), MB_OKCANCEL | MB_ICONWARNING | MB_DEFBUTTON2) != IDOK) {
         free_replacements();
         return;
     }
     g_rep_prev = TreeView_GetSelection(tree);
+    g_rep_i = g_rep_state = g_rep_done = g_rep_hits = g_rep_skipped = 0;
+    g_busy = 1;
+    EnableWindow(g_win, FALSE);
+    SetTimer(g_win, ID_REPLACE_TIMER, 15, NULL);
+}
+
+static void replace_one(void)
+{
+    WCHAR rep[256];
+    if (g_busy)
+        return;
+    int r = (int)SendMessageW(g_list, LB_GETCURSEL, 0, 0);
+    if (r < 0 || r >= g_nrows || g_rows[r].hit < 0)
+        return;
+    HWND te = trigger_editor();
+    HWND tree = te ? find_child(te, L"SysTreeView32", 1) : NULL;
+    if (!tree) {
+        MessageBoxW(g_win, TR(L"Откройте редактор триггеров."), TR(L"Поиск по триггерам"), MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+    Hit h = g_hits[g_rows[r].hit];
+    if (g_sel_hit >= 0 && g_hits[g_sel_hit].doc == h.doc && g_hits[g_sel_hit].line == h.line)
+        h = g_hits[g_sel_hit];
+    build_index();
+    run_search();
+    int hi = -1;
+    for (int i = 0; i < g_nhits && hi < 0; i++)
+        if (!g_hits[i].name_hit && g_hits[i].doc == h.doc && g_hits[i].pos == h.pos)
+            hi = i;
+    for (int i = 0; i < g_nhits && hi < 0; i++)
+        if (!g_hits[i].name_hit && g_hits[i].doc == h.doc && g_hits[i].line == h.line)
+            hi = i;
+    if (hi < 0)
+        return;
+    GetWindowTextW(g_repl, rep, 256);
+    if (!build_replacements(rep, hi)) {
+        free_replacements();
+        return;
+    }
+    g_rep_one = hi;
+    g_rep_one_doc = h.doc;
+    g_rep_prev = NULL;
     g_rep_i = g_rep_state = g_rep_done = g_rep_hits = g_rep_skipped = 0;
     g_busy = 1;
     EnableWindow(g_win, FALSE);
@@ -1526,14 +1778,25 @@ static void toggle(int *flag, HWND button)
     SetFocus(g_edit);
 }
 
+static void set_scope(int s)
+{
+    g_scope = s;
+    for (int i = 0; i < 3; i++)
+        InvalidateRect(g_scope_btn[i], NULL, FALSE);
+    run_search();
+    SetFocus(g_edit);
+}
+
 static int common_key(WPARAM w)
 {
     switch (w) {
     case VK_RETURN:
         if (GetFocus() != g_repl)
             jump(1);
+        else
+            replace_one();
         return 1;
-    case VK_ESCAPE: ShowWindow(g_win, SW_HIDE); return 1;
+    case VK_ESCAPE: hide_window(); return 1;
     case VK_F3: step(GetKeyState(VK_SHIFT) & 0x8000 ? -1 : 1); return 1;
     }
     return 0;
@@ -1562,6 +1825,10 @@ static LRESULT CALLBACK edit_proc(HWND h, UINT m, WPARAM w, LPARAM l)
     }
     if (m == WM_SYSKEYDOWN && w == 'W') {
         toggle(&g_word_on, g_word);
+        return 0;
+    }
+    if (m == WM_SYSKEYDOWN && w == 'T') {
+        set_scope((g_scope + 1) % 3);
         return 0;
     }
     if ((m == WM_CHAR && (w == '\r' || w == 27 || w == '\t')) || m == WM_SYSCHAR)
@@ -1607,12 +1874,12 @@ static void paint_window(HWND h)
     SetBkMode(dc, TRANSPARENT);
     RECT l1 = { g_box.left + 10, g_box.top, g_box.left + 76, g_box.bottom }, l2 = { g_box2.left + 10, g_box2.top, g_box2.left + 76, g_box2.bottom };
     SetTextColor(dc, C_FAINT);
-    DrawTextW(dc, L"Найти", -1, &l1, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    DrawTextW(dc, L"Заменить", -1, &l2, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    DrawTextW(dc, TR(L"Найти"), -1, &l1, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    DrawTextW(dc, TR(L"Заменить"), -1, &l2, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     SetTextColor(dc, g_rx_ok ? C_DIM : C_DANGER);
     DrawTextW(dc, g_info_text, -1, &g_info_rect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
     SetTextColor(dc, C_FAINT);
-    DrawTextW(dc, L"Enter  перейти      ↑↓  по результатам      F3  следующее      Alt+C  регистр      Alt+W  слово      Alt+R  регулярка      Tab  поле замены      Esc  закрыть", -1, &foot,
+    DrawTextW(dc, TR(L"Enter  перейти, в поле замены заменить      ↑↓  по результатам      F3  следующее      Alt+C  регистр      Alt+W  слово      Alt+R  регулярка      Alt+T  область поиска      Tab  поле замены      Esc  закрыть"), -1, &foot,
               DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     EndPaint(h, &ps);
 }
@@ -1625,7 +1892,7 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         show_preview();
         return 0;
     case WM_GETMINMAXINFO:
-        ((MINMAXINFO *)l)->ptMinTrackSize.x = 760;
+        ((MINMAXINFO *)l)->ptMinTrackSize.x = 900;
         ((MINMAXINFO *)l)->ptMinTrackSize.y = 360;
         return 0;
     case WM_ERASEBKGND:
@@ -1648,7 +1915,7 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         if (di->CtlID == ID_LIST)
             draw_row(di);
         else
-            draw_toggle(di, di->CtlID == ID_CASE ? g_case_on : di->CtlID == ID_WORD ? g_word_on : di->CtlID == ID_REGEX ? g_rx_on : 0);
+            draw_toggle(di, di->CtlID == ID_CASE ? g_case_on : di->CtlID == ID_WORD ? g_word_on : di->CtlID == ID_REGEX ? g_rx_on : di->CtlID >= ID_SCOPE && di->CtlID < ID_SCOPE + 3 ? g_scope == (int)di->CtlID - ID_SCOPE : 0);
         return TRUE;
     }
     case WM_COMMAND:
@@ -1673,6 +1940,14 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
             toggle(&g_rx_on, g_regex);
             InvalidateRect(h, &g_box, FALSE);
             break;
+        case ID_SCOPE:
+        case ID_SCOPE + 1:
+        case ID_SCOPE + 2:
+            set_scope(LOWORD(w) - ID_SCOPE);
+            break;
+        case ID_REPLACE_ONE:
+            replace_one();
+            break;
         case ID_REPLACE_ALL:
             start_replace();
             break;
@@ -1686,11 +1961,13 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
             replace_step();
         } else if (w == ID_REPLACE_DONE) {
             replace_done();
-        } else if (w == ID_SELECT_TIMER) {
+        } else if (w == ID_SELECT_TIMER && select_hit()) {
             KillTimer(h, ID_SELECT_TIMER);
-            select_hit();
-        } else if (w == ID_JUMP_TIMER && (finish_jump() || --g_jump_tries <= 0)) {
+        } else if (w == ID_JUMP_TIMER && finish_jump()) {
             KillTimer(h, ID_JUMP_TIMER);
+        } else if (w == ID_JUMP_TIMER && --g_jump_tries <= 0) {
+            KillTimer(h, ID_JUMP_TIMER);
+            g_jump_doc = -1;
         }
         return 0;
     case WM_ACTIVATE:
@@ -1701,7 +1978,11 @@ static LRESULT CALLBACK win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
         }
         return 0;
     case WM_CLOSE:
-        ShowWindow(h, SW_HIDE);
+        hide_window();
+        return 0;
+    case WM_EXITSIZEMOVE:
+    case WM_DESTROY:
+        save_placement();
         return 0;
     }
     return DefWindowProcW(h, m, w, l);
@@ -1735,7 +2016,7 @@ static int create_window(void)
     g_ui = CreateFontW(-13, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     g_bold = CreateFontW(-13, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     g_mono = CreateFontW(-13, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, FIXED_PITCH, L"Consolas");
-    g_win = CreateWindowExW(0, wc.lpszClassName, L"Поиск по триггерам", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1180, 680,
+    g_win = CreateWindowExW(0, wc.lpszClassName, TR(L"Поиск по триггерам"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1180, 680,
                             main_window(), NULL, g_inst, NULL);
     if (!g_win)
         return 0;
@@ -1752,12 +2033,17 @@ static int create_window(void)
     g_case = child(L"BUTTON", L"Aa", BS_OWNERDRAW, 0, ID_CASE);
     g_word = child(L"BUTTON", L"W", BS_OWNERDRAW, 0, ID_WORD);
     g_regex = child(L"BUTTON", L".*", BS_OWNERDRAW, 0, ID_REGEX);
+    g_scope_btn[0] = child(L"BUTTON", TR(L"Карта"), BS_OWNERDRAW, 0, ID_SCOPE);
+    g_scope_btn[1] = child(L"BUTTON", TR(L"Папка"), BS_OWNERDRAW, 0, ID_SCOPE + 1);
+    g_scope_btn[2] = child(L"BUTTON", TR(L"Триггер"), BS_OWNERDRAW, 0, ID_SCOPE + 2);
     g_repl = child(L"EDIT", L"", ES_AUTOHSCROLL, 0, ID_REPLACE);
     SetWindowLongPtrW(g_repl, GWLP_WNDPROC, (LONG_PTR)edit_proc);
-    g_repl_btn = child(L"BUTTON", L"Заменить всё", BS_OWNERDRAW, 0, ID_REPLACE_ALL);
+    g_repl_one = child(L"BUTTON", TR(L"Заменить"), BS_OWNERDRAW, 0, ID_REPLACE_ONE);
+    g_repl_btn = child(L"BUTTON", TR(L"Заменить всё"), BS_OWNERDRAW, 0, ID_REPLACE_ALL);
     g_list = child(L"LISTBOX", L"", WS_VSCROLL | LBS_NOTIFY | LBS_NODATA | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT, 0, ID_LIST);
     g_list_proc = (WNDPROC)SetWindowLongPtrW(g_list, GWLP_WNDPROC, (LONG_PTR)list_proc);
     g_preview = child(L"KFScriptPreview", L"", 0, 0, ID_PREVIEW);
+    load_placement();
     layout(g_win);
     return 1;
 }
@@ -1792,7 +2078,8 @@ static void open_search(void)
     if (sel[0] && !wcschr(sel, '\n'))
         SetWindowTextW(g_edit, sel);
     SendMessageW(g_edit, EM_SETSEL, 0, -1);
-    ShowWindow(g_win, SW_SHOW);
+    ShowWindow(g_win, g_max ? SW_SHOWMAXIMIZED : SW_SHOW);
+    g_max = 0;
     SetForegroundWindow(g_win);
     SetFocus(g_edit);
     build_index();
@@ -1832,6 +2119,8 @@ static void next_in_code(int dir)
         g_jump_doc = h->doc;
         g_jump_pos = h->pos;
         g_jump_len = h->len;
+        g_jump_line = h->line;
+        g_jump_col = h->pos - h->line_start;
         if (!finish_jump())
             g_jump_doc = -1;
         return;
@@ -1842,6 +2131,11 @@ static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
 {
     if (code == HC_ACTION && vk == VK_F3 && !(lp & 0xC0000000) && g_win && !g_busy && g_query[0] && focus_in_scintilla()) {
         next_in_code(GetKeyState(VK_SHIFT) & 0x8000 ? -1 : 1);
+        return 1;
+    }
+    if (code == HC_ACTION && vk == 'K' && !(lp & 0xC0000000) && (GetKeyState(VK_CONTROL) & 0x8000) && (GetKeyState(VK_SHIFT) & 0x8000) &&
+        !(GetKeyState(VK_MENU) & 0x8000) && focus_in_scintilla()) {
+        SendMessageW(GetFocus(), SCI_LINEDELETE, 0, 0);
         return 1;
     }
     if (code == HC_ACTION && vk == 'F' && !(lp & 0xC0000000) && (GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000)) {
@@ -1859,6 +2153,12 @@ __declspec(dllexport) int ScriptSearchInit(void)
     if (g_kb)
         return 1;
     g_tid = GetCurrentThreadId();
+    DWORD pn = GetModuleFileNameW(g_inst, g_ini, MAX_PATH);
+    WCHAR *dot = pn && pn < MAX_PATH ? wcsrchr(g_ini, '.') : NULL;
+    if (dot && dot + 4 < g_ini + MAX_PATH)
+        lstrcpyW(dot, L".ini");
+    else
+        g_ini[0] = 0;
     g_hits = malloc(MAX_HITS * sizeof(Hit));
     if (!g_hits || !install_app_hook())
         return -1;

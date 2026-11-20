@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <Compile Include="*.cs" />
+    <Compile Include="..\..\kfwe\plugin\common\src\KfLang.cs" Link="KfLang.cs" />
+    <EmbeddedResource Include="..\..\kfwe\share\locale\**\kfwe.txt" LogicalName="lang/%(RecursiveDir)" />
     <Compile Include="..\src\*.cs" Exclude="..\src\Program.cs" />
     <EmbeddedResource Include="..\src\Data\*.ini" LogicalName="%(Filename)%(Extension)" />
     <None Include="pjass.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

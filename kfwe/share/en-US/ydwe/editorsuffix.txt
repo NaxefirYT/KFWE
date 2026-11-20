@@ -1,0 +1,284 @@
+﻿[BNva]
+EditorName=Volcano (Area)
+[XNvc]
+EditorName=Volcano (Effect)
+[XNcs]
+EditorName=Rockets(Orb)
+[XNhs]
+EditorName=Healing Gas (Effect)
+[AIlp]
+EditorSuffix=(1)(Orb)
+[AIos]
+EditorSuffix=(Orb)
+[AChx]
+EditorSuffix=(Creep)
+[Aenw]
+EditorSuffix=(Creep 2)
+[AChv]
+EditorSuffix=(Creep)
+[ACsi]
+EditorSuffix=(Creep)
+[ACmf]
+EditorSuffix=(Creep)
+[ACss]
+EditorSuffix=(Creep)
+[ACbc]
+EditorSuffix=(Creep)
+[ACfs]
+EditorSuffix=(Creep)
+[ANfs]
+EditorSuffix=(Creep 2)
+[ACmp]
+EditorSuffix=(Creep)
+[Aps2]
+EditorSuffix=(Guide)
+[ACd2]
+EditorSuffix=(Creep 2)
+[BNpi]
+EditorSuffix=(Creep 1)
+[Bpig]
+EditorSuffix=(Creep 2)
+[Awan]
+EditorSuffix=(Neutral)
+[Avul]
+EditorSuffix=(Neutral)
+[ANbl]
+EditorSuffix=(Neutral)
+[ANtr]
+EditorSuffix=(Neutral 2)
+[Adtg]
+EditorSuffix=(Neutral 1)
+[ACnr]
+EditorSuffix=(Neutral)
+[ANre]
+EditorSuffix=(Neutral)
+[ANb2]
+EditorSuffix=(Creep 3)
+[ACbc]
+EditorSuffix=(Creep)
+[ACde]
+EditorSuffix=(Creep)
+[ANfs]
+EditorSuffix=(Creep 2)
+[ACss]
+EditorSuffix=(Creep)
+[ACmi]
+EditorSuffix=(Creep)
+[Acht]
+EditorSuffix=(Creep)
+[AChx]
+EditorSuffix=(Creep)
+[Aand]
+EditorSuffix=(Creep)
+[ACrk]
+EditorSuffix=(Creep 1)
+[ANfb]
+EditorSuffix=(Creep)
+[ACcs]
+EditorSuffix=(Creep)
+[ACls]
+EditorSuffix=(Creep)
+[SNdd]
+EditorSuffix=(Creep)
+[Anh1]
+EditorSuffix=(Creep 2)
+[ACat]
+EditorSuffix=(Creep)
+[ANin]
+EditorSuffix=(Creep)
+[Apig]
+EditorSuffix=(Creep 2)
+[ACce]
+EditorSuffix=(Creep)
+[Abu5]
+EditorSuffix=(Creep)
+[ACsl]
+EditorSuffix=(Creep)
+[ANpi]
+EditorSuffix=(Creep 1)
+[ACct]
+EditorSuffix=(Creep)
+[ACba]
+EditorSuffix=(Creep)
+[Amnb]
+EditorSuffix=(Creep 2)
+[ACwb]
+EditorSuffix=(Creep)
+[ACmf]
+EditorSuffix=(Creep)
+[ACif]
+EditorSuffix=(Creep)
+[ACrf]
+EditorSuffix=(Creep 2)
+[ACch]
+EditorSuffix=(Creep)
+[ACbb]
+EditorSuffix=(Creep 2)
+[ACad]
+EditorSuffix=(Creep)
+[ACpv]
+EditorSuffix=(Creep)
+[ACrn]
+EditorSuffix=(Creep)
+[ACdm]
+EditorSuffix=(Creep)
+[ACav]
+EditorSuffix=(Creep)
+[AChv]
+EditorSuffix=(Creep)
+[ACsw]
+EditorSuffix=(Creep)
+[Aenw]
+EditorSuffix=(Creep 2)
+[ACsk]
+EditorSuffix=(Creep 2)
+[ACen]
+EditorSuffix=(Creep)
+[AChd]
+EditorSuffix=(Creep)
+[ACbn]
+EditorSuffix=(Creep)
+[Awrg]
+EditorSuffix=(Creep 3) 
+[ANwk]
+EditorSuffix=(Creep)
+[ACfu]
+EditorSuffix=(Carrion Beetles) (Creep)
+[ACro]
+EditorSuffix=(Creep)
+[ACfl]
+EditorSuffix=(Creep)
+[ACsa]
+EditorSuffix=(Creep)
+[SNeq]
+EditorSuffix=(Creep)
+[ACvs]
+EditorSuffix=(Creep)
+[ANbh]
+EditorSuffix=(Creep 2)
+[ACvp]
+EditorSuffix=(Creep)
+[Adsm]
+EditorSuffix=(Creep)
+[ACsh]
+EditorSuffix=(Creep)
+[ACes]
+EditorSuffix=(Creep 100%)
+[ACua]
+EditorSuffix=(Creep)
+[ACsm]
+EditorSuffix=(Creep)
+[ACah]
+EditorSuffix=(Creep)
+[ACfs]
+EditorSuffix=(Creep)
+[AChw]
+EditorSuffix=(Creep)
+[ACuf]
+EditorSuffix=(Creep)
+[ACfn]
+EditorSuffix=(Creep)
+[ACs9]
+EditorSuffix=(Creep Wild Boar)
+[ACf2]
+EditorSuffix=(Carrion Beetles) (Creep)
+[ACrj]
+EditorSuffix=(Creep)
+[ACrd]
+EditorSuffix=(Creep)
+[SCae]
+EditorSuffix=(Creep)
+[ACpu]
+EditorSuffix=(Creep)
+[Aspd]
+EditorSuffix=(Creep)
+[ACps]
+EditorSuffix=(Creep)
+[ACpy]
+EditorSuffix=(Creep)
+[Ambb]
+EditorSuffix=(Creep 3)
+[ACim]
+EditorSuffix=(Creep)
+[ACbk]
+EditorSuffix=(Creep)
+[Anh2]
+EditorSuffix=(Creep 3)
+[ACdc]
+EditorSuffix=(Creep)
+[ACfa]
+EditorSuffix=(Creep)
+[ACtc]
+EditorSuffix=(Creep)
+[ACfr]
+EditorSuffix=(Creep)
+[ACfb]
+EditorSuffix=(Creep)
+[ACsf]
+EditorSuffix=(Creep)
+[ACff]
+EditorSuffix=(Creep)
+[ACev]
+EditorSuffix=(Creep)
+[Ambd]
+EditorSuffix=(Creep 1)
+[ACds]
+EditorSuffix=(Creep)
+[ACcy]
+EditorSuffix=(Creep)
+[ACcr]
+EditorSuffix=(Creep)
+[ACcw]
+EditorSuffix=(Creep)
+[ACcl]
+EditorSuffix=(Creep)
+[ACca]
+EditorSuffix=(Creep)
+[ACcn]
+EditorSuffix=(Creep)
+[Aenr]
+EditorSuffix=(Creep 1)
+[ACdr]
+EditorSuffix=(Creep)
+[Aap4]
+EditorSuffix=(Creep No Damage)
+[Aap3]
+EditorSuffix=(Creep)
+[Awrh]
+EditorSuffix=(Creep 2) 
+[ACbh]
+EditorSuffix=(Creep 1)
+[ACbz]
+EditorSuffix=(Creep)
+[Awrs]
+EditorSuffix=(Creep 1) 
+[ACdv]
+EditorSuffix=(Creep)
+[ACf3]
+EditorSuffix=(Creep)
+[ACam]
+EditorSuffix=(Creep)
+[ANta]
+EditorSuffix=(Creep)
+[ACbl]
+EditorSuffix=(Creep 1)
+[ACrg]
+EditorSuffix=(Creep 1)
+[Assp]
+EditorSuffix=(Creep)
+[ACmp]
+EditorSuffix=(Creep)
+[Afod]
+EditorSuffix=(Creep)
+[Anhe]
+EditorSuffix=(Creep 1)
+[ACfd]
+EditorSuffix=(Creep)
+[ACsi]
+EditorSuffix=(Creep)
+[nbal]
+EditorSuffix=(Default)
+[nba2]
+EditorSuffix=(Summoned)
+[Opgh]
+EditorSuffix= (Demonic Possession)

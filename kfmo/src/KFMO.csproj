@@ -16,5 +16,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Data/*.ini" LogicalName="%(Filename)%(Extension)" />
+    <Compile Include="..\..\kfwe\plugin\common\src\KfLang.cs" Link="KfLang.cs" />
   </ItemGroup>
 </Project>

@@ -27,16 +27,16 @@ namespace YDColorizer
 
         private static readonly Swatch[] Palette =
         {
-            new Swatch(0xFF0303, "Красный (игрок 1)"), new Swatch(0x0042FF, "Синий (игрок 2)"),
-            new Swatch(0x1CE6B9, "Бирюзовый (игрок 3)"), new Swatch(0x540081, "Фиолетовый (игрок 4)"),
-            new Swatch(0xFFFC01, "Жёлтый (игрок 5)"), new Swatch(0xFE8A0E, "Оранжевый (игрок 6)"),
-            new Swatch(0x20C000, "Зелёный (игрок 7)"), new Swatch(0xE55BB0, "Розовый (игрок 8)"),
-            new Swatch(0x959697, "Серый (игрок 9)"), new Swatch(0x7EBFF1, "Голубой (игрок 10)"),
-            new Swatch(0x106246, "Тёмно-зелёный (игрок 11)"), new Swatch(0x4E2A04, "Коричневый (игрок 12)"),
-            new Swatch(0xFFCC00, "Золотой (горячие клавиши)"), new Swatch(0xFFFFFF, "Белый"),
-            new Swatch(0xC0C0C0, "Светло-серый"), new Swatch(0x00FF00, "Ярко-зелёный"),
-            new Swatch(0xFF0000, "Ярко-красный"), new Swatch(0x00FFFF, "Циан"),
-            new Swatch(0x4080FF, "Голубой (мана)"), new Swatch(0xFF8000, "Оранжевый"),
+            new Swatch(0xFF0303, KfLang.T("Красный (игрок 1)")), new Swatch(0x0042FF, KfLang.T("Синий (игрок 2)")),
+            new Swatch(0x1CE6B9, KfLang.T("Бирюзовый (игрок 3)")), new Swatch(0x540081, KfLang.T("Фиолетовый (игрок 4)")),
+            new Swatch(0xFFFC01, KfLang.T("Жёлтый (игрок 5)")), new Swatch(0xFE8A0E, KfLang.T("Оранжевый (игрок 6)")),
+            new Swatch(0x20C000, KfLang.T("Зелёный (игрок 7)")), new Swatch(0xE55BB0, KfLang.T("Розовый (игрок 8)")),
+            new Swatch(0x959697, KfLang.T("Серый (игрок 9)")), new Swatch(0x7EBFF1, KfLang.T("Голубой (игрок 10)")),
+            new Swatch(0x106246, KfLang.T("Тёмно-зелёный (игрок 11)")), new Swatch(0x4E2A04, KfLang.T("Коричневый (игрок 12)")),
+            new Swatch(0xFFCC00, KfLang.T("Золотой (горячие клавиши)")), new Swatch(0xFFFFFF, KfLang.T("Белый")),
+            new Swatch(0xC0C0C0, KfLang.T("Светло-серый")), new Swatch(0x00FF00, KfLang.T("Ярко-зелёный")),
+            new Swatch(0xFF0000, KfLang.T("Ярко-красный")), new Swatch(0x00FFFF, KfLang.T("Циан")),
+            new Swatch(0x4080FF, KfLang.T("Голубой (мана)")), new Swatch(0xFF8000, KfLang.T("Оранжевый")),
         };
 
         private ToolTip modernTips;
@@ -88,9 +88,9 @@ namespace YDColorizer
             StyleButton(this.btnUndo, false);
             StyleButton(this.btnRedo, false);
             this.btnSetColor.Image = null;
-            this.btnSetColor.Text = "Покрасить";
+            this.btnSetColor.Text = KfLang.T("Покрасить");
             this.btnGradual.Image = null;
-            this.btnGradual.Text = "Градиент";
+            this.btnGradual.Text = KfLang.T("Градиент");
             this.btnUndo.Image = null;
             this.btnUndo.Text = "↶";
             this.btnRedo.Image = null;
@@ -102,7 +102,7 @@ namespace YDColorizer
                 StyleSwatch(b);
             }
 
-            this.lblPalette = new Label { Text = "Палитра WC3", AutoSize = true, ForeColor = ClrSubtext, BackColor = Color.Transparent };
+            this.lblPalette = new Label { Text = KfLang.T("Палитра WC3"), AutoSize = true, ForeColor = ClrSubtext, BackColor = Color.Transparent };
             this.palettePanel = new Panel { BackColor = Color.Transparent };
             foreach (Swatch sw in Palette)
             {
@@ -116,7 +116,7 @@ namespace YDColorizer
                 AutoSize = true,
                 ForeColor = ClrSubtext,
                 BackColor = Color.Transparent,
-                Text = "Выделите текст и нажмите на цвет. ПКМ по цвету: конец градиента. Ctrl+Enter: перенос строки."
+                Text = KfLang.T("Выделите текст и нажмите на цвет. ПКМ по цвету: конец градиента. Ctrl+Enter: перенос строки.")
             };
             this.Controls.Add(this.lblPalette);
             this.Controls.Add(this.palettePanel);
@@ -128,18 +128,18 @@ namespace YDColorizer
             }
 
             this.modernTips = new ToolTip();
-            this.modernTips.SetToolTip(this.btn1stColor, "Основной цвет. Нажмите, чтобы выбрать");
+            this.modernTips.SetToolTip(this.btn1stColor, KfLang.T("Основной цвет. Нажмите, чтобы выбрать"));
             foreach (Button b in new Button[] { this.btn2ndColor, this.btn3rdColor, this.btn4thColor })
             {
-                this.modernTips.SetToolTip(b, "ЛКМ: выбрать цвет\nПКМ: поменять местами с основным");
+                this.modernTips.SetToolTip(b, KfLang.T("ЛКМ: выбрать цвет\nПКМ: поменять местами с основным"));
             }
-            this.modernTips.SetToolTip(this.btnSetColor, "Покрасить выделенный текст основным цветом");
-            this.modernTips.SetToolTip(this.btnGradual, "Градиент по выделенному тексту: от основного цвета к первому дополнительному");
-            this.modernTips.SetToolTip(this.btnUndo, "Отменить (Ctrl+Z)");
-            this.modernTips.SetToolTip(this.btnRedo, "Повторить (Ctrl+Y)");
+            this.modernTips.SetToolTip(this.btnSetColor, KfLang.T("Покрасить выделенный текст основным цветом"));
+            this.modernTips.SetToolTip(this.btnGradual, KfLang.T("Градиент по выделенному тексту: от основного цвета к первому дополнительному"));
+            this.modernTips.SetToolTip(this.btnUndo, KfLang.T("Отменить (Ctrl+Z)"));
+            this.modernTips.SetToolTip(this.btnRedo, KfLang.T("Повторить (Ctrl+Y)"));
             foreach (Control c in this.palettePanel.Controls)
             {
-                this.modernTips.SetToolTip(c, (string)c.Tag + "\nЛКМ: покрасить выделение, ПКМ: конец градиента");
+                this.modernTips.SetToolTip(c, (string)c.Tag + KfLang.T("\nЛКМ: покрасить выделение, ПКМ: конец градиента"));
             }
 
             this.Resize += (s, e) => LayoutModern();

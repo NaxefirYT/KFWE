@@ -63,6 +63,9 @@
     <CodeAnalysisRuleDirectories>;D:\Program Files\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\common\src\KfLang.cs">
+      <Link>KfLang.cs</Link>
+    </Compile>
     <Compile Include="AboutConfig.cs" />
     <Compile Include="AboutProcess.cs" />
     <Compile Include="ColorPicker.cs">

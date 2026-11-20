@@ -709,32 +709,75 @@ function mt:listen_error(w2l)
     end
 end
 
-local function eq_obj(a, b)
+local function f32(x)
+    return (string.unpack('f', string.pack('f', x)))
+end
+
+local function eq_value(x, y)
+    if x == y then
+        return true
+    end
+    if x == nil or y == nil then
+        local v = x == nil and y or x
+        return v == 0 or v == ''
+    end
+    local tx, ty = type(x), type(y)
+    if tx == 'table' or ty == 'table' or (tx == 'string' and ty == 'string') then
+        return false
+    end
+    if math.type(x) == 'integer' and math.type(y) == 'integer' then
+        return false
+    end
+    x, y = tonumber(x), tonumber(y)
+    if not x or not y then
+        return false
+    end
+    x, y = x + 0.0, y + 0.0
+    return around_number(x) == around_number(y) or f32(x) == f32(y)
+end
+
+local function pick(t, k)
+    if type(t) == 'table' then
+        return t[k]
+    end
+end
+
+local function at_level(t, i)
+    if type(t) ~= 'table' then
+        return t
+    end
+    local v = t[i]
+    if v == nil then
+        v = t[#t]
+    end
+    return v
+end
+
+local function eq_field(v, o, d, p)
+    if eq_value(v, o) then
+        return true
+    end
+    return d ~= nil and p ~= nil and eq_value(v, d) and eq_value(o, p)
+end
+
+local function eq_obj(a, b, d, p)
     for k, v in pairs(a) do
         if k == '_create' then
             goto CONTINUE
         end
-        if type(v) ~= type(b[k]) then
-            if b[k] == nil then
-                if v ~= 0 and v ~= '' then
+        local o = b[k]
+        if type(v) == 'table' then
+            if type(o) ~= 'table' then
+                return false
+            end
+            local dk, pk = pick(d, k), pick(p, k)
+            for i, lv in pairs(v) do
+                if not eq_field(lv, o[i], at_level(dk, i), at_level(pk, i)) then
                     return false
                 end
-                goto CONTINUE
             end
-            local x, y = tonumber(v), tonumber(b[k])
-            if not x or not y or around_number(x + 0.0) ~= around_number(y + 0.0) then
-                return false
-            end
-            goto CONTINUE
-        end
-        if type(v) == 'table' then
-            if not eq_obj(v, b[k]) then
-                return false
-            end
-        else
-            if around_number(v) ~= around_number(b[k]) then
-                return false
-            end
+        elseif not eq_field(v, o, pick(d, k), pick(p, k)) then
+            return false
         end
         ::CONTINUE::
     end
@@ -748,7 +791,8 @@ function mt:update_change(ttype)
         local new_map = self.new[ttype]
         for name, obj in pairs(self.new[ttype]) do
             if old_map[name] then
-                if not eq_obj(obj, old_map[name]) then
+                local parent = obj._parent
+                if not eq_obj(obj, old_map[name], self.default[ttype][parent], self.slk[ttype][parent]) then
                     self.change[ttype][name] = obj
                 end
                 old_map[name] = nil

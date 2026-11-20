@@ -1,0 +1,920 @@
+﻿[Arsp]
+YDWEtip="Causing spell attacks, universal damage"
+[ANsb]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ANpa]
+YDWEtip="Spell attack, Poison Damage" ( Enhanced Damage)"
+[AOr3]
+YDWEtip="The death of rebirth will not trigger unit death."
+[ANr2]
+YDWEtip="The death of rebirth will not trigger unit death."
+[ANcf]
+YDWEtip="Initial damage is spell attack, Sonic damage ( magic Damage ), sustained damage is spell attack, fire damage ( mana damage )." The magical effect of lasting damage can be caused only by a unit of magical effect exerted by the skill of the drunken mist as the template."
+[Acdb]
+YDWEtip=""
+[ANcl]
+YDWEtip="Can be used as a template for most active skills and can be resisted by the Magic Shield amulet."
+[AOls]
+YDWEtip="The damage caused depends on the attack of its summoned units, the summoned units without the locust skills may not actively patrol"
+[ACfu]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[AOw2]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ANhw]
+YDWEtip="Negative treatment can cause spell attacks, lightning damage ( magic Damage)"
+[AOs2]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[ANen]
+YDWEtip= cannot be used on non-removable units"
+[Andm]
+YDWEtip="Spells attack, magical damage."
+[Acdh]
+YDWEtip="Flame breathing as a template can ignite the magic effect exerted by this skill, causing it to continue to injure"
+[Afbb]
+YDWEtip="Weapon type is ordinary or immediately , the effect of the elimination of the magic is 4 -level pure ball, is covered by more advanced ball effect." When the weapon type is arrow, the feedback is a 4 -level hollow ball + non Independent effect, which is covered by more advanced ball effects or attack effects. Other weapon type feedback failed."
+[AOr2]
+YDWEtip="The same aura can be stacked with different buffs."
+[ANsh]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Arep]
+YDWEtip="Use command ID as 852024, activate command as 852025, cancel command as 852026"
+[AHbu]
+YDWEtip="Command ID is 851995"
+[AEpa]
+YDWEtip= "1 -level ball effect ( increase attack damage )+ non-independent attack effect, be obtained after the 1 -level ball effects or attack effects cover, cover low-level ball effect and attack effects." Constant damage is spell attack, poison damage ( magic Damage ). The weapon type is valid for the monomer when the arrow vector, the weapon type is the arrow vector ( sputtering ) to cause the range special effect ( depending on the skill influence range )."
+[AHmt]
+YDWEtip="Group transmission can not be released to enemy units even if the target is changed. The transmitted target unit cannot be moved, attacked, cast, or suspended. The unit that is currently attacking the target will transfer the attack target. If the target is dead during this time, then the mass transfer enters the cooling but does not transmit the past. You can create a vest unit at the target location after the delivery command is issued, which can be used as the target of the transmission."
+[Amic]
+YDWEtip="Loses battle-summoning skills after becoming a militia and crashes after a duration expires."
+[Afbt]
+YDWEtip="Weapon type is ordinary or immediately , the effect of the elimination of the magic is 4 -level pure ball, is covered by more advanced ball effect." When the weapon type is projected, the feedback is a 4 -level null-sphere + Independent effect, which is covered by more advanced ball effects or attack effects. Other weapon type feedback failed."
+[Adts]
+YDWEtip="True Vision can go beyond the horizon, but the ability to add a negative field of vision does not make the field less than the real field."
+[Acmg]
+YDWEtip="Can only control the calling unit, including the Unit class as the summoned unit"
+[AHds]
+YDWEtip="Will not interrupt the unit of any current action including continuous casting, can be in vertigo, coma capture the release of the skill command"
+[Aclf]
+YDWEtip="The skill is a bug, and the goal is to be judged by only 1 of the player's enemies.""
+[AHfs]
+YDWEtip="Causes spell attack, Fire damage ( magic Damage ). The magic cast time of this skill is special, and interrupting spells during casting time consumes magic and goes into cooling."
+[Amil]
+YDWEtip="Loses battle-summoning skills after becoming a militia and crashes after a duration expires."
+[Afbk]
+YDWEtip="Weapon type is ordinary or immediately , the effect of the elimination of the magic is 4 -level pure ball, is covered by more advanced ball effect." When the weapon type is projected, the feedback is a 4 -level null-sphere + Independent effect, which is covered by more advanced ball effects or attack effects. Other weapon type feedback failed."
+[BHab]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[Apxf]
+YDWEtip="This skill can also give a unit multiple firing capability, but the damage is not based on unit attack. It is caused by its own cooling time, projected image, damage and continuous damage, and will automatically cast on the range of enemies. Its duration data field determines the duration of its sustained damage and the interval at which it attacks the same target. If necessary, you can use the items to add multiple identical Phoenix fire skills, they can be effective at the same time. Spell attack, Fire damage ( magic Damage))"
+[Adef]
+YDWEtip="Damage is increased by 1 -class ball effect, after the 1 -level method of the ball effect coverage, and the ball-like effect of perfect superposition.""
+[Amls]
+YDWEtip="Spells attack, magical damage."
+[AHbh]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[Asps]
+YDWEtip="Steals priority decisions by magic of skill.""
+[AHtc]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[Ahea]
+YDWEtip="The unit in medical treatment cannot be medical by other units."
+[Agyv]
+YDWEtip="True Vision can go beyond the horizon, but the ability to add a negative field of vision will not be less than the real view"
+[AHhb]
+YDWEtip="Cannot be cast against units of the undead group of friendly units and non-undead enemy units, causing spell attacks, divine damage ( magic Damage)"
+[AHtb]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[AHbz]
+YDWEtip="Causing spell attack, freezing damage ( magic Damage)"
+[Asth]
+YDWEtip="This is an ineffective passive skill that only has an icon that can be used to make some of the passive skills that trigger the production of the icon"
+[Aroc]
+YDWEtip= "4 -level air ball + Independent class attack effects, covering the low-level of the ball effect, and low-level or first-order peer attack effect coexistence, by advanced or after the peer attack effect coverage. and class attack effects perfect superposition. The weapon type is valid for Arrows ( not sputtering, penetrating, ejection )"
+[AHad]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[Asph]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[AHwe]
+YDWEtip="Never summon a negative number of water elements, you know."
+[AHdr]
+YDWEtip="Absorbs the life part to cause spell attack, magical damage." The ability to transfer magic and life to friendlies depends on the balance of the game."
+[Afsh]
+YDWEtip="Fragmentation works only against medium-armored and unarmored units. Level 4 empty orb plus independent attack effects: lower-level orb effects and attack effects are overridden by attack effects gained later or of a higher level. Weapon types only. Works for units with artillery attacks (not artillery (line))."
+[AHbn]
+YDWEtip="Empty units will be subject to magical attacks, arbitrary injury damage, and spell attacks, magic or common type of damage."
+[Agyb]
+YDWEtip="This is an ineffective passive skill that only has an icon that can be used to make some of the passive skills that trigger the production of the icon"
+[Amdf]
+YDWEtip="Damage is increased by 1 -class ball effect, after the 1 -class method of the ball effect coverage, and the ball-like effect of perfect superposition.""
+[AHre]
+YDWEtip="Will refresh and interrupt the current action of the resurrected unit."
+[Aflk]
+YDWEtip="The type of attack and the type of damage is the same as the original attack. Level 4 class attack effects, and the first gain or low-level attack effects coexist, by the later or advanced attack effect coverage. and class attack effects perfect superposition. The weapon type is valid only for normal or immediate units."
+[Asd2]
+YDWEtip="Causing spell attacks, common damage"
+[ANms]
+YDWEtip="Turning the mana shield on or off does not interrupt the unit's current order. The duration field sets how long it stays on before turning off automatically each time."
+[ANsi]
+YDWEtip="If the unit is not prohibited by the silent magic skills of a certain ability, also will not be affected by deceleration effect." The prohibition of magical silence, for example, does not work in units without magical skills."
+[Sdro]
+YDWEtip="This skill can be used in conjunction with maintaining the cargo class skills to unload the currently mounted units." Point target skills."
+[ACtb]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ACfl]
+YDWEtip="Spells attack, lightning damage ( magic Damage)"
+[Afzy]
+YDWEtip="This skill is used for yourself without specifying a goal.""
+[Aasl]
+YDWEtip="The unit affected by the Halo will receive 0 damage when it obtains the halo effect." Buff of multiple deceleration rings can be superimposed"
+[Ambb]
+YDWEtip="Spells attack, magical damage." The damage value depends on the magical value of the burn."
+[Ansk]
+YDWEtip="Directly reduces attack damage by attacking the armor before it is calculated." Only valid for attack damage."
+[Abgl]
+YDWEtip="Only make a surface change when acquiring skills"
+[AHca]
+YDWEtip= "1 -level ball effect ( increase attack damage )+ non-independent attack effect, be obtained after the 1 -level ball effects or attack effects cover, cover low-level ball effect and attack effects." The weapon type is valid for the monomer when the arrow vector, the weapon type is the arrow vector ( sputtering ) to cause the range special effect ( depending on the skill influence range ). Other weapons type effects fail."
+[ACen]
+YDWEtip="The unit with a moving speed of 0 cannot be trapped."
+[ACf3]
+YDWEtip="Spells attack, magical damage." This skill can always be used on magical immune units, but may not be harmful"
+[ACfu]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[Adro]
+YDWEtip="This skill can be used in conjunction with maintaining the cargo class skills to unload the currently mounted units." Point target skills."
+[ACvp]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed. The weapon type is valid only for normal or immediate units."
+[ACba]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[ACmp]
+YDWEtip="Spells attack, power damage ( mana damage )." is not valid for the entangled unit. Not valid for flight units."
+[ANth]
+YDWEtip="The technical demand for this skill is invalid. Reflection causes spell attacks, defensive damage ( mana damage ). Reflects the original attack value."
+[Abdl]
+YDWEtip="Only make a surface change when acquiring skills"
+[AOac]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[Atol]
+YDWEtip="This skill can give units a model , unit death model disappears"
+[ACc2]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[ACc3]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[ANmr]
+YDWEtip="This skill can continue to consume the magic value of the target until the end of time, the magic is depleted or dispersed.""
+[SNeq]
+YDWEtip="Causes spell attacks, universal damage. Damage is only valid for buildings."
+[Asd3]
+YDWEtip="Causing spell attacks, common damage"
+[ANdh]
+YDWEtip="Flame breathing as a template can ignite the magic effect exerted by this skill, causing it to continue to injure"
+[ACpv]
+YDWEtip="Multiple crushing attacks independent of perfect superposition." The range is centered on itself. Damage is a spell attack, enhanced damage ( enhanced Damage)"
+[AAns]
+YDWEtip="This ability can make skills that need to consume resources."
+[ANde]
+YDWEtip= "4 class ball effect, by the advanced method of the ball effect coverage, and the ball-like effect of perfect superposition." Multiple crushing multiplication superposition."
+[Acar]
+YDWEtip="Swallowed the goods so that the unit can accommodate other units, can be combined with loading class skills and unload class skills."
+[Asds]
+YDWEtip="Causing spell attacks, common damage"
+[ANcs]
+YDWEtip="Spells attack, power damage ( magic Damage )." Modifying the buff of this skill to other buff can result in no harm and can only modify the original buff data."
+[ANrf]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[ANtm]
+YDWEtip="Goal allows the hook on the invincible can be perfect kill invincible unit"
+[ACmf]
+YDWEtip="Turning the mana shield on or off does not interrupt the unit's current order. The duration field sets how long it stays on before turning off automatically each time."
+[ANhs]
+YDWEtip="Negative treatment can cause spell attacks, universal damage"
+[ANef]
+YDWEtip="The caster unit will be hidden in situ."
+[SNdd]
+YDWEtip="Causes spell attacks, universal damage. Multiple death and decay cannot be superimposed."
+[ACct]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[ACdr]
+YDWEtip="Absorbs the life part to cause spell attack, magical damage." The ability to transfer magic and life to friendlies depends on the balance of the game."
+[ANbf]
+YDWEtip="Initial damage is spell attack, Sonic damage ( magic Damage ), sustained damage is spell attack, fire damage ( mana damage )." The magical effect of lasting damage can be caused only by a unit of magical effect exerted by the skill of the drunken mist as the template."
+[ACpu]
+YDWEtip="Spells attack on the calling unit, Sonic Damage ( magic Damage)"
+[ANcr]
+YDWEtip="At the start and end, the change will be released once"
+[ANvc]
+YDWEtip="Causes spell attacks, common injuries. Hold down shift to open the damage ID item to modify the call's VOLC type, default to "
+[ANtr]
+YDWEtip="True Vision can go beyond the horizon, but the ability to add a negative field of vision does not make the field less than the real field."
+[Sch5]
+YDWEtip="Swallowed the goods so that units can accommodate other units, can be combined with loading class skills and uninstall skills."
+[ANmo]
+YDWEtip="Causing spell attacks, universal damage"
+[ACuf]
+YDWEtip="Causing spell attack, death damage ( magic Damage)"
+[ANb2]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[ANdr]
+YDWEtip="Absorbs the life part to cause spell attack, magical damage." The ability to transfer magic and life to friendlies depends on the balance of the game."
+[Aloa]
+YDWEtip="This skill can be used in conjunction with the maintenance of cargo skills, that is, a ' capacity ' unit can be loaded or swallowed by other units. Can be paired with unload class skills."
+[ANfs]
+YDWEtip="Causes spell attack, Fire damage ( magic Damage ). The magic cast time of this skill is special, and interrupting spells during casting time consumes magic and goes into cooling."
+[ANeg]
+YDWEtip="Heroes need to have original skills that can be replaced . Disabling the original skills while initializing the map and adding a project upgrade can add a learning skill to the hero. Replace the original skill and replacement skills in the project Upgrade data column, and then add and remove the project upgrade, replacing the skills on the basis of hidden icons. Invalid for unit and error."
+[ANg3]
+YDWEtip="At the start and end, the change will be released once"
+[ACds]
+YDWEtip="Will not interrupt the unit of any current action including continuous casting, and can capture the release of skill commands in vertigo and coma"
+[ACdv]
+YDWEtip="Causing damage is spell attack, acid damage ( enhanced Damage )." In fact, the damage is given by devouring the cargo skill, which acts as a ' load ' , and the swallowed unit can also be unloaded."
+[ANc2]
+YDWEtip="Spells attack, power damage ( mana damage )." Modifying the buff of this skill to other buff can result in no harm and can only modify the original buff data."
+[ACcv]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[ANg2]
+YDWEtip="At the start and end, the change will be released once"
+[ANpi]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[ACtc]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ACrk]
+YDWEtip="The duration of the skill to be calculated according to the heroic duration"
+[ACcw]
+YDWEtip="Ball effect + non-independent attack effects, not with other ball effects and attack effects superimposed"
+[Aenw]
+YDWEtip="Causes spell attacks, plant damage ( Magical Damage ), and is ineffective for flight units."
+[ANrg]
+YDWEtip="At the start and end, the change will be released once"
+[Sch4]
+YDWEtip="Swallowed the goods so that units can accommodate other units, can be combined with loading class skills and uninstall skills."
+[Asod]
+YDWEtip="Weapon type for arrows ( not sputtering, penetrating or ejection ) ,1 -level ball effect ( increase attack damage )+ Non-independent attack effects, after the obtained 1 -level ball effect or attack effects coverage, covering low-level ball effects and attack effects. In addition, this skill has a bug, in the weapon type is ordinary or immediately, becomes the 1 class attack special effect, and becomes the passive skill!"
+[ACad]
+YDWEtip="The resurrected unit will belong to the caster control. Modifications to the target are also valid for surviving units."
+[AChv]
+YDWEtip="Negative treatment can cause spell attacks, lightning damage ( magic Damage)"
+[ACac]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[ACnr]
+YDWEtip="This skill can give the unit binding model, the team color of the model varies with the unit team color, and the unit death model disappears."
+[ANbh]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[Awrs]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Abun]
+YDWEtip="Swallowed the goods so that units can accommodate other units, can be combined with loading class skills and uninstall skills. This skill can cause the unit to lose its attack capability until it loads other units"
+[ACde]
+YDWEtip="Spells attack on the calling unit, magical damage"
+[Atsp]
+YDWEtip="This skill can blow up a nearby unit"
+[ANst]
+YDWEtip="Causes spell attacks, universal damage. The spatter model after hitting the unit cannot be changed unless the original skill data is changed"
+[ACpa]
+YDWEtip="Spell attack, Poison Damage" ( Enhanced Damage)"
+[ACsh]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Atwa]
+YDWEtip="The unit with this skill can follow the target more closely than the average unit. Once you leave the affected area, you die."
+[Sbtl]
+YDWEtip="This skill can be used in conjunction with the maintenance of cargo skills, that is, a ' capacity ' unit can be loaded or swallowed by other units. Can be paired with unload class skills. No target skills."
+[ANso]
+YDWEtip="Causes spell attack, Fire damage ( magic Damage ). Silence the target."
+[ANfd]
+YDWEtip="Spells attack, magical damage." This skill can always be used on magical immune units, but may not be harmful"
+[Apig]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[Sch2]
+YDWEtip="Swallowed the goods so that the unit can accommodate other units, can be combined with loading class skills and unload class skills."
+[ANfl]
+YDWEtip="Spells attack, lightning damage ( magic Damage)"
+[ANdo]
+YDWEtip="Causes spell attacks, universal damage. Can prohibit the target unit's active skill and many passive skill's effect."
+[Afod]
+YDWEtip="Spells attack, magical damage." This skill can always be used on magical immune units, but may not be harmful"
+[ACsk]
+YDWEtip="The duration of the skill to be calculated according to the heroic duration"
+[Apmf]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[ACls]
+YDWEtip="Can not be used on the flight unit, the damage always ignore the enemy, causing spell attack, lightning damage ( magic Damage)"
+[Adri]
+YDWEtip="This skill can be used in conjunction with maintaining the cargo class skills to unload the currently loaded units immediately in situ." No target skills."
+[ACvs]
+YDWEtip= "4 -level air ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects. The monomer is valid only if the weapon type is normal, immediate or arrow"
+[ACua]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[ACfs]
+YDWEtip="Spells attack, Fire damage ( mana damage )." The spell cast time of this skill is special, and interrupting the skill during casting time consumes magic and goes into cooling."
+[ACca]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Awrh]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Amnz]
+YDWEtip="Causing spell attacks, common damage"
+[SCae]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[ACrg]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[ANt2]
+YDWEtip="The technical demand for this skill is invalid. Reflection causes spell attacks, defensive damage ( mana damage ). Reflects the original attack value."
+[ANba]
+YDWEtip="Weapon type for arrows ( not sputtering, penetrating or ejection ) ,1 -level ball effect ( increase attack damage )+ Non-independent attack effects, after the obtained 1 -level ball effect or attack effects coverage, covering low-level ball effects and attack effects. In addition, the skill has a bug, when the weapon type is ordinary or immediately, becomes the 1 class attack special effect, and becomes the passive skill!"
+[ACcb]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ACrf]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[ANia]
+YDWEtip="Open is a 1 -level air ball + independent attack effect, covering low-level ball effects and attack effects, after the attack of the same peer attacks. Weapon type is ordinary, immediate or arrow vector when the monomer is effective, weapon type is arrows ( sputtering ) when the range effects ( depending on the range of skills ), weapon type is arrow vector (penetrating ) or an arrow ( ejection ) , the effect causes the ejection to fail. Other weapons type effects fail. The additional attack damage for the custom burn-ash skill is invalid. The effect of increasing the damage is only effective for damage that was not previously 0 . The superimposed damage records only superimposed layers and each layer of damage, each of which is subject to a larger per-layer damage."
+[ACim]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[Adtg]
+YDWEtip="True Vision can go beyond the horizon, but the ability to add a negative field of vision does not make the field less than the real field."
+[ANlm]
+YDWEtip="Game balance constants can modify the dye data for each generation of this skill. The default data in the split more than three generations after no staining, can be modified."
+[ANab]
+YDWEtip="Spells attack, shadow raid damage ( magic Damage)"
+[ACsa]
+YDWEtip="Pure spherical effect, can not be superimposed with other spherical effect"
+[ACf2]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[ACfa]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[ACfb]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[Atdg]
+YDWEtip="Spells attack, power damage ( magic Damage)"
+[Ambd]
+YDWEtip="Spells attack, magical damage. The damage value depends on the mana value of the burn."
+[ANrn]
+YDWEtip="The death of rebirth will not trigger unit death."
+[ACd2]
+YDWEtip="Spells attack on the calling unit, magical damage"
+[ACdm]
+YDWEtip="Spells attack on the calling unit, magical damage"
+[Advc]
+YDWEtip="Swallowed the goods so that units can accommodate other units, can be combined with loading class skills and uninstall skills. Causing spell attacks, acid damage ( enhanced Damage)"
+[ACst]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Adsm]
+YDWEtip="Spells attack on the calling unit, magical damage"
+[ACcl]
+YDWEtip="Causes spell attacks, lightning damage ( Magical Damage ). Lightning chains are still unable to use the Lightning chain skills again during ejection."
+[Awrg]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[ACcn]
+YDWEtip="Will only look for bodies in the default range."
+[ACat]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[ACbz]
+YDWEtip="Spells attack, freezing damage ( magic Damage)"
+[ACwb]
+YDWEtip="Cannot be used on units that cannot be moved"
+[ACdc]
+YDWEtip="Hostile units and non-undead friendly units of the unit category are not valid." Cause spell attack, death damage ( magic Damage))"
+[Abgs]
+YDWEtip="Only make a surface change when acquiring skills"
+[Asdg]
+YDWEtip="Causing spell attacks, common damage"
+[Abds]
+YDWEtip="Only make a surface change when acquiring skills"
+[ACfn]
+YDWEtip="Spells attack, freeze damage ( mana Damage ), deceleration value can be modified in game balance constants"
+[ANc1]
+YDWEtip="Spells attack, power damage ( mana damage )." Modifying the buff of this skill to other buff can result in no harm and can only modify the original buff data."
+[ANd3]
+YDWEtip= "4 class ball effect, by the advanced method of the ball effect coverage, and the ball-like effect of perfect superposition." Multiple crushing multiplication superposition."
+[ACbh]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[ANdb]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[SCva]
+YDWEtip= "2 -level pure ball, covered with low-level ball effect, is covered by advanced ball effect." The illusion of attack does not occupy the ball effect. In addition, the skill is one of the few that can be compatible with fire and fire ( straight line ) weapon types, but only the monomer effect."
+[Amnx]
+YDWEtip="Causes spell attacks, common injuries."
+[ANwk]
+YDWEtip="Unit weapon type is ordinary or immediately when, break a hit does not occupy the ball effect, is 1 class attack special effects, other weapon type break a hit belongs to 1 class ball, be covered by the ball effect, Can be stacked with other kinds of balls, so the attack does not strike violently during the blast step. "
+[ANin]
+YDWEtip="Spells attack, power damage ( mana Damage ), the source of the damage is the calling unit, no no harm." Will cause the locust skills of the summoned units to fail."
+[ACbc]
+YDWEtip="Initial damage is spell attack, Sonic damage ( magic Damage ), sustained damage is spell attack, fire damage ( mana damage )." The magical effect of lasting damage can be caused only by a unit of magical effect exerted by the skill of the drunken mist as the template."
+[Sch3]
+YDWEtip="Swallowed the goods so that the unit can accommodate other units, can be combined with loading class skills and unload class skills."
+[ANic]
+YDWEtip= "1 -level air-ball + independent attack effect, covering low-level ball effects and attack effects, after the attack on the same effect coverage. Weapon type is ordinary, immediate or arrow vector when the monomer is effective, weapon type is arrows ( sputtering ) when the range effects ( depending on the range of skills ), weapon type is arrow vector (penetrating ) or an arrow ( ejection ) , the effect causes the ejection to fail. Other weapons type effects fail. The additional attack damage for the custom burn-ash skill is invalid. The effect of increasing the damage is only effective for damage that was not previously 0 . The superimposed damage records only superimposed layers and each layer of damage, each of which is subject to a larger per-layer damage."
+[ACbf]
+YDWEtip="Initial damage is spell attack, Sonic damage ( magic Damage ), sustained damage is spell attack, fire damage ( mana damage )." No need to drink mist can produce lasting damage effect."
+[ANak]
+YDWEtip="Only for weapons of the type of Arrows ( sputtering ) units effective." 1 -level pure spherical effect, open when the other ball effect. Part of the change in sputtering data is a class 1 attack effect."
+[ANd2]
+YDWEtip= "4 class ball effect, by the advanced method of the ball effect coverage, and the ball-like effect of perfect superposition." Multiple crushing multiplication superposition."
+[ACbk]
+YDWEtip="Weapon type for arrows ( not sputtering, penetrating or ejection ) ,1 -Class ball effect ( increase attack damage )+ Non-independent attack effects, after the obtained 1 -level ball effect or attack effects coverage, covering low-level ball effects and attack effects. In addition, the skill has a bug, when the weapon type is ordinary or immediately, becomes the 1 class attack special effect, and becomes the passive skill!"
+[Awrp]
+YDWEtip="Teleport door skills are always ignored and can be used.""
+[Amin]
+YDWEtip="This skill allows the unit to be invisible, but even the unit of flight will have ground impact, and in any case cannot be built by the ground"
+[ACbn]
+YDWEtip="Empty units will be subject to magical attacks, arbitrary injury damage, and spell attacks, magic or common type of damage."
+[Adda]
+YDWEtip="Causing spell attacks, common damage"
+[Amnb]
+YDWEtip="Spells attack, magical damage. The damage value depends on the mana value of the burn."
+[ACt2]
+YDWEtip="Spells attack, sonic damage ( magic Damage)"
+[ACss]
+YDWEtip="Initial damage is spell attack, chronic poison damage ( enhanced injury )." Constant damage is spell attack, shadow assault damage ( Magical Damage ). When multiple shadow raids overlap, the injury takes the one with the higher residual damage, while the injury interval takes the shortest one."
+[ACrn]
+YDWEtip="Will be reborn death will not trigger a unit death event. This skill (ACRN) has a bug, during this skill cooling, if the unit is in a state of change (hex, demon change, etc.), and the remaining time is greater than the rebirth delay, the target after playing the death animation, will be deleted by the system."
+[ACsi]
+YDWEtip="If the unit is not forbidden by the silent magic skill, it will not be affected by the deceleration effect." The prohibition of magical silence, for example, does not work in units without magical skills."
+[ACsm]
+YDWEtip="Absorbs the life part to cause spell attack, magical damage." The ability to transfer magic and life to friendlies depends on the balance of the game."
+[Achd]
+YDWEtip="Maintain the goods so that units can accommodate other units, can match the loading class skills and the use of unloading class skills"
+[ACah]
+YDWEtip="Magical effects of the same halo can be superimposed . Causing spell attacks, plant damage ( Magical Damage ). The rebound value is the initial damage value before the calculation of resistance and armor."
+[ANc3]
+YDWEtip="Spells attack, power damage ( magic Damage )." Modifying the buff of this skill to other buff can result in no harm and can only modify the original buff data."
+[ACmo]
+YDWEtip="Causing spell attacks, universal damage"
+[Aenr]
+YDWEtip="Causes spell attacks, plant damage ( Magical Damage ). cannot be used on flight units."
+[ANg1]
+YDWEtip="At the start and end, the change will be released once"
+[ANca]
+YDWEtip= "1 class attack special effects, was obtained after the 1 -class ball effect coverage, covering the lower level of the ball effect." Causes the original attack type to strengthen the injury ( strengthens the injury ). Multiple split attacks add superposition. Valid only if the weapon type is normal or immediate."
+[ANfa]
+YDWEtip= "1 -level ball effect ( increase attack damage )+ non-independent attack effect, be obtained after the 1 -level ball effects or attack effects cover, cover low-level ball effect and attack effects." The weapon type is valid for the monomer when the arrow vector, the weapon type is the arrow vector ( sputtering ) to cause the range special effect ( depending on the skill influence range ). Other weapons type effects fail."
+[ACfd]
+YDWEtip="Spells attack, magical damage."
+[ANd1]
+YDWEtip= "4 class ball effect, by the advanced method of the ball effect coverage, and the ball-like effect of perfect superposition." Multiple crushing multiplication superposition."
+[SNin]
+YDWEtip="Spells attack, power damage ( mana Damage ), the source of the damage is the calling unit, no no harm." Will cause the locust skills of the summoned units to fail."
+[ACce]
+YDWEtip= "Class 1 attack special effects, after the acquisition of the 1 -class ball effect coverage, covering the low level of the ball effect." Causes the original attack type to strengthen the injury ( strengthens the injury ). Multiple split attacks add superposition. Valid only if the weapon type is normal or immediate."
+[Adtn]
+YDWEtip="The call unit damage is spell attack, magical damage.""
+[Amgl]
+YDWEtip="This is an ineffective passive skill that only has an icon that can be used to make some of the passive skills that trigger the production of the icon"
+[Aegr]
+YDWEtip="Multiple Airuni elegant magical resistance multiplication overlay . The effect of the damage increase is 1 -class ball effect, which is covered by the 1 -class spherical effect, and the effect of the class-ball is perfect superimposed."
+[Aadm]
+YDWEtip="The call unit damage is spell attack, magical damage.""
+[Asp6]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[AEvi]
+YDWEtip="At the start and end, the change will be released once"
+[Amgr]
+YDWEtip="This is an ineffective passive skill that only has an icon that can be used to make some of the passive skills that trigger the production of the icon"
+[Apsh]
+YDWEtip="Disguised movement is in fact just in stealth state."
+[Asp2]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[Asp4]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[AEah]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed . Causing spell attacks, plant damage ( Magical Damage ). The rebound value is the initial damage value before the calculation of resistance and armor."
+[AHfa]
+YDWEtip= "1 -level pure ball effect, cover other ball effect on opening and attack damage promotion"
+[AEsb]
+YDWEtip="Causing spell attacks, universal damage"
+[Asp5]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[Alit]
+YDWEtip="Can make a unit of attack into an instantaneous lightning effect. 5 -level empty ball effect + class attack effects, is covered by more advanced attack effects."
+[AEer]
+YDWEtip="Causes spell attacks, plant damage ( mana damage ). cannot be used on flying units."
+[Acor]
+YDWEtip="It's an ineffective skill"
+[Arav]
+YDWEtip="Adds a storm raven to any unit and deletes it immediately so that the unit can be triggered to modify the unit height ( animation)"
+[AEsf]
+YDWEtip="Causing spell attacks, universal damage"
+[AEar]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[AEfk]
+YDWEtip="Shake before casting. Cause spell attack, enhance damage ()"
+[AEmb]
+YDWEtip="Spells attack, magical damage. The damage value depends on the mana value of the burn."
+[AEIl]
+YDWEtip="At the start and end, the change will be released once"
+[AEme]
+YDWEtip="At the start and end, the change will be released once"
+[AEim]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[Assk]
+YDWEtip="Reduces attack damage directly before armor is calculated." Only valid for attack damage."
+[Aspo]
+YDWEtip= "3 -level air-ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects covered." The monomer is valid only if the weapon type is normal, immediate or arrow"
+[Asp1]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[Asp3]
+YDWEtip="The ability to bind a model to a unit, which plays a death animation during a unit attack or cast, is recreated after the magic cast cooldown and plays the birth animation of the model. Unit death, the effect disappears. In addition, the skill is able to release the projectile to the target during the unit casting skill to the launch skill, which is equivalent to the unit's casting before the time."
+[Arsk]
+YDWEtip="The duration of the skill to be calculated according to the heroic duration"
+[AEsh]
+YDWEtip="Initial damage is spell attack, chronic poison damage ( enhanced injury )." Constant damage is spell attack, shadow assault damage ( Magical Damage ). When multiple shadow raids overlap, the injury takes the one with the higher residual damage, while the injury interval takes the shortest one."
+[Adch]
+YDWEtip="Damage to the calling unit is spell attack, magical damage."
+[AOcr]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[AOcl]
+YDWEtip="Spells attack, lightning damage ( mana damage )." Lightning chains are still unable to use the Lightning chain skills again during ejection."
+[Astd]
+YDWEtip="No target skills. The unit needs to have the skills to keep the goods and ensure that they carry the unit. Can be used to unload the swallowed unit"
+[AOvd]
+YDWEtip= "The caster unit is not invincible by Voodoo. In addition, the learning level of this skill is less than or equal to 1 , there will be intermittent release invincible situation."
+[Adcn]
+YDWEtip="Damage to the calling unit is spell attack, magical damage."
+[Aast]
+YDWEtip="Resurrection of a tauren who is being swallowed will cause a bug, the resurrected unit will be hidden but the population"
+[Aeye]
+YDWEtip="This skill creates a permanent invisibility of the Unit"
+[AOwk]
+YDWEtip="Unit weapon type is ordinary or immediately when, break a hit does not occupy the ball effect, is 1 class attack special effects, other weapon type break a hit belongs to 1 class ball, be covered by the ball effect, Can be stacked with other kinds of balls, so the attack does not strike violently during the blast step. "
+[AOhw]
+YDWEtip="Negative treatment causes spell attack, lightning damage ( magic Damage)"
+[Absk]
+YDWEtip="Does not interrupt the unit's current actions including continuous casting, which captures the release of skill commands in vertigo and coma . When the additional damage is negative, the unit immunity physical damage, and will be affected by the magical damage corresponding to a certain life value"
+[Alsh]
+YDWEtip="Can not be used on the flight unit, the damage always ignore the enemy, causing spell attack, lightning damage ( magic Damage)"
+[Acpf]
+YDWEtip="Empty units will be subject to magical attacks, arbitrary injury damage, and spell attacks, magic or common type of damage."
+[Aspl]
+YDWEtip="If the Soul link technology can only be used against the enemy, regardless of the maximum target number, only the skill cast target has buffand will not be connected to other units." Allocation of damage to spell attack soul chain damage ( mana Damage ), total damage value unit of the original damage value ( excluding armor)"
+[Abof]
+YDWEtip= "4 -level air ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects. Only the weapon type is arrow, arrow ( sputtering ), artillery (not ( fire (penetrating )) units valid. Damage is a spell attack, enhanced damage ( enhanced Damage )."
+[Apg2]
+YDWEtip="Cause damage is spell attack, magical damage."
+[AOeq]
+YDWEtip="Causes spell attacks, universal damage. Damage is only valid for buildings."
+[AOre]
+YDWEtip="The death of a rebirth will not trigger a unit death."
+[AOmi]
+YDWEtip="Conflict with various changing skills"
+[Aprg]
+YDWEtip="Cause damage is spell attack, magical damage."
+[Aens]
+YDWEtip= cannot be used on non-removable units"
+[Abtl]
+YDWEtip="No target skills. The unit needs to have the skills to keep the goods and ensure that they carry the unit."
+[AOws]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[AOae]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[AOsh]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Aetf]
+YDWEtip="Empty units will be subject to magical attacks, arbitrary injury damage, and spell attacks, magic or common type of damage."
+[Auco]
+YDWEtip="Cause damage is spell attack, common damage."
+[Apo2]
+YDWEtip="For melee units, this skill needs to be matched with an item skill (AIPB) with a poison effect. 4 -level air-ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effect coverage. The monomer is valid only if the weapon type is normal, immediate or arrows. Causing damage is spell attack, poison damage ( enhanced Damage )."
+[Adev]
+YDWEtip="Causing damage is spell attack, acid damage ( enhanced Damage )." In fact, the damage is given by devouring the cargo skill, which acts as a ' load ' , and the swallowed unit can also be unloaded."
+[Aven]
+YDWEtip= "4 -level air-ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects covered." The monomer is valid only if the weapon type is ordinary, immediate or arrow. Causing damage is spell attack, poison damage ( enhanced Damage )."
+[Asal]
+YDWEtip= "1 class ball effect, can and other kinds of ball perfect superposition, be obtained after the 1 -class ball effect coverage.""
+[Awfb]
+YDWEtip="Causing damage is spell attack, fire damage ( mana damage ).""
+[Aliq]
+YDWEtip= "Level 4 pure attack effect, covering low-level attack effects, is covered by more advanced attack effects." Damage is a spell attack, fire damage ( mana damage ). The weapon type is valid only for arrows and arrows ( sputtering ) ."
+[Apoi]
+YDWEtip= "4 -level air-ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects covered." The monomer is valid only if the weapon type is ordinary, immediate or arrow. Causing damage is spell attack, poison damage ( enhanced Damage )."
+[Awar]
+YDWEtip="Multiple crushing attacks are perfectly stacked independently. The range is centered on itself. Damage is a spell attack, enhanced damage ( enhanced Damage)"
+[AOww]
+YDWEtip="Creates spell attacks, strengthens damage ( strengthens damage)"
+[Afak]
+YDWEtip="Works only for units whose weapon type is missile (splash). Level 1 pure orb effect. While on, it overrides other orb effects. The part that changes splash data is a level 1 attack effect."
+[Aam2]
+YDWEtip="Can only absorb the damage of spell attack and magical attack, in addition, can not absorb damage type for universal damage.""
+[AUav]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[Acn2]
+YDWEtip="Will only look for bodies in the default range."
+[AUfa]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[AUls]
+YDWEtip="The damage caused depends on the attack of its summoned units, the summoned units without the locust skills may not actively patrol"
+[Auns]
+YDWEtip="This skill causes spell attack, damage damage ( enhanced Damage ). Returning a resource rate of 100% may not cause harm if it is recycled."
+[Advm]
+YDWEtip="Spells attack on summoned units and categories for summoned units, magical damage"
+[Aspa]
+YDWEtip="Can only produce a small spider projection. 5 -level air ball + Independent attack effect, is more advanced or after the same attack effect of the peer attacks."
+[AUan]
+YDWEtip="The resurrected unit will belong to the caster control. Modifications to the target are also valid for surviving units."
+[AUdr]
+YDWEtip="Hostile units and non-undead friendly units of the unit category of undead are not valid"
+[Afr2]
+YDWEtip= "5 -level air-ball + Independent attack Special effect, is more advanced or after the attack of the peer attacks. The deceleration value can be modified in the game balance constant"
+[Aweb]
+YDWEtip= cannot be used on non-removable units"
+[AUin]
+YDWEtip="Spells attack, power damage ( mana Damage ), the source of the damage is the calling unit, no no harm." Will cause the locust skills of the summoned units to fail."
+[AUdd]
+YDWEtip="Causes spell attacks, universal damage. Multiple death and decay cannot be superimposed."
+[AUfn]
+YDWEtip="Spells attack, freeze damage ( mana Damage ), deceleration value can be modified in game balance constants"
+[Aap3]
+YDWEtip="Is not valid for units of a dead family type. Causing spell attacks, disease damage ( not counting the physical damage of armor))"
+[AUdp]
+YDWEtip="Hostile units and non-undead friendly units of the unit category of undead are not valid"
+[AUau]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[Auhf]
+YDWEtip="Causing spell attack, death damage ( magic Damage)"
+[Aabr]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"
+[AUts]
+YDWEtip="The technical demand for this skill is invalid. Reflection causes spell attacks, defensive damage ( mana damage ). Reflects the original attack value."
+[AUdc]
+YDWEtip="Hostile units and non-undead friendly units of the Unit class are not valid. Cause spell attack, death damage ( magic Damage))"
+[AUim]
+YDWEtip="Spells attack, power damage ( mana damage )." is not valid for the entangled unit. Not valid for flight units."
+[Atru]
+YDWEtip="True Vision can go beyond the horizon, but the ability to add a negative field of vision does not make the field less than the real field."
+[AUcs]
+YDWEtip="This skill will not be effective against friendlies, causing spell attacks, sonic damage ( magic Damage)"
+[Suhf]
+YDWEtip="Causing spell attack, death damage ( magic Damage)"
+[AUfu]
+YDWEtip="Only allow non-remote attackers to slow down, the deceleration value can be modified in the game balance constant"
+[Acan]
+YDWEtip="Will only look for bodies in the default range."
+[Aap4]
+YDWEtip="Is not valid for units of a dead family type. Causing spell attacks, disease damage ( not counting the physical damage of armor))"
+[Afra]
+YDWEtip= "5 -level air-ball + Independent attack Special effect, is more advanced or after the attack of the peer attacks. The deceleration value can be modified in the game balance constant"
+[Afrb]
+YDWEtip= "5 -level air ball + Independent attack effect, is more advanced or after the same attack effect of the peer attacks. Deceleration values can be modified in game balance constants"
+[Aap2]
+YDWEtip="Is not valid for units of the type of undead. Causing spell attacks, disease damage ( not counting the physical damage to armor))"
+[Aap1]
+YDWEtip="Is not valid for units of the type of undead. Causing spell attacks, disease damage ( not counting the physical damage to armor))"
+[Aapl]
+YDWEtip="Is not valid for units of the type of undead. Causing spell attacks, disease damage ( not counting the physical damage to armor))"
+[Afrz]
+YDWEtip="Weapon type for arrow ( sputtering ) , is a 4 -stage Hollow ball + independent attack effect, covering the low level of the ball effects, is overwritten by a higher level or later peer attack effect. Weapon type is arrow, is a 4 -level air ball + class attack effect, but also to target an immediate increase in attack damage, the attack will attach additional ball effect, the number of ice-breathing increase attack times can be superimposed (bug)."
+[Apts]
+YDWEtip="This skill can summon units at the time of attack, and the summoned units cannot be selected but can be harmed." The plague is not valid for units of unit type of undead. 5 -level air ball +Independent attack effect, is more advanced or after the same attack effect of the peer attacks."
+[Amec]
+YDWEtip="Command ID is 852564. The units called by this skill, in the non-controllers ( including the Allies of Unshared control ) , look like neutral units. The only difference is that when the enemy right clicks on the unit, the attack command is released. You cannot change the unit type of this skill call because it will only be randomly selected in small animals of the current terrain, and of course you can change the race of the unit and add it to the list of small animals in the current terrain. "
+[AItl]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIdi]
+YDWEtip="Command ID is 852271"
+[AIgd]
+YDWEtip="Sputtering damage is fixed to the skill's value, spell attack, universal damage." 3 -level air-ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered. The weapon type is ordinary, the monomer is effective immediately or the arrow vector, when the weapon type is the arrow vector ( sputtering ) , the sputtering damage is covered by the skill sputtering. When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails."
+[AIfb]
+YDWEtip="Sputtering damage is fixed to the skill's value, spell attack, universal damage." 3 -level air-ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered. The weapon type is ordinary, the monomer is effective immediately or the arrow vector, when the weapon type is the arrow vector ( sputtering ) , the sputtering damage is covered by the skill sputtering. When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AImo]
+YDWEtip="Command ID is 852614"
+[AIt9]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIt6]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AItc]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIfr]
+YDWEtip="Command ID is 852261"
+[AIir]
+YDWEtip="Command ID is 852261"
+[AIp2]
+YDWEtip="Command ID is 852609"
+[Aspp]
+YDWEtip="If the Soul link technology can only be used against the enemy, regardless of the maximum target number, only the skill cast target has buffand will not be connected to other units." Allocation of damage to spell attack soul chain damage ( mana Damage ), total damage value unit of the original damage value ( excluding armor)"
+[AIsl]
+YDWEtip="Command ID is 852609"
+[AIdd]
+YDWEtip="Damage increase effect is a class of ball, can and other types of ball superposition, can not be combined with other spherical effect"
+[AIhe]
+YDWEtip="Command ID is 852272"
+[AIfg]
+YDWEtip="The skill is a bug, and the target allows only 1 of the player's enemies to decide. Command ID is 852473 "
+[APmg]
+YDWEtip="Command ID is 852277"
+[AIff]
+YDWEtip="Command ID is 852261"
+[AIp3]
+YDWEtip="Command ID is 852609"
+[AItp]
+YDWEtip="Command ID is 852286. The caster unit is in an invincible state. The enemy unit cannot be released even if the target is changed. The transmitted target unit cannot be moved, attacked, cast, or suspended. The unit that is currently attacking the target will transfer the attack target. If the target dies during this period, then the mass transfer enters the cooling, but does not transmit the past. You can create a vest unit at the target location after the delivery command is issued, which can be used as the target of the transmission."
+[AIra]
+YDWEtip="Command ID is 852282"
+[AIrl]
+YDWEtip="Command ID is 852609"
+[AIm1]
+YDWEtip="Command ID is 852276"
+[AIuw]
+YDWEtip="Command ID is 852261"
+[AItx]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[ANse]
+YDWEtip="Command ID is 852571"
+[AIsw]
+YDWEtip="This skill creates a permanent invisibility of the Unit"
+[AIcb]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." The weapon type is ordinary, immediately, the arrow vector or the arrow vector ( sputtering ) when the monomer is effective. When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[Aami]
+YDWEtip="Command ID is 852186"
+[AIsp]
+YDWEtip="Command ID is 852285"
+[AIdb]
+YDWEtip="Command ID is 852269"
+[AIhb]
+YDWEtip="Command ID is 852273"
+[AIv1]
+YDWEtip="Command ID is 852287"
+[AIpr]
+YDWEtip="Command ID is 852609"
+[AItb]
+YDWEtip="Command ID is 852625"
+[AIsa]
+YDWEtip="Command ID is 852285"
+[AIcf]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[AIbx]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[AIil]
+YDWEtip="Command ID is 852274"
+[AIpl]
+YDWEtip="Command ID is 852609"
+[Asou]
+YDWEtip="Command ID is 852284"
+[AIrt]
+YDWEtip="Order ID: 852279"
+[AIh1]
+YDWEtip="Command ID is 852272"
+[AImt]
+YDWEtip="Command ID is 852093"
+[AIpm]
+YDWEtip="Command ID is 852278"
+[AIdc]
+YDWEtip="Command ID is 852615"
+[AIvl]
+YDWEtip="Command ID is 852288"
+[AIbh]
+YDWEtip="Command ID is 852619"
+[AIda]
+YDWEtip="Command ID is 852269"
+[AIth]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIlp]
+YDWEtip="Command ID is 852111"
+[AIta]
+YDWEtip="Command ID is 852270"
+[AIcs]
+YDWEtip="Does not trigger the use of ball and attack effects." The damage multiplier is part 1 class ball. The type of weapon is normal or immediate, the hit part is a class 1 attack effect, Vertigo ignores magic but spells attack power damage ( magic Damage ). When the weapon type is arrow, the hit part is a 1 -level attack effect. When the weapon type is an arrow ( sputtering ) can range stun, not the ultimate skill of the hit vertigo can not be effective against the magic but the damage is added to the original attack. When the weapon type is an arrow ( ejection ) or ( straight line ) , a heavy strike can cause ejection failure. When a weapon type is artillery or artillery fire ( straight line ) , the weapon type causes a hit attack effect to fail. Multiple fatal strike probability is independent of each other, while the red word is not the real damage value when triggered, but the magnification obtained after taking."
+[AIll]
+YDWEtip= "3 -level air ball + Independent attack effect, does not fire without occupying the attack effect, the ball will not trigger when superimposed." Covers low-level ball effects and attack effects, and is covered by advanced ball effects and attack effects. The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail. The ball of lightning cannot be triggered correctly when the unit does not accept any instructions or under the"Keep position"Command and automatically attacks the enemy within the alert range. The performance is: When the trigger uses the attack effect, consumes the mana value, but does not have any skill to cast, the skill also does not enter the cooling."
+[Aste]
+YDWEtip="Command ID is 852574"
+[AIre]
+YDWEtip="Command ID is 852281"
+[AIrd]
+YDWEtip="Command ID is 852624"
+[ANpr]
+YDWEtip="Command ID is 852568"
+[AIlx]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." When the weapon type is an arrow (penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[APmr]
+YDWEtip="Command ID is 852277"
+[AIlb]
+YDWEtip="This skill does not contain a purifying effect. 3 -level air-ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered. The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AIpb]
+YDWEtip="This skill does not contain toxic effects, for melee units, must be with the Stinger ( Venom ball ) Skills (APO2) with the attack damage, otherwise the attack will be harmless. 3 -level air-ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered. The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AIco]
+YDWEtip="Command ID is 852093"
+[AIbg]
+YDWEtip="Command ID is 852619"
+[APra]
+YDWEtip="Command ID is 852282"
+[AIbr]
+YDWEtip="Command ID is 852619"
+[AIfw]
+YDWEtip="Sputtering damage is fixed to the skill's value, spell attack, universal damage." 3 -level air-ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered. The weapon type is ordinary, the monomer is effective immediately or the arrow vector, when the weapon type is the arrow vector ( sputtering ) , the sputtering damage is covered by the skill sputtering. When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[Ash]
+YDWEtip="Order ID: 852570. Gives vision of the target unit until the buff ends."
+[AIbs]
+YDWEtip="Command ID is 852619"
+[AIbf]
+YDWEtip="Command ID is 852619"
+[AIvu]
+YDWEtip="Command ID is 852288"
+[AIv2]
+YDWEtip="Command ID is 852287"
+[AIfu]
+YDWEtip="Command ID is 852261"
+[AIfi]
+YDWEtip="Spells attack, Fire damage ( magic Damage)"
+[AImr]
+YDWEtip="Command ID is 852277"
+[AIva]
+YDWEtip= "2 -level pure ball, covered with low-level ball effect, is covered by advanced ball effect." The illusion of attack does not occupy the ball effect. In addition, the skill is one of the few that can be compatible with fire and fire ( straight line ) weapon types, but only the monomer effect."
+[AIfs]
+YDWEtip="Command ID is 852261"
+[AIls]
+YDWEtip="Can not be used on the flight unit, the damage always ignore the enemy, causing spell attack, lightning damage ( magic Damage)"
+[AIvi]
+YDWEtip="Command ID is 852287"
+[AItg]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIxk]
+YDWEtip="Does not interrupt the unit's current actions including continuous casting, which captures the release of skill commands in vertigo and coma . When the additional damage is negative, the unit immunity physical damage, and will be affected by the magical damage corresponding to a certain life value"
+[AIcl]
+YDWEtip="Spells attack, lightning damage ( magic Damage)"
+[AIsb]
+YDWEtip= "3 -level air ball + Independent attack effect, does not fire without occupying the attack effect, the ball will not trigger when superimposed." Covers low-level ball effects and attack effects, and is covered by advanced ball effects and attack effects. The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail. The ball of lightning cannot be triggered correctly when the unit does not accept any instructions or under the"Keep position"Command and automatically attacks the enemy within the alert range. The performance is: When the trigger uses the attack effect, consumes the mana value, but does not have any skill to cast, the skill also does not enter the cooling."
+[AIfh]
+YDWEtip="Command ID is 852261"
+[AIft]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." When the weapon type is an arrow (penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AIds]
+YDWEtip="Command ID is 852274"
+[AIsz]
+YDWEtip= "4 -level air ball + independent attack effect, covering low-level ball effects and attack effects, by advanced attack effects. Causing spell attacks, chronic poison damage ( enhanced injury)"
+[AIhl]
+YDWEtip="Spells attack, Divine Damage" ( Magic Damage)"
+[Aret]
+YDWEtip="Command ID is 852471"
+[AIfz]
+YDWEtip="Spells attack, magical damage. Command ID is 852230 "
+[AIrc]
+YDWEtip="The death of a rebirth will not trigger a unit death."
+[AIbk]
+YDWEtip="Command ID is 852525"
+[AIcm]
+YDWEtip="Only to summon units and categories for summoning units to be effective"
+[AIuf]
+YDWEtip="Causing spell attack, death damage ( magic Damage)"
+[ANbs]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." The weapon type is not valid for artillery or artillery fire ( penetrating ) ."
+[AIp6]
+YDWEtip="Command ID is 852609"
+[AItf]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIbb]
+YDWEtip="Command ID is 852619"
+[AIp4]
+YDWEtip="Command ID is 852609"
+[AIbt]
+YDWEtip="Command ID is 852619"
+[AIh3]
+YDWEtip="Command ID is 852272"
+[AIrv]
+YDWEtip="Command ID is 852612"
+[AItn]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AItk]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIh2]
+YDWEtip="Command ID is 852272"
+[AIct]
+YDWEtip="Command ID is 852621"
+[AItj]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIti]
+YDWEtip="This skill can give the unit binding model, the Unit death model still exists"
+[AIp5]
+YDWEtip="Command ID is 852609"
+[AIdv]
+YDWEtip="Will not interrupt the unit of any current action including continuous casting, and can capture the release of skill commands in vertigo and coma"
+[AUds]
+YDWEtip="Command ID is 852220"
+[AIfa]
+YDWEtip="Command ID is 852618"
+[AIms]
+YDWEtip="Cannot stack"
+[Aspb]
+YDWEtip="Add a magic book to the unit, and then disable the Magic book in the Trigger, the Magic books will not show, but the passive skills inside are effective"
+[AIwb]
+YDWEtip="Command ID is 852613"
+[ANss]
+YDWEtip="Command ID is 852571"
+[AIbl]
+YDWEtip="Command ID is 852619"
+[AIhx]
+YDWEtip="Command ID is 852272"
+[AIpv]
+YDWEtip="Command ID is 852623"
+[AIob]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AIfd]
+YDWEtip="Command ID is 852261"
+[AIm2]
+YDWEtip="Command ID is 852276"
+[AIzb]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[AIpz]
+YDWEtip="Command ID is 852273"
+[AIha]
+YDWEtip="Command ID is 852273"
+[AIdf]
+YDWEtip= "3 -level air ball + non-independent attack effects, covering low-level ball effects and attack effects, by advanced ball effects and attack effects covered." The weapon type is ordinary, immediately or the arrow vector when the monomer is effective, the weapon type is the arrow vector ( sputtering ) causes the range special effect ( depending on the skill influence range ). When the weapon type is an arrow ( penetrating ) or an arrow ( ejection ) , the attack fails. When the weapon type is artillery or artillery fire ( penetrating ) , the special effects fail"
+[ACav]
+YDWEtip="Magical effects of different rings of the same halo can be superimposed"

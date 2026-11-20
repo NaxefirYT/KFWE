@@ -119,8 +119,8 @@ namespace YDColorizer
 
             #region Other colors
             btnOtherColor = new Button();
-            btnOtherColor.Text = "Другой цвет…";
-            toolTip.SetToolTip(btnOtherColor, "Выбрать любой цвет");
+            btnOtherColor.Text = KfLang.T("Другой цвет…");
+            toolTip.SetToolTip(btnOtherColor, KfLang.T("Выбрать любой цвет"));
             btnOtherColor.Left = 6;
             btnOtherColor.Top = 96;
             btnOtherColor.Width = 138;
@@ -137,8 +137,8 @@ namespace YDColorizer
             #endregion
             #region Screen color
             btnScreenColor = new Button();
-            btnScreenColor.Text = "С экрана";
-            toolTip.SetToolTip(btnScreenColor, "Взять цвет точки на экране");
+            btnScreenColor.Text = KfLang.T("С экрана");
+            toolTip.SetToolTip(btnScreenColor, KfLang.T("Взять цвет точки на экране"));
             btnScreenColor.Left = 6;
             btnScreenColor.Top = 125;
             btnScreenColor.Width = 138;

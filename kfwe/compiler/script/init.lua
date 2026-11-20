@@ -117,6 +117,7 @@ end
 local compiler = {}
 
 function compiler:compile(map_path, config, war3ver)
+    collectgarbage 'collect'
     inject_code:initialize()
     
     local option = make_option(config, war3ver)

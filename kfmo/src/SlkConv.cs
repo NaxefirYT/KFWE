@@ -130,7 +130,7 @@ sealed partial class SlkConv
             foreach (var file in SlkFiles[type])
             {
                 var keys = keydata.TryGetValue(file, out var kk) ? kk : new List<string>();
-                var bytes = load(file) ?? throw new FileNotFoundException("нет в игре: " + file);
+                var bytes = load(file) ?? throw new FileNotFoundException(KfLang.T("нет в игре: ") + file);
                 var rows = W3Slk.Parse(bytes);
                 if (file == @"units\abilitybuffdata.slk")
                     foreach (var (id, v) in YdweBuffs)
@@ -424,7 +424,7 @@ sealed partial class SlkConv
             passthrough[type] = new List<RawObj>();
             if (buf != null)
             {
-                var raw = ReadObjFile(buf, LevelKey.ContainsKey(type), wts) ?? throw new InvalidDataException("не разобран " + ObjFile[type]);
+                var raw = ReadObjFile(buf, LevelKey.ContainsKey(type), wts) ?? throw new InvalidDataException(KfLang.T("не разобран ") + ObjFile[type]);
                 foreach (var ro in raw.Values)
                 {
                     var w = UpdateObj(type, ro);
@@ -475,7 +475,7 @@ sealed partial class SlkConv
         if (ReforgedSkins)
             foreach (var (path, text) in skins)
                 if (get(path) == null) res.Write[path] = Encoding.UTF8.GetBytes(text);
-                else Report.Add(path + ": уже есть в карте, не перезаписан");
+                else Report.Add(path + KfLang.T(": уже есть в карте, не перезаписан"));
         foreach (var f in TxtFiles) res.Write[f] = Array.Empty<byte>();
         foreach (var (type, text) in BackendTxt())
             res.Write[TxtOut[type]] = Encoding.UTF8.GetBytes(text);

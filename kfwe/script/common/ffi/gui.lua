@@ -6,6 +6,7 @@ ffi.cdef[[
 	unsigned int GetForegroundWindow();
 	unsigned int GetDlgItem(unsigned int hDlg, int nIDDlgItem);
 	int EnableWindow(unsigned int hWnd, int bEnable);
+	int PostMessageW(unsigned int hWnd, unsigned int Msg, unsigned int wParam, int lParam);
 ]]
 
 local uni = require 'ffi.unicode'
@@ -48,6 +49,19 @@ message_map[0xBE00] = function()
 	end
 end
 
+local after_command = {}
+
+function gui.after_command(callback)
+	after_command[#after_command + 1] = callback
+end
+
+message_map[0xBE01] = function()
+	for _, fn in ipairs(after_command) do
+		local ok, err = pcall(fn)
+		if not ok then log.error(err) end
+	end
+end
+
 function gui.menu(main_menu, name)
 	local handle = ffi.C.CreateMenu()
 	local wname = uni.u2w(name)
@@ -66,6 +80,9 @@ function event.EVENT_WINDOW_MESSAGE(event_data)
 		local menu_id = (event_data.wparam & 0xFFFF)
 		if message_map[menu_id] then
 			message_map[menu_id]()
+		end
+		if menu_id ~= 0xBE01 and #after_command > 0 then
+			ffi.C.PostMessageW(event_data.handle, gui.WM_COMMAND, 0xBE01, 0)
 		end
 	end
 	return 0

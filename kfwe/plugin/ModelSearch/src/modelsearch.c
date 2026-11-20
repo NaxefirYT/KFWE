@@ -4,6 +4,7 @@
 #include "fastsub.h"
 #include <stdlib.h>
 #include <wchar.h>
+#include "../../common/src/kflang.h"
 
 #define IDC_STD 12
 #define IDC_IMP 13
@@ -363,7 +364,7 @@ static LRESULT CALLBACK edit_proc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR i
             rc.left += LOWORD(SendMessageW(h, EM_GETMARGINS, 0, 0)) + 1;
             SetBkMode(dc, TRANSPARENT);
             SetTextColor(dc, c);
-            DrawTextW(dc, st->mode == MODE_LIST ? L"Поиск" : L"Поиск по всем категориям", -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+            DrawTextW(dc, st->mode == MODE_LIST ? TR(L"Поиск") : TR(L"Поиск по всем категориям"), -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
             SelectObject(dc, of);
             ReleaseDC(h, dc);
         }

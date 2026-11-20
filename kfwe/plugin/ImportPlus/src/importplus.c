@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include "fastsub.h"
+#include "../../common/src/kflang.h"
 
 #define IDC_WE_TOOLBAR 10
 #define IDC_WE_LIST 11
@@ -651,7 +652,7 @@ static uint8_t *decode_blp(const uint8_t *b, DWORD n, int *w, int *h, wchar_t *f
             else if (abits == 1 && al + i / 8 < b + n) a = (al[i / 8] >> (i & 7)) & 1 ? 255 : 0;
             px[i * 4 + 0] = (uint8_t)c; px[i * 4 + 1] = (uint8_t)(c >> 8); px[i * 4 + 2] = (uint8_t)(c >> 16); px[i * 4 + 3] = a;
         }
-        swprintf(fmt, 64, L"BLP палитра%ls", abits ? L", альфа" : L"");
+        swprintf(fmt, 64, TR(L"BLP палитра%ls"), abits ? TR(L", альфа") : L"");
     } else {
         uint32_t hs = *(uint32_t *)(b + 156);
         if (160 + (size_t)hs > n) { free(px); return NULL; }
@@ -684,7 +685,7 @@ static uint8_t *decode_blp(const uint8_t *b, DWORD n, int *w, int *h, wchar_t *f
         if (!ok) { free(px); return NULL; }
         if (!abits)
             for (uint32_t i = 0; i < W * H; i++) px[i * 4 + 3] = 255;
-        swprintf(fmt, 64, L"BLP JPEG%ls", abits ? L", альфа" : L"");
+        swprintf(fmt, 64, L"BLP JPEG%ls", abits ? TR(L", альфа") : L"");
     }
     *w = (int)W;
     *h = (int)H;
@@ -715,7 +716,7 @@ static uint8_t *decode_tga(const uint8_t *b, DWORD n, int *w, int *h, wchar_t *f
             if (!rle || k == cnt - 1) s += bp;
         }
     }
-    swprintf(fmt, 64, L"TGA %d бит", bpp);
+    swprintf(fmt, 64, TR(L"TGA %d бит"), bpp);
     *w = W;
     *h = H;
     return px;
@@ -1044,7 +1045,7 @@ static void draw_sidebar(Imp *im, Paint *pt, int pass)
             RECT t = { r.left + 8, r.top + 6, r.right, r.bottom };
             if (pass) {
                 SetTextCharacterExtra(pt->dc, 1);
-                text(pt, s->idx ? L"ПАПКИ" : L"ТИПЫ", t, f_section, C_FAINT, DT_SINGLELINE | DT_VCENTER);
+                text(pt, s->idx ? TR(L"ПАПКИ") : TR(L"ТИПЫ"), t, f_section, C_FAINT, DT_SINGLELINE | DT_VCENTER);
                 SetTextCharacterExtra(pt->dc, 0);
             }
             continue;
@@ -1079,7 +1080,7 @@ static void draw_sidebar(Imp *im, Paint *pt, int pass)
             fill_rr(pt, pill, 7, ARGB_OF(active ? C_ACCENT : C_CARD, active ? 90 : 255));
         } else {
             RECT tr = { s->kind == 1 || s->kind == 4 ? ix + 18 : ix + 32, r.top, pill.left - 6, r.bottom };
-            const wchar_t *lb = s->kind == 1 ? k_name[s->idx] : s->kind == 4 ? L"Неиспользуемые" : s->kind == 2 ? L"Все папки" : im->fold[s->idx].label;
+            const wchar_t *lb = s->kind == 1 ? TR(k_name[s->idx]) : s->kind == 4 ? TR(L"Неиспользуемые") : s->kind == 2 ? TR(L"Все папки") : im->fold[s->idx].label;
             int dim = s->kind == 4 ? im->unused_state == 2 && !cnt : !cnt;
             text(pt, lb, tr, active ? f_bold : f_ui, active ? RGB(0xFF, 0xFF, 0xFF) : dim ? C_FAINT : C_TEXT, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             text(pt, num, pill, f_small, active ? RGB(0xFF, 0xFF, 0xFF) : C_DIM, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
@@ -1107,7 +1108,7 @@ static void draw_topbar(Imp *im, Paint *pt, int pass)
         }
     } else if (!GetWindowTextLengthW(im->edit) && GetFocus() != im->edit) {
         RECT t = { im->r_search.left + 36, im->r_search.top, im->r_search.right - 10, im->r_search.bottom };
-        text(pt, L"Поиск по имени, пути или типу", t, f_ui, C_FAINT, DT_SINGLELINE | DT_VCENTER);
+        text(pt, TR(L"Поиск по имени, пути или типу"), t, f_ui, C_FAINT, DT_SINGLELINE | DT_VCENTER);
     }
 }
 
@@ -1152,7 +1153,7 @@ static void draw_list(Imp *im, Paint *pt, int pass)
                 RECT tb = { x[3], top + 8, x[3] + 46, top + ROW_H - 8 };
                 badge(pt, 1, tb, row);
                 wchar_t sz[32];
-                swprintf(sz, 32, L"%d КБ", row->kb);
+                swprintf(sz, 32, TR(L"%d КБ"), row->kb);
                 RECT ts = { x[4], top, x[5], top + ROW_H };
                 text(pt, sz, ts, f_small, C_DIM, DT_SINGLELINE | DT_VCENTER | DT_RIGHT);
             }
@@ -1191,14 +1192,14 @@ static void draw_list(Imp *im, Paint *pt, int pass)
     if (!im->nvis && pass) {
         RECT t = im->r_list;
         wchar_t msg[200];
-        if (!im->nrows) wcscpy(msg, L"В карте нет импортированных файлов");
-        else if (im->unused_f && im->unused_state == 1) wcscpy(msg, L"Ищу неиспользуемые файлы\x2026");
-        else if (im->unused_f && im->unused_state == 4) wcscpy(msg, L"Сохраните карту, чтобы найти неиспользуемые файлы");
-        else if (im->unused_f && im->unused_state != 2) wcscpy(msg, L"Не удалось проверить карту");
-        else if (im->unused_f && !GetWindowTextLengthW(im->edit)) wcscpy(msg, L"Неиспользуемых файлов не нашлось");
+        if (!im->nrows) wcscpy(msg, TR(L"В карте нет импортированных файлов"));
+        else if (im->unused_f && im->unused_state == 1) wcscpy(msg, TR(L"Ищу неиспользуемые файлы\x2026"));
+        else if (im->unused_f && im->unused_state == 4) wcscpy(msg, TR(L"Сохраните карту, чтобы найти неиспользуемые файлы"));
+        else if (im->unused_f && im->unused_state != 2) wcscpy(msg, TR(L"Не удалось проверить карту"));
+        else if (im->unused_f && !GetWindowTextLengthW(im->edit)) wcscpy(msg, TR(L"Неиспользуемых файлов не нашлось"));
         else if (im->kind_f != K_ALL && im->fold_f >= 0 && im->fold_f < im->nfold && !GetWindowTextLengthW(im->edit))
-            swprintf(msg, 200, L"В папке «%ls» нет файлов типа «%ls»", im->fold[im->fold_f].label, k_name[im->kind_f]);
-        else wcscpy(msg, L"Ничего не найдено");
+            swprintf(msg, 200, TR(L"В папке «%ls» нет файлов типа «%ls»"), im->fold[im->fold_f].label, TR(k_name[im->kind_f]));
+        else wcscpy(msg, TR(L"Ничего не найдено"));
         text(pt, msg, t, f_ui, C_FAINT, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
     if (im->marq && pass == 0) {
@@ -1229,7 +1230,7 @@ static void draw_list(Imp *im, Paint *pt, int pass)
             if (pass) {
                 wchar_t lb[32];
                 int on = im->sort_col == hc[i];
-                swprintf(lb, 32, L"%ls%ls", hn[i], on ? (im->sort_desc ? L"  ↓" : L"  ↑") : L"");
+                swprintf(lb, 32, L"%ls%ls", TR(hn[i]), on ? (im->sort_desc ? L"  ↓" : L"  ↑") : L"");
                 text(pt, lb, h, on ? f_bold : f_small, on ? C_TEXT : (hovered(im, 5, i) ? C_TEXT : C_FAINT), DT_SINGLELINE | DT_VCENTER | (i == 3 ? DT_RIGHT : 0));
             }
         }
@@ -1248,18 +1249,19 @@ static void draw_status(Imp *im, Paint *pt, int pass)
     int kb, n = sel_count(im, &kb);
     wchar_t s[200];
     if (im->unused_f && im->unused_state == 2)
-        swprintf(s, 200, L"Похоже не используются: %d  \x00B7  по сохранённой версии карты%ls", im->nvis, n ? L"  \x00B7  выделено" : L"");
-    else if (n) swprintf(s, 200, L"Показано %d из %d  ·  выделено %d (%d КБ)", im->nvis, im->nrows, n, kb);
-    else swprintf(s, 200, L"Показано %d из %d", im->nvis, im->nrows);
+        swprintf(s, 200, TR(L"Похоже не используются: %d  \x00B7  по сохранённой версии карты%ls"), im->nvis, n ? TR(L"  \x00B7  выделено") : L"");
+    else if (n) swprintf(s, 200, TR(L"Показано %d из %d  ·  выделено %d (%d КБ)"), im->nvis, im->nrows, n, kb);
+    else swprintf(s, 200, TR(L"Показано %d из %d"), im->nvis, im->nrows);
     RECT t = { im->r_status.left + 16, im->r_status.top, im->r_status.right - 16, im->r_status.bottom };
     text(pt, s, t, f_small, C_DIM, DT_SINGLELINE | DT_VCENTER);
     static const wchar_t *hints[2] = { L"Enter: свойства   Del: удалить   Ctrl+E: экспорт   Ctrl+C: путь", L"Enter · Del · Ctrl+E · Ctrl+C" };
     SIZE a, b;
     GetTextExtentPoint32W(pt->dc, s, (int)wcslen(s), &a);
     for (int i = 0; i < 2; i++) {
-        GetTextExtentPoint32W(pt->dc, hints[i], (int)wcslen(hints[i]), &b);
+        const wchar_t *hint = TR(hints[i]);
+        GetTextExtentPoint32W(pt->dc, hint, (int)wcslen(hint), &b);
         if (a.cx + b.cx + 40 < t.right - t.left) {
-            text(pt, hints[i], t, f_small, C_FAINT, DT_SINGLELINE | DT_VCENTER | DT_RIGHT);
+            text(pt, hint, t, f_small, C_FAINT, DT_SINGLELINE | DT_VCENTER | DT_RIGHT);
             break;
         }
     }
@@ -1289,8 +1291,8 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
     int bw = (w - 8) / 2, bh = 34, iy = P.bottom - pad - bh;
     if (pass == 0) {
         im->nbtn = 0;
-        add_btn(im, CMD_IMPORT_FILES, L"Импорт файлов…", 0, (RECT){ P.left + pad, iy, P.left + pad + bw, iy + bh });
-        add_btn(im, CMD_IMPORT_DIR, L"Импорт папки…", 0, (RECT){ P.left + pad + bw + 8, iy, P.right - pad, iy + bh });
+        add_btn(im, CMD_IMPORT_FILES, TR(L"Импорт файлов…"), 0, (RECT){ P.left + pad, iy, P.left + pad + bw, iy + bh });
+        add_btn(im, CMD_IMPORT_DIR, TR(L"Импорт папки…"), 0, (RECT){ P.left + pad + bw + 8, iy, P.right - pad, iy + bh });
     }
     if (nsel == 0 || r < 0) {
         RECT box = { P.left + pad, P.top + 18, P.right - pad, iy - 12 };
@@ -1299,10 +1301,10 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
             stroke_rr(pt, box, 12, ARGB_OF(C_ACCENT, 90), 1);
         } else {
             RECT t = { box.left + 12, box.top, box.right - 12, (box.top + box.bottom) / 2 - 2 };
-            text(pt, L"Перетащите файлы или папки сюда", t, f_bold, C_DIM, DT_CENTER | DT_BOTTOM | DT_SINGLELINE);
+            text(pt, TR(L"Перетащите файлы или папки сюда"), t, f_bold, C_DIM, DT_CENTER | DT_BOTTOM | DT_SINGLELINE);
             t.top = t.bottom + 6;
             t.bottom = t.top + 20;
-            text(pt, L"или выберите файл в списке", t, f_small, C_FAINT, DT_CENTER | DT_TOP | DT_SINGLELINE);
+            text(pt, TR(L"или выберите файл в списке"), t, f_small, C_FAINT, DT_CENTER | DT_TOP | DT_SINGLELINE);
         }
         draw_btns(im, pt, pass);
         return;
@@ -1344,7 +1346,7 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
         wchar_t chips[3][48];
         int nc = 0;
         swprintf(chips[nc++], 48, L"%ls", row->type);
-        swprintf(chips[nc++], 48, L"%d КБ", row->kb);
+        swprintf(chips[nc++], 48, TR(L"%d КБ"), row->kb);
         if (im->prev_img && im->prev_row == r) swprintf(chips[nc++], 48, L"%d × %d", im->prev_w, im->prev_h);
         int cx = P.left + pad;
         for (int i = 0; i < nc; i++) {
@@ -1360,7 +1362,7 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
         y += 36;
         if (pass) {
             RECT tp = { P.left + pad, y, P.right - pad, y + 60 };
-            text(pt, L"ПУТЬ", tp, f_section, C_FAINT, DT_SINGLELINE);
+            text(pt, TR(L"ПУТЬ"), tp, f_section, C_FAINT, DT_SINGLELINE);
             tp.top += 18;
             text(pt, row->path, tp, f_small, C_DIM, DT_WORDBREAK | DT_EDITCONTROL);
             if (im->prev_img && im->prev_row == r && im->prev_fmt[0]) {
@@ -1378,7 +1380,7 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
             HFONT big = CreateFontW(-64, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
             text(pt, s, a, big, C_TEXT, DT_CENTER | DT_BOTTOM | DT_SINGLELINE);
             DeleteObject(big);
-            swprintf(s, 80, L"файлов выделено  ·  %d КБ", kb);
+            swprintf(s, 80, TR(L"файлов выделено  ·  %d КБ"), kb);
             RECT b = { box.left, a.bottom + 4, box.right, a.bottom + 30 };
             text(pt, s, b, f_ui, C_DIM, DT_CENTER | DT_TOP | DT_SINGLELINE);
         }
@@ -1386,14 +1388,14 @@ static void draw_preview(Imp *im, Paint *pt, int pass)
     }
     if (pass == 0) {
         if (nsel == 1) {
-            add_btn(im, CMD_PROPS, L"Свойства", 0, (RECT){ P.left + pad, y, P.left + pad + bw, y + bh });
-            add_btn(im, CMD_REPLACE, L"Заменить…", 0, (RECT){ P.left + pad + bw + 8, y, P.right - pad, y + bh });
+            add_btn(im, CMD_PROPS, TR(L"Свойства"), 0, (RECT){ P.left + pad, y, P.left + pad + bw, y + bh });
+            add_btn(im, CMD_REPLACE, TR(L"Заменить…"), 0, (RECT){ P.left + pad + bw + 8, y, P.right - pad, y + bh });
             y += bh + 8;
         }
-        add_btn(im, CMD_EXPORT, nsel > 1 ? L"Экспорт…" : L"Экспорт…", 0, (RECT){ P.left + pad, y, P.left + pad + bw, y + bh });
-        add_btn(im, CMD_COPYPATH, nsel > 1 ? L"Копировать пути" : L"Копировать путь", 0, (RECT){ P.left + pad + bw + 8, y, P.right - pad, y + bh });
+        add_btn(im, CMD_EXPORT, nsel > 1 ? TR(L"Экспорт…") : TR(L"Экспорт…"), 0, (RECT){ P.left + pad, y, P.left + pad + bw, y + bh });
+        add_btn(im, CMD_COPYPATH, nsel > 1 ? TR(L"Копировать пути") : TR(L"Копировать путь"), 0, (RECT){ P.left + pad + bw + 8, y, P.right - pad, y + bh });
         y += bh + 8;
-        add_btn(im, CMD_DELETE, nsel > 1 ? L"Удалить выделенные" : L"Удалить", 1, (RECT){ P.left + pad, y, P.right - pad, y + bh });
+        add_btn(im, CMD_DELETE, nsel > 1 ? TR(L"Удалить выделенные") : TR(L"Удалить"), 1, (RECT){ P.left + pad, y, P.right - pad, y + bh });
         if (y + bh + 12 > iy) SetRectEmpty(&im->btn[0].rc), SetRectEmpty(&im->btn[1].rc);
     }
     draw_btns(im, pt, pass);
@@ -1570,8 +1572,8 @@ static int cmp_we_desc_q(const void *a, const void *b) { return g_cmp_im->rows[*
 static void batch_delete(Imp *im, int *rows, int n)
 {
     wchar_t msg[200];
-    swprintf(msg, 200, L"Удалить из карты %d файлов?", n);
-    if (MessageBoxW(im->dlg, msg, L"Менеджер импорта", MB_YESNO | MB_ICONQUESTION) != IDYES) return;
+    swprintf(msg, 200, TR(L"Удалить из карты %d файлов?"), n);
+    if (MessageBoxW(im->dlg, msg, TR(L"Менеджер импорта"), MB_YESNO | MB_ICONQUESTION) != IDYES) return;
     g_cmp_im = im;
     qsort(rows, n, sizeof *rows, cmp_we_desc_q);
     g_auto++;
@@ -1679,8 +1681,8 @@ static void import_paths(Imp *im, wchar_t **paths, int n)
     refresh(im);
     if (fails) {
         wchar_t msg[160];
-        swprintf(msg, 160, L"Импортировано: %d\nНе удалось: %d", done, fails);
-        MessageBoxW(im->dlg, msg, L"Менеджер импорта", MB_OK | MB_ICONWARNING);
+        swprintf(msg, 160, TR(L"Импортировано: %d\nНе удалось: %d"), done, fails);
+        MessageBoxW(im->dlg, msg, TR(L"Менеджер импорта"), MB_OK | MB_ICONWARNING);
     }
 }
 
@@ -1692,8 +1694,14 @@ static void import_files_dialog(Imp *im)
     o.hwndOwner = im->dlg;
     o.lpstrFile = buf;
     o.nMaxFile = cap;
-    o.lpstrTitle = L"Импорт файлов";
-    o.lpstrFilter = L"Все файлы\0*.*\0Модели и текстуры\0*.mdx;*.mdl;*.blp;*.tga;*.dds\0Звуки\0*.wav;*.mp3;*.flac\0";
+    o.lpstrTitle = TR(L"Импорт файлов");
+    wchar_t filter[256];
+    int fl = swprintf(filter, 200, L"%ls|*.*|%ls|*.mdx;*.mdl;*.blp;*.tga;*.dds|%ls|*.wav;*.mp3;*.flac|", TR(L"Все файлы"), TR(L"Модели и текстуры"), TR(L"Звуки"));
+    for (int i = 0; i < fl; i++)
+        if (filter[i] == L'|')
+            filter[i] = 0;
+    filter[fl > 0 ? fl : 0] = 0;
+    o.lpstrFilter = filter;
     o.Flags = OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     if (GetOpenFileNameW(&o)) {
         wchar_t *dir = buf, *p = buf + wcslen(buf) + 1;
@@ -1720,7 +1728,7 @@ static void import_dir_dialog(Imp *im)
     BROWSEINFOW bi = { 0 };
     wchar_t dir[MAX_PATH], *p = dir;
     bi.hwndOwner = im->dlg;
-    bi.lpszTitle = L"Папка для импорта";
+    bi.lpszTitle = TR(L"Папка для импорта");
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
     LPITEMIDLIST id = SHBrowseForFolderW(&bi);
     if (!id) return;
@@ -1755,7 +1763,7 @@ static void batch_export(Imp *im, int *rows, int n)
     BROWSEINFOW bi = { 0 };
     wchar_t dir[MAX_PATH];
     bi.hwndOwner = im->dlg;
-    bi.lpszTitle = L"Папка для экспорта (пути файлов сохранятся)";
+    bi.lpszTitle = TR(L"Папка для экспорта (пути файлов сохранятся)");
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
     LPITEMIDLIST id = SHBrowseForFolderW(&bi);
     if (!id || !SHGetPathFromIDListW(id, dir)) return;
@@ -1784,9 +1792,9 @@ static void batch_export(Imp *im, int *rows, int n)
     }
     g_auto--;
     wchar_t msg[300];
-    if (fails) swprintf(msg, 300, L"Выгружено %d из %d файлов в\n%ls", n - fails, n, dir);
-    else swprintf(msg, 300, L"Выгружено %d файлов в\n%ls", n, dir);
-    MessageBoxW(im->dlg, msg, L"Менеджер импорта", MB_OK | MB_ICONINFORMATION);
+    if (fails) swprintf(msg, 300, TR(L"Выгружено %d из %d файлов в\n%ls"), n - fails, n, dir);
+    else swprintf(msg, 300, TR(L"Выгружено %d файлов в\n%ls"), n, dir);
+    MessageBoxW(im->dlg, msg, TR(L"Менеджер импорта"), MB_OK | MB_ICONINFORMATION);
 }
 
 static void copy_paths(Imp *im, int *rows, int n)
@@ -1912,12 +1920,12 @@ static void show_menu(Imp *im, POINT sp)
 {
     if (!sel_count(im, NULL)) return;
     HMENU m = CreatePopupMenu();
-    AppendMenuW(m, MF_STRING, CMD_PROPS, L"Свойства\tEnter");
-    AppendMenuW(m, MF_STRING, CMD_REPLACE, L"Заменить файл…\tCtrl+R");
-    AppendMenuW(m, MF_STRING, CMD_EXPORT, L"Экспорт…\tCtrl+E");
-    AppendMenuW(m, MF_STRING, CMD_COPYPATH, L"Копировать путь\tCtrl+C");
+    AppendMenuW(m, MF_STRING, CMD_PROPS, TR(L"Свойства\tEnter"));
+    AppendMenuW(m, MF_STRING, CMD_REPLACE, TR(L"Заменить файл…\tCtrl+R"));
+    AppendMenuW(m, MF_STRING, CMD_EXPORT, TR(L"Экспорт…\tCtrl+E"));
+    AppendMenuW(m, MF_STRING, CMD_COPYPATH, TR(L"Копировать путь\tCtrl+C"));
     AppendMenuW(m, MF_SEPARATOR, 0, NULL);
-    AppendMenuW(m, MF_STRING, CMD_DELETE, L"Удалить\tDelete");
+    AppendMenuW(m, MF_STRING, CMD_DELETE, TR(L"Удалить\tDelete"));
     int cmd = TrackPopupMenu(m, TPM_RETURNCMD | TPM_RIGHTBUTTON, sp.x, sp.y, 0, im->dlg, NULL);
     DestroyMenu(m);
     if (cmd) on_command(im, cmd);

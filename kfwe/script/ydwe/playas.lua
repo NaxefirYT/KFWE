@@ -59,10 +59,12 @@ local function map_players(map_path)
 		table.sort(r)
 		return r
 	end)
-	if ok and list then return list end
-	local all = {}
-	for i = 0, 11 do all[#all + 1] = i end
-	return all
+	if ok then return list end
+end
+
+local function stamp(map_path)
+	local ok, t = pcall(fs.last_write_time, map_path)
+	return map_path:string() .. '|' .. tostring(ok and t)
 end
 
 local function append(h, flags, id, text)
@@ -71,28 +73,38 @@ end
 
 function M.attach(parent_menu, on_command)
 	local sub = ffi.C.CreatePopupMenu()
-	append(parent_menu.handle, MF_STRING | MF_POPUP, sub, 'Тест за игрока')
-	local function rebuild()
+	append(parent_menu.handle, MF_STRING | MF_POPUP, sub, TR('Тест за игрока'))
+	local built
+	local function rebuild(force)
+		local s = current_map and stamp(current_map)
+		if not force and s == built then return end
+		local players = current_map and map_players(current_map)
+		built = players and s
 		while ffi.C.GetMenuItemCount(sub) > 0 do ffi.C.DeleteMenu(sub, 0, MF_BYPOSITION) end
 		if not current_map then
-			append(sub, MF_STRING | MF_GRAYED, ID_BASE, 'Сначала откройте карту')
+			append(sub, MF_STRING | MF_GRAYED, ID_BASE, TR('Сначала откройте карту'))
 			return
+		end
+		if not players then
+			players = {}
+			for i = 0, 11 do players[#players + 1] = i end
 		end
 		local cur = M.get(current_map)
 		if cur == -1 then cur = nil end
-		append(sub, MF_STRING | (cur == nil and MF_CHECKED or 0), ID_BASE, 'Как в карте (красный)')
+		append(sub, MF_STRING | (cur == nil and MF_CHECKED or 0), ID_BASE, TR('Как в карте (красный)'))
 		append(sub, MF_SEPARATOR, 0, '')
-		for _, n in ipairs(map_players(current_map)) do
-			append(sub, MF_STRING | (cur == n and MF_CHECKED or 0), ID_BASE + 1 + n, ('%s (игрок %d)'):format(COLORS[n + 1] or '?', n + 1))
+		for _, n in ipairs(players) do
+			append(sub, MF_STRING | (cur == n and MF_CHECKED or 0), ID_BASE + 1 + n, (TR('%s (игрок %d)')):format(TR(COLORS[n + 1] or '?'), n + 1))
 		end
 	end
 	for i = 0, 12 do
 		on_command(ID_BASE + i, function ()
-			if current_map then M.set(current_map, i - 1); rebuild() end
+			if current_map then M.set(current_map, i - 1); rebuild(true) end
 		end)
 	end
-	ev.on('打开地图', function () pcall(rebuild) end)
-	rebuild()
+	ev.on('打开地图', function () pcall(rebuild, true) end)
+	gui.after_command(function () if current_map then rebuild() end end)
+	rebuild(true)
 end
 
 function M.for_test(map_path)

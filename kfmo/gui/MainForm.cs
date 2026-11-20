@@ -43,22 +43,22 @@ sealed class MainForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
 
-        var title = new Label { Text = "Карта (можно перетащить в окно)", AutoSize = true, ForeColor = Dim, Margin = new Padding(0, 0, 0, 4) };
+        var title = new Label { Text = KfLang.T("Карта (можно перетащить в окно)"), AutoSize = true, ForeColor = Dim, Margin = new Padding(0, 0, 0, 4) };
         root.Controls.Add(title);
         var mapRow = Row(3);
         mapRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         mapRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         mapRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         StyleBox(mapBox); mapBox.Dock = DockStyle.Fill;
-        StyleButton(pick, "Выбрать"); pick.Click += (_, _) => PickMap();
+        StyleButton(pick, KfLang.T("Выбрать")); pick.Click += (_, _) => PickMap();
         mapRow.Controls.Add(mapBox, 0, 0); mapRow.Controls.Add(pick, 1, 0);
         root.Controls.Add(mapRow);
 
         var outRow = Row(4);
-        outRow.Controls.Add(new Label { Text = "Результат:", AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 4, 0) });
+        outRow.Controls.Add(new Label { Text = KfLang.T("Результат:"), AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 4, 0) });
         outLabel.AutoSize = true; outLabel.Anchor = AnchorStyles.Left; outLabel.Margin = new Padding(0, 6, 16, 0);
         outRow.Controls.Add(outLabel);
-        outRow.Controls.Add(new Label { Text = "Суффикс:", AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 4, 0) });
+        outRow.Controls.Add(new Label { Text = KfLang.T("Суффикс:"), AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 4, 0) });
         StyleBox(suffixBox); suffixBox.Width = 70;
         outRow.Controls.Add(suffixBox);
         root.Controls.Add(outRow);
@@ -66,40 +66,40 @@ sealed class MainForm : Form
         var opts = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Dock = DockStyle.Top, BackColor = Panel2, Padding = new Padding(12, 10, 12, 10), Margin = new Padding(0, 12, 0, 8) };
         opts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         opts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        Check(cSlk, "Объекты в SLK", "Данные объектов пишутся таблицами SLK. Карта грузится намного быстрее.");
-        Check(cUnused, "Удалять неиспользуемые объекты", "Удаляет объекты, на которые нигде нет ссылок.");
-        Check(cStrip, "Удалять файлы редактора", "Триггеры, регионы, камеры и т.п. Игре не нужны.\nКарта перестанет нормально открываться в редакторе, храни исходник.");
-        Check(cJass, "Сжимать скрипт", "Короткие имена, без комментариев. Проверяется через pjass.");
-        Check(cIcons, "Иконки без мипмапов", "Иконкам остаётся только основной размер. Картинка не меняется.");
-        Check(cKeys, "Убирать лишние ключи анимации", "Удаляет ключи, которые ничего не меняют.");
-        Check(cList, "Сохранять listfile", "Нужен, чтобы карту можно было распаковать.");
-        Check(cPreview, "Удалять превью", "Картинка карты в списке карт. Без неё игра покажет миникарту.");
+        Check(cSlk, KfLang.T("Объекты в SLK"), KfLang.T("Данные объектов пишутся таблицами SLK. Карта грузится намного быстрее."));
+        Check(cUnused, KfLang.T("Удалять неиспользуемые объекты"), KfLang.T("Удаляет объекты, на которые нигде нет ссылок."));
+        Check(cStrip, KfLang.T("Удалять файлы редактора"), KfLang.T("Триггеры, регионы, камеры и т.п. Игре не нужны.\nКарта перестанет нормально открываться в редакторе, храни исходник."));
+        Check(cJass, KfLang.T("Сжимать скрипт"), KfLang.T("Короткие имена, без комментариев. Проверяется через pjass."));
+        Check(cIcons, KfLang.T("Иконки без мипмапов"), KfLang.T("Иконкам остаётся только основной размер. Картинка не меняется."));
+        Check(cKeys, KfLang.T("Убирать лишние ключи анимации"), KfLang.T("Удаляет ключи, которые ничего не меняют."));
+        Check(cList, KfLang.T("Сохранять listfile"), KfLang.T("Нужен, чтобы карту можно было распаковать."));
+        Check(cPreview, KfLang.T("Удалять превью"), KfLang.T("Картинка карты в списке карт. Без неё игра покажет миникарту."));
         opts.Controls.Add(cSlk); opts.Controls.Add(cJass);
         opts.Controls.Add(cUnused); opts.Controls.Add(cIcons);
         opts.Controls.Add(cStrip); opts.Controls.Add(cKeys);
-        Check(cSkins, "Модели для Reforged", "Вместе с SLK пишет UnitSkin.txt и ItemSkin.txt. Без них в Reforged юниты и предметы невидимы. 1.26 эти файлы не читает.");
+        Check(cSkins, KfLang.T("Модели для Reforged"), KfLang.T("Вместе с SLK пишет UnitSkin.txt и ItemSkin.txt. Без них в Reforged юниты и предметы невидимы. 1.26 эти файлы не читает."));
         opts.Controls.Add(cList); opts.Controls.Add(cPreview);
         opts.Controls.Add(cSkins);
         cSlk.CheckedChanged += (_, _) => cSkins.Enabled = cSlk.Checked;
 
-        StyleCombo(models, "7 бит", "Бережно", "Не трогать");
-        StyleCombo(textures, "Без потерь", "Качество 90", "Качество 85", "Качество 75");
-        tip.SetToolTip(models, "Округление чисел в моделях. Модели сжимаются лучше.");
-        tip.SetToolTip(textures, "Без потерь: пиксели не меняются.");
-        StyleCombo(texMax, "Без ограничения", "512", "256", "128");
-        tip.SetToolTip(texMax, "Текстуры моделей больше этого размера уменьшаются вдвое. Интерфейс не трогается.");
-        opts.Controls.Add(Labeled("Модели:", models), 0, 5);
-        opts.Controls.Add(Labeled("Текстуры:", textures), 1, 5);
-        opts.Controls.Add(Labeled("Макс. размер текстур моделей:", texMax), 1, 6);
+        StyleCombo(models, KfLang.T("7 бит"), KfLang.T("Бережно"), KfLang.T("Не трогать"));
+        StyleCombo(textures, KfLang.T("Без потерь"), KfLang.T("Качество 90"), KfLang.T("Качество 85"), KfLang.T("Качество 75"));
+        tip.SetToolTip(models, KfLang.T("Округление чисел в моделях. Модели сжимаются лучше."));
+        tip.SetToolTip(textures, KfLang.T("Без потерь: пиксели не меняются."));
+        StyleCombo(texMax, KfLang.T("Без ограничения"), "512", "256", "128");
+        tip.SetToolTip(texMax, KfLang.T("Текстуры моделей больше этого размера уменьшаются вдвое. Интерфейс не трогается."));
+        opts.Controls.Add(Labeled(KfLang.T("Модели:"), models), 0, 5);
+        opts.Controls.Add(Labeled(KfLang.T("Текстуры:"), textures), 1, 5);
+        opts.Controls.Add(Labeled(KfLang.T("Макс. размер текстур моделей:"), texMax), 1, 6);
 
         var gameRow = Row(3);
         gameRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         gameRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         gameRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         gameRow.Margin = new Padding(0, 8, 0, 0);
-        gameRow.Controls.Add(new Label { Text = "Папка игры:", AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 6, 0) }, 0, 0);
+        gameRow.Controls.Add(new Label { Text = KfLang.T("Папка игры:"), AutoSize = true, ForeColor = Dim, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 6, 0) }, 0, 0);
         StyleBox(gameBox); gameBox.Dock = DockStyle.Fill;
-        tip.SetToolTip(gameBox, "Нужна для SLK и проверки скрипта.");
+        tip.SetToolTip(gameBox, KfLang.T("Нужна для SLK и проверки скрипта."));
         StyleButton(pickGame, "…"); pickGame.Click += (_, _) => PickGame();
         gameRow.Controls.Add(gameBox, 1, 0); gameRow.Controls.Add(pickGame, 2, 0);
         opts.Controls.Add(gameRow, 0, 7);
@@ -107,9 +107,9 @@ sealed class MainForm : Form
         root.Controls.Add(opts);
 
         var btnRow = Row(4);
-        StyleButton(run, "Оптимизировать"); run.BackColor = Accent; run.Font = new Font(Font.FontFamily, 11f, FontStyle.Bold); run.Padding = new Padding(18, 6, 18, 6);
+        StyleButton(run, KfLang.T("Оптимизировать")); run.BackColor = Accent; run.Font = new Font(Font.FontFamily, 11f, FontStyle.Bold); run.Padding = new Padding(18, 6, 18, 6);
         run.Click += async (_, _) => await RunAsync();
-        StyleButton(openDir, "Открыть папку"); openDir.Enabled = false;
+        StyleButton(openDir, KfLang.T("Открыть папку")); openDir.Enabled = false;
         openDir.Click += (_, _) => { if (lastOutput != null && File.Exists(lastOutput)) Process.Start("explorer.exe", $"/select,\"{lastOutput}\""); };
         bar.Style = ProgressBarStyle.Marquee; bar.MarqueeAnimationSpeed = 0; bar.Width = 160; bar.Anchor = AnchorStyles.Left; bar.Visible = false; bar.Margin = new Padding(12, 10, 0, 0);
         btnRow.Controls.Add(run); btnRow.Controls.Add(openDir); btnRow.Controls.Add(bar);
@@ -187,7 +187,7 @@ sealed class MainForm : Form
         cSkins.Checked = st.ReforgedSkins; cSkins.Enabled = cSlk.Checked;
         suffixBox.Text = st.Suffix;
         mapBox.Text = st.LastMap;
-        gameBox.Text = string.IsNullOrWhiteSpace(st.GameDir) ? GameFiles.DefaultDir() : st.GameDir;
+        gameBox.Text = File.Exists(Path.Combine(st.GameDir ?? "", "war3.mpq")) ? st.GameDir : GameFiles.DefaultDir();
     }
 
     void SaveSettings()
@@ -216,7 +216,7 @@ sealed class MainForm : Form
 
     void PickMap()
     {
-        using var d = new OpenFileDialog { Filter = "Карты Warcraft III (*.w3x;*.w3m)|*.w3x;*.w3m|Все файлы|*.*", Title = "Выберите карту" };
+        using var d = new OpenFileDialog { Filter = KfLang.T("Карты Warcraft III (*.w3x;*.w3m)|*.w3x;*.w3m|Все файлы|*.*"), Title = KfLang.T("Выберите карту") };
         var cur = mapBox.Text.Trim('"');
         if (cur.Length > 0 && Directory.Exists(Path.GetDirectoryName(cur))) d.InitialDirectory = Path.GetDirectoryName(cur);
         if (d.ShowDialog(this) == DialogResult.OK) mapBox.Text = d.FileName;
@@ -224,7 +224,7 @@ sealed class MainForm : Form
 
     void PickGame()
     {
-        using var d = new FolderBrowserDialog { Description = "Папка Warcraft III", UseDescriptionForTitle = true };
+        using var d = new FolderBrowserDialog { Description = KfLang.T("Папка Warcraft III"), UseDescriptionForTitle = true };
         if (Directory.Exists(gameBox.Text)) d.InitialDirectory = gameBox.Text;
         if (d.ShowDialog(this) == DialogResult.OK) gameBox.Text = d.SelectedPath;
     }
@@ -232,12 +232,12 @@ sealed class MainForm : Form
     async Task RunAsync()
     {
         var input = mapBox.Text.Trim().Trim('"');
-        if (!File.Exists(input)) { Fail("Нет файла: " + input); return; }
+        if (!File.Exists(input)) { Fail(KfLang.T("Нет файла: ") + input); return; }
         var output = OutputPath()!;
         if (string.Equals(Path.GetFullPath(input), Path.GetFullPath(output), StringComparison.OrdinalIgnoreCase))
-        { Fail("Укажи суффикс, иначе результат перезапишет карту."); return; }
+        { Fail(KfLang.T("Укажи суффикс, иначе результат перезапишет карту.")); return; }
         if (!File.Exists(Path.Combine(gameBox.Text, "war3.mpq")) && (cSlk.Checked || cJass.Checked))
-            if (MessageBox.Show(this, "В папке игры нет war3.mpq. SLK и сжатие скрипта будут пропущены. Продолжить?", "KFMO", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            if (MessageBox.Show(this, KfLang.T("В папке игры нет war3.mpq. SLK и сжатие скрипта будут пропущены. Продолжить?"), "KFMO", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
 
         GameFiles.OverrideDir = gameBox.Text;
         var o = new Optimize.Options
@@ -260,17 +260,17 @@ sealed class MainForm : Form
             Console.SetOut(writer);
             rc = await Task.Run(() => Optimize.Run(o));
         }
-        catch (Exception ex) { error = ex.Message; writer.WriteLine("Ошибка: " + ex); }
+        catch (Exception ex) { error = ex.Message; writer.WriteLine(KfLang.T("Ошибка: ") + ex); }
         finally { Console.SetOut(oldOut); SetBusy(false); }
 
         if (rc == 0 && File.Exists(output))
         {
             long outSize = new FileInfo(output).Length;
             result.ForeColor = Good;
-            result.Text = $"Готово: {inSize / 1048576.0:F2} > {outSize / 1048576.0:F2} МБ (-{100.0 * (inSize - outSize) / inSize:F1}%), {sw.Elapsed.TotalSeconds:F1} с";
+            result.Text = KfLang.F("Готово: {0:F2} > {1:F2} МБ (-{2:F1}%), {3:F1} с", inSize / 1048576.0, outSize / 1048576.0, 100.0 * (inSize - outSize) / inSize, sw.Elapsed.TotalSeconds);
             lastOutput = output; openDir.Enabled = true;
         }
-        else Fail(error ?? (rc == 2 ? "В карте есть файлы без имени, нужен listfile." : "Ошибка, см. журнал."));
+        else Fail(error ?? (rc == 2 ? KfLang.T("В карте есть файлы без имени, нужен listfile.") : KfLang.T("Ошибка, см. журнал.")));
     }
 
     void Fail(string msg) { result.ForeColor = Bad; result.Text = msg; }

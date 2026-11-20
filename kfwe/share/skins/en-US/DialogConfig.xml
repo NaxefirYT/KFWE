@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?><!-- kflang a0efea63 -->
 
 <Window size="720,660" caption="0,0,0,52" roundcorner="12,12" >
   <Font name="Segoe UI" size="16" default="true" />
@@ -26,80 +26,80 @@
   <VerticalLayout class="Title" inset="0,0,0,0" >
     <HorizontalLayout height="52" bkcolor="#FF17181C" inset="24,0,24,0" childpadding="10" >
       <Label text="KFWE" font="4" textcolor="#FF7C5CFF" width="64" height="52" align="left" textpadding="0,0,0,0" />
-      <Label text="Настройки" font="0" textcolor="#FF8B90A0" height="52" align="left" textpadding="0,2,0,0" />
+      <Label text="Settings" font="0" textcolor="#FF8B90A0" height="52" align="left" textpadding="0,2,0,0" />
     </HorizontalLayout>
     <HorizontalLayout>
       <VerticalLayout bkcolor="#FF17181C" width="200" inset="12,10,12,10">
         <Control height="16" />
-        <RadioButton name="tab_0" group="TabSelect" text="Компиляция карты"   class="TabSelect" width="176" height="38" selected="true" />
+        <RadioButton name="tab_0" group="TabSelect" text="Map compilation"   class="TabSelect" width="176" height="38" selected="true" />
         <Control height="4" />
-        <RadioButton name="tab_1" group="TabSelect" text="Тест карты"       class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_1" group="TabSelect" text="Map test"       class="TabSelect" width="176" height="38" />
         <Control height="4" />
-        <RadioButton name="tab_2" group="TabSelect" text="Редактор" class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_2" group="TabSelect" text="Editor" class="TabSelect" width="176" height="38" />
         <Control height="4" />
-        <RadioButton name="tab_3" group="TabSelect" text="Локальный тест" class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_3" group="TabSelect" text="Local test" class="TabSelect" width="176" height="38" />
         <Control height="4" />
-        <RadioButton name="tab_4" group="TabSelect" text="Плагины"   class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_4" group="TabSelect" text="Plugins"   class="TabSelect" width="176" height="38" />
         <Control height="4" />
-        <RadioButton name="tab_5" group="TabSelect" text="Ассоциации Windows"   class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_5" group="TabSelect" text="Windows integration"   class="TabSelect" width="176" height="38" />
         <Control height="4" />
-        <RadioButton name="tab_6" group="TabSelect" text="Язык"       class="TabSelect" width="176" height="38" />
+        <RadioButton name="tab_6" group="TabSelect" text="Language"       class="TabSelect" width="176" height="38" />
       </VerticalLayout>
       <TabLayout name="tabs" >
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="140" >
-            <Label text="РАЗРЕШЕННЫЕ ФУНКЦИИ" tooltip= "Опции разрешения функций" class="LabelTitle" />
+            <Label text="ALLOWED FUNCTIONS" tooltip= "Опции разрешения функций" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-            <RadioButton class="NormalRadioButton" text="Только классические 1.26 функции" width="412" group="MapSave" name="MapSave_1" tooltip="Сохраряет карту как 1.26 с классическими функциями." />
-            <RadioButton class="NormalRadioButton" text="Japi/Dzapi функции" width="412" group="MapSave" name="MapSave_2" tooltip="Сохраряет карту как 1.26 с Japi/Dzapi функциями." />
-            <RadioButton class="NormalRadioButton" text="Reforged функции" width="412" group="MapSave" name="MapSave_3" tooltip="Сохраряет карту как 1.26 но позволяет использовать функции из Reforged. Это не означает что карта будет работать без Reforged, просто совместимость останется на уровне 1.26. Однако вы лишаетесь возможности тестировать карту из редактора и использовать все преимущества теста карт в KFWE." />
+            <RadioButton class="NormalRadioButton" text="Classic 1.26 functions only" width="412" group="MapSave" name="MapSave_1" tooltip="Saves the map as 1.26 with classic functions." />
+            <RadioButton class="NormalRadioButton" text="Japi/Dzapi functions" width="412" group="MapSave" name="MapSave_2" tooltip="Saves the map as 1.26 with Japi/Dzapi functions." />
+            <RadioButton class="NormalRadioButton" text="Reforged functions" width="412" group="MapSave" name="MapSave_3" tooltip="Saves the map as 1.26 but allows Reforged functions. The map will not work without Reforged, the format just stays 1.26. You lose map testing from the editor and all KFWE test features." />
             </VerticalLayout>
           </VerticalLayout>
           <Control height="12" />
           <VerticalLayout height="120" >
-            <Label text="ИСПОЛЬЗОВАНИЕ СИСТЕМ KFWE" tooltip="Отвечает за то, будут ли уникальные функции и системы KFWE вставлены в карту автоматически когда вы используете их." class="LabelTitle" />
+            <Label text="KFWE SYSTEMS" tooltip="Whether KFWE functions and systems are added to the map automatically when you use them." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <RadioButton class="NormalRadioButton" text="Автоматически" width="412" group="ScriptInjection" name="ScriptInjection_0" tooltip="Все встроенные уникальные системы и функции KFWE будут автоматически вставляться в карту когда вы их используете. Рекомендуется не отключать этот режим, иначе будете получать ошибки наподобие 'undeclared function' ." />
-              <RadioButton class="NormalRadioButton" text="Вручную"   width="412" group="ScriptInjection" name="ScriptInjection_1" tooltip="Для ручного добавления используйте команду препроцессора boost: #include &quot;Jass filename&quot; Example: #include &quot;YDWEAttackWaveTimer.j&quot; Файлы можно найти в папке ui\ydwe\jass." />
+              <RadioButton class="NormalRadioButton" text="Automatically" width="412" group="ScriptInjection" name="ScriptInjection_0" tooltip="KFWE functions and systems are added to the map automatically when you use them. Keep this on, otherwise you will get errors like 'undeclared function'." />
+              <RadioButton class="NormalRadioButton" text="Manually"   width="412" group="ScriptInjection" name="ScriptInjection_1" tooltip="Add them with the boost preprocessor: #include &quot;Jass filename&quot;, for example #include &quot;YDWEAttackWaveTimer.j&quot;. The files are in ui\ydwe\jass." />
             </VerticalLayout>
           </VerticalLayout>
           <Control height="12" />
           <VerticalLayout height="140" >
-            <Label text="КОМПИЛЯЦИЯ КОДА" tooltip="Опции компилятора JassHelper." class="LabelTitle" />
+            <Label text="CODE COMPILATION" tooltip="JassHelper compiler options." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6"  >
-              <CheckBox text="Включить JassHelper" width="244" name="EnableJassHelper" tooltip="Это базовая опция обязательная к включению в любом случае, без нее вы не сможете использовать функции KFWE. Можете отключить только если не используете vJass и делаете карту на чистом Jass." />
-              <CheckBox text="Включить Jass Helper Оптимизацию"         width="440" name="EnableJassHelperOptimization" tooltip="В настоящее время поддерживает встраивание функций." />
-              <CheckBox text="Включить Jass Helper Дебаг"         width="344" name="EnableJassHelperDebug" tooltip="Включает дебаг режим. Вы можете использовать ключевое слово &quot;debug&quot; для того чтобы вся строка кода после него, вставилась в карту или была удалена при сохранении карты. Таким образом можно включать и отключать все дебаг строки когда вам это нужно." />
+              <CheckBox text="Enable JassHelper" width="244" name="EnableJassHelper" tooltip="Required for KFWE functions. Turn it off only if you write plain Jass without vJass." />
+              <CheckBox text="Enable JassHelper optimization"         width="440" name="EnableJassHelperOptimization" tooltip="Currently supports function inlining." />
+              <CheckBox text="Enable JassHelper debug"         width="344" name="EnableJassHelperDebug" tooltip="Enables debug mode. Code lines starting with the &quot;debug&quot; keyword are kept or removed on save, so you can switch all debug lines on and off at once." />
             </VerticalLayout>
           </VerticalLayout>
           <Control height="12" />
           <VerticalLayout height="110" >
-            <Label text="ПРОВЕРКА ГРАМАТИКИ КОДА (PJASS)" tooltip="Опции PJass. Который проверяет код на наличие ошибок при сохранении карты." class="LabelTitle" />
+            <Label text="CODE SYNTAX CHECK (PJASS)" tooltip="PJass options. PJass checks the code for errors when the map is saved." class="LabelTitle" />
             <HorizontalLayout height="40" inset="10,6,10,6" >
-              <RadioButton class="NormalRadioButton" text="Новейший" width="122" group="PJass" name="PJass_0" tooltip="Есть некоторая разница между версиями pJass, если у вас странные ошибки, можете попробовать переключить режим. Однако я рекомендую использовать новейший." />
-              <RadioButton class="NormalRadioButton" text="Классический" width="132" group="PJass" name="PJass_1" tooltip="Есть некоторая разница между версиями pJass, если у вас странные ошибки, можете попробовать переключить режим." />
+              <RadioButton class="NormalRadioButton" text="Latest" width="122" group="PJass" name="PJass_0" tooltip="pJass versions differ slightly. If you get strange errors, try switching. The latest one is recommended." />
+              <RadioButton class="NormalRadioButton" text="Classic" width="132" group="PJass" name="PJass_1" tooltip="pJass versions differ slightly. If you get strange errors, try switching." />
             </HorizontalLayout>
           </VerticalLayout>
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="230" >
-            <Label text="ЗАПУСК WC3 ЧЕРЕЗ KFWE" tooltip="Эти опции влияют на игру когда вы запускаете игру или тестируете карту через KFWE." class="LabelTitle" />
+            <Label text="LAUNCHING WC3 FROM KFWE" tooltip="These options apply when you launch the game or test a map from KFWE." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text="Оконный режим"     width="440" name="LaunchWindowed" tooltip="Игра запустится в оконном режиме, что позволяет быстро сворачивать/разворавивать окно игры." />
+              <CheckBox text="Windowed"     width="440" name="LaunchWindowed" tooltip="The game starts in a window, so you can quickly minimize and restore it." />
               <HorizontalLayout>
                 <Control width="16" />
                 <VerticalLayout>
-                  <CheckBox text="Полный экран"     width="244" name="LaunchFullWindowed"       tooltip="В оконном режиме, окно игры будет растянута на весь экран." />
-                  <CheckBox text="Удерживать мышь"       width="244" name="LaunchLockingMouse"       tooltip="Препятствует выходу курсора за пределы экрана игры когда вы в оконном режиме." />
-                  <CheckBox text="Адаптивное разрешение"   width="244" name="LaunchFixedRatioWindowed" tooltip="Позволяет окну игры автоматически адаптироваться к текущему разрешению, а не растягивать его." />
+                  <CheckBox text="Fullscreen window"     width="244" name="LaunchFullWindowed"       tooltip="In windowed mode, the game window covers the whole screen." />
+                  <CheckBox text="Lock the mouse"       width="244" name="LaunchLockingMouse"       tooltip="Keeps the cursor inside the game window in windowed mode." />
+                  <CheckBox text="Adaptive resolution"   width="244" name="LaunchFixedRatioWindowed" tooltip="The game window adapts to the current resolution instead of stretching." />
                 </VerticalLayout>
                 </HorizontalLayout>
-              <CheckBox text="Широкий экран" width="244" name="LaunchWideScreenSupport" tooltip="Запуск игры с соотношением строн 16:9." />
-              <CheckBox text="Включить права администратора" width="440" name="LaunchDisableSecurityAccess" tooltip="Warcraft увеличит свои собственные ограничения доступа, чтобы предотвратить доступ к нему всех неадминистративных процессов，После этого потребуются права VistaAdminUAC，Разве это не раздражает?" />
+              <CheckBox text="Widescreen" width="244" name="LaunchWideScreenSupport" tooltip="Starts the game in 16:9." />
+              <CheckBox text="Enable administrator rights" width="440" name="LaunchDisableSecurityAccess" tooltip="Warcraft raises its own access restrictions so that non-admin processes cannot access it. After that it needs UAC admin rights, which gets annoying." />
             </VerticalLayout>
           </VerticalLayout>
           <VerticalLayout height="90" >
-            <Label text="DIRECTX" tooltip="Выбор способа рендеринга. На данный момент я не вижу чтобы этот выбор на что-то влиял, скорее всего опция не работает." class="LabelTitle" />
+            <Label text="DIRECTX" tooltip="Rendering mode. It does not seem to change anything right now, the option probably does not work." class="LabelTitle" />
             <Control height="12" />
             <HorizontalLayout height="30" >
               <Control width="16" />
@@ -112,11 +112,11 @@
           </VerticalLayout>
           <Control height="12" />
           <VerticalLayout>
-            <Label text="ВЕРСИЯ ИГРЫ ПРИ ТЕСТЕ КАРТЫ" tooltip="Можно выбрать версию для теста карты." class="LabelTitle" />
+            <Label text="GAME VERSION FOR MAP TEST" tooltip="Choose the game version for map tests." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <RadioButton class="NormalRadioButton" text="Использовать текущую версию"       width="312" group="War3Patch" name="War3Patch_0" tooltip="" />
-              <RadioButton class="NormalRadioButton" text="Адаптироваться под версию карты" width="312" group="War3Patch" name="War3Patch_1" tooltip="KFWE выберет патч (если есть), соответствующий версии карты, из каталога пакетов патчей." />
-              <RadioButton class="NormalRadioButton" text="Выбрать конкретную версию"           width="312" group="War3Patch" name="War3Patch_2" tooltip="Укажите пакет патчей, который нужно загрузить самостоятельно." />
+              <RadioButton class="NormalRadioButton" text="Use the current version"       width="312" group="War3Patch" name="War3Patch_0" tooltip="" />
+              <RadioButton class="NormalRadioButton" text="Match the map version" width="312" group="War3Patch" name="War3Patch_1" tooltip="KFWE picks a patch matching the map version from the patch folder, if there is one." />
+              <RadioButton class="NormalRadioButton" text="Choose a version"           width="312" group="War3Patch" name="War3Patch_2" tooltip="Pick the patch to load." />
               <HorizontalLayout>
                 <Control width="16" />
                 <VerticalLayout name ="War3PatchList" enabled="false" vscrollbar="true" height="90" >
@@ -127,23 +127,23 @@
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="470" >
-            <Label text="ОПЦИИ" tooltip= "" class="LabelTitle" />
+            <Label text="OPTIONS" tooltip= "" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text="Slk-Оптимизация перед тестом карты" width="344" name="EnableMapSlk" tooltip="Значительно снижает время загрузки карт которые долго загружаются, по большему счету это относится к картам где много способностей с уровнем выше чем 4." />
+              <CheckBox text="SLK optimization before map test" width="344" name="EnableMapSlk" tooltip="Greatly reduces loading time for slow maps, mostly maps with many abilities above level 4." />
                 <HorizontalLayout height="24" >
                   <Control width="20" />
-                  <RadioButton class="NormalRadioButton" text="KFMO (рекомендуется)" width="202" group="MapOptimizer" name="MapOptimizer_0" tooltip="Быстрее и без замены текстов стандартных объектов." />
-                  <RadioButton class="NormalRadioButton" text="w3x2lni" width="122" group="MapOptimizer" name="MapOptimizer_1" tooltip="Старый оптимизатор." />
+                  <RadioButton class="NormalRadioButton" text="KFMO (recommended)" width="202" group="MapOptimizer" name="MapOptimizer_0" tooltip="Faster, and keeps standard object texts." />
+                  <RadioButton class="NormalRadioButton" text="w3x2lni" width="122" group="MapOptimizer" name="MapOptimizer_1" tooltip="The old optimizer." />
                 </HorizontalLayout>
-              <CheckBox text="Включить тёмный режим" width="344" name="EnableDarkMode" tooltip="Меняет визуальное оформление редактора на темное, требует включения темной темы на windows 10 и старше." />
-              <CheckBox text="Включить ускоренное сохранение" width="344" name="EnableMapHelper" tooltip="Сильно ускоряет скорость сохранения карты." />
-              <CheckBox text="Плагин покраски текста (*)"         width="344" name="EnableDotNetSupport" tooltip="Улучшенное окно для ТЕКСТОВЫХ полей редактора объектов (имя, описание, подсказки): предпросмотр как в игре, палитра цветов игроков WC3, градиент. Для списков, чисел и флажков не открывается." />
-              <CheckBox text="Подсветка Jass синтаксиса (TESH) (*)"     width="344" name="EnableTesh" tooltip="Включает подсветку синтаксиса - TESH. Обязателен к использованию чтобы видеть Jass код в нормальном виде." />
-              <CheckBox text="Ускорение загрузки (экспериментально) (*)" width="384" name="EnableStormFastHeap" tooltip="Экспериментально. Ускоряет открытие и тест больших карт: быстрый менеджер памяти для строк, исправление квадратичного роста массива и индекс для проверки переменных триггеров. Если редактор ведёт себя странно, выключите. Требует перезапуска редактора." />
-              <CheckBox text="Ручной ввод ID объектов при создании"  width="344" name="EnableManualNewId" tooltip="При создании объектов в редакторе объектов вам будет предложено ввести ID самостоятельно либо использовать тот который редактор предложил бы сам без этой опции." />
-              <CheckBox text="Не спрашивать про папки UI/Units" width="384" name="DisableUiDirCheck" tooltip="Не показывать при запуске вопрос об удалении папок UI и Units в папке Warcraft III." />
-              <CheckBox text="Не проверять обновления при запуске" width="384" name="DisableAutoUpdate" tooltip="Не спрашивать при запуске про новую версию KFWE на GitHub." />
-              <CheckBox text="Выбрать шрифт текста(*)" tooltip="Устанавливает шрифт для редактора объектов." width="244" name="FontEnable" />
+              <CheckBox text="Enable dark mode" width="344" name="EnableDarkMode" tooltip="Makes the editor dark. Needs the dark theme on Windows 10 or later." />
+              <CheckBox text="Enable fast save" width="344" name="EnableMapHelper" tooltip="Saves maps much faster." />
+              <CheckBox text="Text color plugin (*)"         width="344" name="EnableDotNetSupport" tooltip="A better window for TEXT fields of the Object Editor (name, description, tooltips): in-game preview, WC3 player color palette, gradients. It does not open for lists, numbers or checkboxes." />
+              <CheckBox text="Jass syntax highlighting (TESH) (*)"     width="344" name="EnableTesh" tooltip="Enables TESH syntax highlighting. Needed to see Jass code properly." />
+              <CheckBox text="Faster loading (experimental) (*)" width="384" name="EnableStormFastHeap" tooltip="Experimental. Opens and tests big maps faster: a fast string allocator, a fix for quadratic array growth and an index for trigger variable checks. Turn it off if the editor behaves oddly. Needs an editor restart." />
+              <CheckBox text="Enter object IDs manually"  width="344" name="EnableManualNewId" tooltip="When you create an object in the Object Editor, you can type its ID or keep the one the editor would pick." />
+              <CheckBox text="Do not ask about UI/Units folders" width="384" name="DisableUiDirCheck" tooltip="Do not ask at startup about deleting the UI and Units folders in the Warcraft III folder." />
+              <CheckBox text="Do not check for updates at startup" width="384" name="DisableAutoUpdate" tooltip="Do not ask at startup about a new KFWE version on GitHub." />
+              <CheckBox text="Text font (*)" tooltip="Sets the Object Editor font." width="244" name="FontEnable" />
               <HorizontalLayout>
                 <Control width="20" />
                 <Combo name="FontName" dropboxsize="0, 300" height="30" itemfont="2" normalimage="file='Common/kf/field.png' corner='8,8,8,8'" hotimage="file='Common/kf/field_hot.png' corner='8,8,8,8'" pushedimage="file='Common/kf/field_hot.png' corner='8,8,8,8'" textpadding="10,0,10,0" itemtextcolor="#FFE4E6EB" itembkcolor="#FF2B2D33" itemhottextcolor="#FFFFFFFF" itemhotbkcolor="#FF363944" itemselectedtextcolor="#FFFFFFFF" itemselectedbkcolor="#FF7C5CFF" />
@@ -168,19 +168,19 @@
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="290" >
-            <Label text="ТЕСТ КАРТЫ В ЛОКАЛЬНОЙ ИГРЕ"  tooltip="" class="LabelTitle" />
+            <Label text="MAP TEST IN A LAN GAME"  tooltip="" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text="Включить локальный тест"         width="274" name="EnableHost" tooltip="Игра запустится в локальной сети а не в одиночном режиме." />
+              <CheckBox text="Enable local test"         width="274" name="EnableHost" tooltip="The game starts as a LAN game instead of single player." />
                 <VerticalLayout class="Background" inset="10,6,10,6" >
-                  <RadioButton class="NormalRadioButton" text="Режим одного игрока" width="212" group="HostTest" name="HostTest_0" tooltip="Игра запустится в локальной сети, но вы будете в ней единственным игроком." />
-                  <RadioButton class="NormalRadioButton" text="Режим нескольких игроков"   width="252" group="HostTest" name="HostTest_1" tooltip="Игра запустится в локальной сети, при этом будет создано столько дополнительных окон, сколько открытых слотов под игроков у вас в карте. Все окна попытаются зайти в игру автоматически, но могут застрять в меню загрузки игры, вам нужно просто выйти из него и тогда окно зайдет в созданную игру." />
+                  <RadioButton class="NormalRadioButton" text="Single player" width="212" group="HostTest" name="HostTest_0" tooltip="A LAN game where you are the only player." />
+                  <RadioButton class="NormalRadioButton" text="Multiple players"   width="252" group="HostTest" name="HostTest_1" tooltip="A LAN game with an extra game window for every open player slot in the map. All windows try to join automatically. If one gets stuck in the menu, leave it and the window will join the game." />
               </VerticalLayout>
             </VerticalLayout>
           </VerticalLayout>
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="450" >
-            <Label text="ПЛАГИНЫ"  tooltip="Select the plug-in that needs to be turned on。" class="LabelTitle" />
+            <Label text="PLUGINS"  tooltip="Select the plug-in that needs to be turned on。" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <HorizontalLayout>
                 <Control width="16" />
@@ -192,57 +192,58 @@
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" vscrollbar="true" >
           <VerticalLayout height="110" >
-            <Label text="АССОЦИИРОВАТЬ КАРТЫ С KFWE"  tooltip="Вы сможете открывать карты сразу в KFWE при помощи двойного клика, так же у карт поменяются иконки на иконку этого конфига в панели задач." class="LabelTitle" />
+            <Label text="OPEN MAPS WITH KFWE"  tooltip="Double-click a map to open it in KFWE. Map files get the KFWE icon." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text=".w3x" width="244" name="FileAssociation_w3x" tooltip="Карты Frozen Throne." />
-              <CheckBox text=".w3m" width="244" name="FileAssociation_w3m" tooltip="Карты Reign of Chaos." />
+              <CheckBox text=".w3x" width="244" name="FileAssociation_w3x" tooltip="Frozen Throne maps." />
+              <CheckBox text=".w3m" width="244" name="FileAssociation_w3m" tooltip="Reign of Chaos maps." />
             </VerticalLayout>
           </VerticalLayout>
           <Control height="16" />
           <VerticalLayout height="110" >
-            <Label text="ЯРЛЫКИ"  tooltip="Добавить/убрать ярлыки для KFWE." class="LabelTitle" />
+            <Label text="SHORTCUTS"  tooltip="Add or remove KFWE shortcuts." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text="Добавить на рабочий стол"   width="284" name="Shortcuts_desktop" tooltip="" />
-              <CheckBox text="Добавить в windows" width="244" name="Shortcuts_taskbar" tooltip="" />
+              <CheckBox text="Desktop"   width="284" name="Shortcuts_desktop" tooltip="" />
+              <CheckBox text="Windows taskbar" width="244" name="Shortcuts_taskbar" tooltip="" />
             </VerticalLayout>
           </VerticalLayout>
           <Control height="16" />
           <VerticalLayout height="90" >
-            <Label text="ПУТЬ К ИГРЕ (*)"  tooltip="Изменение пути к игре" class="LabelTitle" />
+            <Label text="GAME FOLDER (*)"  tooltip="Change the game folder" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <Control height="8" />
               <HorizontalLayout class="Background" childpadding="6" >
-                <Button text="Путь" width="64" height="30" font="2" name="choose_war3_dir" />
+                <Button text="Path" width="64" height="30" font="2" name="choose_war3_dir" />
                 <Label text="" bkimage="file='Common/kf/field.png' corner='8,8,8,8'" textcolor="#FFE4E6EB" font="2" textpadding="10,0,10,0" align="left" height="30" name="Warcraft3Directory" />
               </HorizontalLayout>
             </VerticalLayout>
           </VerticalLayout>
           <Control height="16" />
           <VerticalLayout height="110" >
-            <Label text="РЕГИСТР"  tooltip="Изменение параметров регистра." class="LabelTitle" />
+            <Label text="REGISTRY"  tooltip="Game registry settings." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <CheckBox text="Разрешить локальные файлы"   width="304" name="AllowLocalFiles" tooltip="Опция нужна для таких вещей как системы сохранения без пароля, где для загрузки используется не код а файл." />
+              <CheckBox text="Allow local files"   width="304" name="AllowLocalFiles" tooltip="Needed for things like save systems that load from a file instead of a code." />
             </VerticalLayout>
           </VerticalLayout>
         </VerticalLayout>
         <VerticalLayout class="Background" inset="24,14,20,14" >
           <VerticalLayout height="170" >
-            <Label text="ЯЗЫК(*)" tooltip= "Выбор языка." class="LabelTitle" />
+            <Label text="LANGUAGE (*)" tooltip= "Выбор языка." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
-              <RadioButton class="NormalRadioButton" text="Русский" width="212" group="Language" name="Language-en-US" />
+              <RadioButton class="NormalRadioButton" text="Русский" width="212" group="Language" name="Language-ru" />
+              <RadioButton class="NormalRadioButton" text="English" width="212" group="Language" name="Language-en-US" />
             </VerticalLayout>
           </VerticalLayout>
         </VerticalLayout>
       </TabLayout>
     </HorizontalLayout>
     <HorizontalLayout bkcolor="#FF17181C" height="30" inset="24,8,24,0" >
-      <Label text="Важно: Опции со знаком (*) требуют перезапуска KFWE." textcolor="#FF7D8290" font="2" align="left" />
+      <Label text="Options marked (*) need a KFWE restart." textcolor="#FF7D8290" font="2" align="left" />
     </HorizontalLayout>
     <HorizontalLayout bkcolor="#FF17181C" height="60" childpadding="10" inset="24,10,24,16" >
       <Control />
-      <Button text="Сброс" width="104" height="34" name="reset" />
-      <Button text="Ок" width="104" height="34" name="ok" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" normalimage="file='Common/kf/btn_pri.png' corner='9,9,9,9'" hotimage="file='Common/kf/btn_pri_hot.png' corner='9,9,9,9'" pushedimage="file='Common/kf/btn_pri_push.png' corner='9,9,9,9'" />
-      <Button text="Отмена" width="104" height="34" name="cancel" />
+      <Button text="Reset" width="104" height="34" name="reset" />
+      <Button text="OK" width="104" height="34" name="ok" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" normalimage="file='Common/kf/btn_pri.png' corner='9,9,9,9'" hotimage="file='Common/kf/btn_pri_hot.png' corner='9,9,9,9'" pushedimage="file='Common/kf/btn_pri_push.png' corner='9,9,9,9'" />
+      <Button text="Cancel" width="104" height="34" name="cancel" />
     </HorizontalLayout>
   </VerticalLayout>
 </Window>

@@ -1,0 +1,14 @@
+[CHOOSE_WAR3_DIR]
+Выберите каталог установки Warcraft 3.
+[ERROR_DEL_YDDLLFIXER]
+Невозможно удалить YDDllFixer.dll в каталоге war3.
+[ERROR_WE_EXE]
+Не удалось найти основной исполняемый файл редактора мира в каталоге YDWE/bin.
+[ERROR_LAUNCH_WE]
+Не удалось запустить редактор мира.
+[ERROR_UNKNOWN]
+Неизвестная ошибка
+[ERROR]
+Ошибка
+[ERROR_YDWE_DIR]
+Ошибка каталога YDWE.

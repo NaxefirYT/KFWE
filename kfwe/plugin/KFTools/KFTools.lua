@@ -42,6 +42,7 @@ loader.load = function(path)
 		int KFToolsCopy(int with_z);
 		int KFToolsCheckUpdate(void);
 		int KFToolsShowChangelog(void);
+		int KFToolsImportCustomData(int type, const char *path);
 	]])
 	loader.dll = dll
 	local r = dll.KFToolsInit()
@@ -62,6 +63,14 @@ end
 
 loader.changelog = function()
 	loader.dll.KFToolsShowChangelog()
+end
+
+loader.import_customdata = function(type, path)
+	local ok, r = pcall(function() return loader.dll.KFToolsImportCustomData(type, path) end)
+	if not ok then
+		return -1
+	end
+	return r
 end
 
 loader.unload = function()

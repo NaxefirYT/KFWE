@@ -1,6 +1,18 @@
 require "w3x2lni.check_object"
 require 'w3x2lni.open_map'
 local uiloader = require "uiloader"
+
+local function copy_wes(ydwePath, variant)
+	local lang = (require "i18n").get_language()
+	local dir = ydwePath / 'plugin' / 'tesh' / 'data' / variant
+	local src = dir / ('WorldEditStrings.' .. lang .. '.txt')
+	if not fs.exists(src) then
+		src = dir / 'WorldEditStrings.txt'
+	end
+	local dst = ydwePath / 'share' / lang / 'mpq' / 'UI'
+	fs.create_directories(dst)
+	fs.copy_file(src, dst / 'WorldEditStrings.txt', true)
+end
 local stormlib = require 'ffi.stormlib'
 
 -- 版本信息
@@ -213,24 +225,24 @@ local function check_war3_version()
 		end
 	elseif mapsave_number == 3 then -- Reforged (PK Edit)
 		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'Ref' / 'tesh_keywords.db', ydwePath / 'plugin' / 'tesh' / 'data' / 'tesh_keywords.db', true)
-		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'Ref' / 'WorldEditStrings.txt', ydwePath / 'share' / 'en-US' / 'mpq' / 'UI' / 'WorldEditStrings.txt', true)
+		copy_wes(ydwePath, 'Ref')
 	elseif mapsave_number == 1 then -- 1.26 (PK Edit)
 		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / '126' / 'tesh_keywords.db', ydwePath / 'plugin' / 'tesh' / 'data' / 'tesh_keywords.db', true)
-		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / '126' / 'WorldEditStrings.txt', ydwePath / 'share' / 'en-US' / 'mpq' / 'UI' / 'WorldEditStrings.txt', true)
+		copy_wes(ydwePath, '126')
 	elseif mapsave_number == 2 then -- Japi/Dzapi (PK Edit)
 		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'Japi' / 'tesh_keywords.db', ydwePath / 'plugin' / 'tesh' / 'data' / 'tesh_keywords.db', true)
-		fs.copy_file(ydwePath / 'plugin' / 'tesh' / 'data' / 'Japi' / 'WorldEditStrings.txt', ydwePath / 'share' / 'en-US' / 'mpq' / 'UI' / 'WorldEditStrings.txt', true)
+		copy_wes(ydwePath, 'Japi')
 	end
 end
 
 -- 显示制作者和感谢信息
 function show_credit()
-	we.message_show("    |cff9d86ff" .. (LNG.MENU_YDWE:gsub("&", "")) .. "|r  |cff8a8f9eот Naxefir|r")
+	we.message_show("    |cff9d86ff" .. (LNG.MENU_YDWE:gsub("&", "")) .. "|r  |cff8a8f9e" .. TR("от Naxefir") .. "|r")
 	we.message_show(" ")
 	we.message_show("    |cff8a8f9eGitHub|r    |cffffffffgithub.com/NaxefirYT/KFWE|r")
 	we.message_show("    |cff8a8f9eDiscord|r   |cffffffffdiscord.gg/2Chc8rbXXD|r")
-	we.message_show("    |cff8a8f9eОснован на YDWE PK (Enemy1PK) и YDWE (actboy168, sumneko)|r")
-	we.message_show("    |cff8a8f9eСпасибо Dracol1ch, Prometheus, Super.Skill, sotzaii_shuen, PortusM|r")
+	we.message_show("    |cff8a8f9e" .. TR("Основан на YDWE PK (Enemy1PK) и YDWE (actboy168, sumneko)") .. "|r")
+	we.message_show("    |cff8a8f9e" .. TR("Спасибо Dracol1ch, Prometheus, Super.Skill, sotzaii_shuen, PortusM") .. "|r")
 end
 
 local function initialize_font()
@@ -299,6 +311,9 @@ function event.EVENT_WE_START(event_data)
     if lang ~= 'zh-CN' then
         load_virtual_mpq(lang .. "/mpq", 14)
     end
+    if lang ~= 'ru' and lang ~= 'zh-CN' then
+        load_virtual_mpq("ru/mpq", 14)
+    end
     load_virtual_mpq("zh-CN/mpq", 14)
 
 	-- 加载插件
@@ -306,6 +321,15 @@ function event.EVENT_WE_START(event_data)
 
 	-- 初始化UI加载器
 	uiloader()
+	pcall(kflang.sync)
+	virtual_mpq.watch('units\\unitui.slk', function ()
+		local t = (require 'w3xparser').slk((require 'mpqloader'):load('units\\unitui.slk'), 'unitui.slk')
+		for _, o in pairs(t) do
+			o.inEditor = 1
+			o.hiddenInEditor = 0
+		end
+		return (require 'stringify_slk')(t, 'unitUIID')
+	end)
 
 	initialize_reg()
 	initialize_dark_mode()

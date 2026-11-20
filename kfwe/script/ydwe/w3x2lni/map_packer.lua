@@ -3,6 +3,15 @@ local root = fs.ydwe_path()
 local dev = fs.ydwe_devpath()
 local i18n = require 'i18n'
 
+local function read_all(f)
+    if not f then
+        return ''
+    end
+    local s = f:read 'a' or ''
+    f:close()
+    return s
+end
+
 local function do_command(script, ...)
     local current_dir = dev / 'plugin' / 'w3x2lni' / 'script'
     local args = {
@@ -23,9 +32,13 @@ local function do_command(script, ...)
         cwd = current_dir:string(),
     }
     local process = subprocess.spawn(args)
+    if not process then
+        log.error(string.format('Executed %s failed.', sys.tbl_concat(args, ' ')))
+        return false
+    end
     log.trace(string.format('Executed %s.', sys.tbl_concat(args, ' ')))
-    local out = process.stdout:read 'a'
-    local err = process.stderr:read 'a'
+    local out = read_all(process.stdout)
+    local err = read_all(process.stderr)
     local exit_code = process:wait()
     log.debug('exit_code', exit_code)
     if exit_code == 0 then
@@ -82,8 +95,8 @@ local function kfmo(...)
         log.error('KFMO: failed to start')
         return false
     end
-    local out = process.stdout:read 'a'
-    local err = process.stderr:read 'a'
+    local out = read_all(process.stdout)
+    local err = read_all(process.stderr)
     local exit_code = process:wait()
     log.info('KFMO exit_code', exit_code, out)
     if exit_code ~= 0 then
@@ -108,7 +121,7 @@ return function (mode, map_path, target_path)
         end
     end
     local lang = i18n.get_language()
-    if lang:sub(1, 2) == 'en' then
+    if lang ~= 'zh-CN' then
         make_enUS()
     else
         make_zhCN()

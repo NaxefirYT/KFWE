@@ -135,7 +135,7 @@ return function(default, type_name, check)
     head:setmousedowncanmovewindow(true)
     root:addchildview(head)
 
-    local title = label('Новый ID  ·  ' .. type_name, 15, C.accent, 'bold')
+    local title = label(TR('Новый ID  ·  ') .. type_name, 15, C.accent, 'bold')
     title:setalign('start')
     title:setstyle { FlexGrow = 1, Height = 44, MarginLeft = 18 }
     title:setmousedowncanmovewindow(true)
@@ -145,7 +145,7 @@ return function(default, type_name, check)
     body:setstyle { FlexGrow = 1, Padding = 18, PaddingTop = 14 }
     root:addchildview(body)
 
-    local caption = label('Введите 4 символа или оставьте пустым', 13, C.dim)
+    local caption = label(TR('Введите 4 символа или оставьте пустым'), 13, C.dim)
     caption:setalign('start')
     caption:setstyle { Height = 20 }
     body:addchildview(caption)
@@ -180,7 +180,7 @@ return function(default, type_name, check)
     actions:setstyle { FlexDirection = 'row', MarginTop = 8, MarginLeft = -5, MarginRight = -5 }
     body:addchildview(actions)
 
-    local hint = label('Enter  создать      Esc  по умолчанию', 12, C.dim)
+    local hint = label(TR('Enter  создать      Esc  по умолчанию'), 12, C.dim)
     hint:setstyle { Height = 20, MarginTop = 6 }
     body:addchildview(hint)
 
@@ -197,7 +197,7 @@ return function(default, type_name, check)
         if text == '' then
             value:settext(default)
             value:setcolor(C.faint)
-            status:settext('Будет использован ' .. default)
+            status:settext(TR('Будет использован ') .. default)
             status:setcolor(C.dim)
             return
         end
@@ -208,7 +208,7 @@ return function(default, type_name, check)
             status:settext(err)
             status:setcolor(#text == 4 and C.bad or C.dim)
         else
-            status:settext(text .. ' свободен')
+            status:settext(text .. TR(' свободен'))
             status:setcolor(C.ok)
         end
     end
@@ -240,15 +240,15 @@ return function(default, type_name, check)
     end
 
     local chip_style = { Height = 34, Width = 177, Margin = 5 }
-    chips:addchildview(button('Предложенный  ' .. default, C.text, C.btn, C.btn_hover, chip_style, function() fill(default) end))
+    chips:addchildview(button(TR('Предложенный  ') .. default, C.text, C.btn, C.btn_hover, chip_style, function() fill(default) end))
     local series = last_used[type_name] and next_free(last_used[type_name], safe_check)
     if series then
-        chips:addchildview(button('Дальше по серии  ' .. series, C.text, C.btn, C.btn_hover, chip_style, function() fill(series) end))
+        chips:addchildview(button(TR('Дальше по серии  ') .. series, C.text, C.btn, C.btn_hover, chip_style, function() fill(series) end))
     end
 
     local action_style = { Height = 42, Width = 177, Margin = 5 }
-    actions:addchildview(button('Создать', '#16161a', C.accent, C.accent_hover, action_style, function() finish(text) end))
-    actions:addchildview(button('По умолчанию', C.text, C.btn, C.btn_hover, action_style, function() finish(default) end))
+    actions:addchildview(button(TR('Создать'), '#16161a', C.accent, C.accent_hover, action_style, function() finish(text) end))
+    actions:addchildview(button(TR('По умолчанию'), C.text, C.btn, C.btn_hover, action_style, function() finish(default) end))
 
     head:addchildview(button('×', C.dim, C.head, C.close_hover, { Width = 48, Height = 44 }, function() finish(default) end))
 
