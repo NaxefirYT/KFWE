@@ -283,10 +283,7 @@ Unhotkey=B
 
 [Bblo]
 Bufftip=Bloodlust
-EditorName=Earthquake (Caster)
-
-[BOsh]
-EditorName=Shockwave (Caster)
+Buffubertip="This unit has Bloodlust; its attack rate and movement speed are increased."
 
 [BOvc]
 EditorName=Big Bad Voodoo (Caster)

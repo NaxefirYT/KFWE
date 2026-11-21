@@ -1,3 +1,9 @@
+## 1.8.1
+
+**Fixed**
+- The Bloodlust buff was named “Earthquake (Caster)” in the Object Editor and had no tooltip
+- Better wording in a few places of the English translation
+
 ## 1.8.0
 
 **New**

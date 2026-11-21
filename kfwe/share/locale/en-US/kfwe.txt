@@ -94,10 +94,10 @@ Enter: свойства   Del: удалить   Ctrl+E: экспорт   Ctrl+C:
 Не выбран триггер = No trigger selected
 Триггеров: %d = Triggers: %d
 %s%d в %d = %s%d in %d
-Больше\s = Over\s
+Больше\s = More than\s
 имя = name
 Начните вводить текст = Start typing
-Триггер на GUI, совпало имя = GUI trigger, the name matched
+Триггер на GUI, совпало имя = GUI trigger, only the name matches
 Заменено: %d в %d, пропущено %d = Replaced %d in %d, skipped %d
 Откройте редактор триггеров. = Open the Trigger Editor.
 Поиск по триггерам = Trigger search
@@ -201,10 +201,10 @@ Warcraft %d.%d не поддерживается. = Warcraft %d.%d is not suppor
 
 # kfwe/share/locale/ru/config.lng
 Ошибка при загрузке скинов. = Failed to load skins.
-Удаленный параметр = Remote parameter
+Удаленный параметр = JAPI functions
 JASS дебагинг в реальном времени = Real-time JASS debugging
 Монитор утечек = Leak monitor
-Разрешить запуск wc3 в нескольких окнах = Allow several wc3 windows
+Разрешить запуск wc3 в нескольких окнах = Allow multiple WC3 windows
 Виртуальный MPQ = Virtual MPQ
 Загрузите на сайте www.ydwe.net; = Download it from www.ydwe.net;
 
@@ -349,7 +349,7 @@ KFWE уже установлен, файлы обновятся, а настро
 Закрыть = Close
 
 # kfmo/gui/MainForm.cs
-Карта (можно перетащить в окно) = Map (you can drop it on the window)
+Карта (можно перетащить в окно) = Map (or drop it onto the window)
 Выбрать = Browse
 Результат: = Output:
 Суффикс: = Suffix:
@@ -372,8 +372,8 @@ KFWE уже установлен, файлы обновятся, а настро
 Модели для Reforged = Reforged models
 Вместе с SLK пишет UnitSkin.txt и ItemSkin.txt. Без них в Reforged юниты и предметы невидимы. 1.26 эти файлы не читает. = Writes UnitSkin.txt and ItemSkin.txt along with SLK. Without them units and items are invisible in Reforged. 1.26 does not read these files.
 7 бит = 7-bit
-Бережно = Gentle
-Не трогать = Keep
+Бережно = Safe
+Не трогать = Off
 Без потерь = Lossless
 Качество 90 = Quality 90
 Качество 85 = Quality 85
@@ -473,7 +473,7 @@ SLK не сделан, карта для теста не собрана = SLK fa
 Ярко-красный = Bright red
 Циан = Cyan
 Голубой (мана) = Light blue (mana)
-Покрасить = Color
+Покрасить = Apply color
 Градиент = Gradient
 Палитра WC3 = WC3 palette
 Выделите текст и нажмите на цвет. ПКМ по цвету: конец градиента. Ctrl+Enter: перенос строки. = Select text and click a color. Right-click a color: gradient end. Ctrl+Enter: line break.
