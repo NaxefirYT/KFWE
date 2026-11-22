@@ -224,7 +224,7 @@ function show_credit()
 	we.message_show("    |cff9d86ff" .. (LNG.MENU_YDWE:gsub("&", "")) .. "|r  |cff8a8f9e" .. TR("от Naxefir") .. "|r")
 	we.message_show(" ")
 	we.message_show("    |cff8a8f9eGitHub|r    |cffffffffgithub.com/NaxefirYT/KFWE|r")
-	we.message_show("    |cff8a8f9eDiscord|r   |cffffffffdiscord.gg/2Chc8rbXXD|r")
+	we.message_show("    |cff8a8f9eDiscord|r   |cffffffffdiscord.gg/4EHuGnhyGe|r")
 	we.message_show("    |cff8a8f9e" .. TR("Основан на YDWE PK (Enemy1PK) и YDWE (actboy168, sumneko)") .. "|r")
 	we.message_show("    |cff8a8f9e" .. TR("Спасибо Dracol1ch, Prometheus, Super.Skill, sotzaii_shuen, PortusM") .. "|r")
 end

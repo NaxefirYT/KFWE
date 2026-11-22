@@ -38,7 +38,7 @@ end
 
 -- 打开官网
 local function open_offical_site()
-	os.execute('explorer "https://discord.gg/2Chc8rbXXD"')
+	os.execute('explorer "https://discord.gg/4EHuGnhyGe"')
 end
 
 local function open_thanks()
