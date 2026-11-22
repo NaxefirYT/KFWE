@@ -2700,27 +2700,10 @@ OrderTypeOrderoff=0,OrderType,`Orderoff`,Deactivate
 
 
 [DefaultTriggerCategories]
-NumCategories=1
-Category01="Welcome to YDWE"
+NumCategories=0
 
 [DefaultTriggers]
-NumTriggers=1
-Trigger01Name="Introduction"
-Trigger01Comment=
-Trigger01Category=1
-Trigger01Events=0
-Trigger01Conditions=0
-Trigger01Actions=8
-Trigger01Action01=CommentString,"  YDWE Это лучший редактор карт для классического Warcraft III."
-Trigger01Action02=CommentString,"　　                                                                   "
-Trigger01Action03=CommentString,"　　Текущий разработчик: Enemy1PK"
-Trigger01Action04=CommentString,"　　Вы можете скачать последнюю версию по ссылке https://www.hiveworkshop.com/threads/ydwe-map-editor.341135/"
-Trigger01Action05=CommentString,"　　Присоединяйтесь к дискорд серверу: https://discord.gg/sVkB27JwG8"
-Trigger01Action06=CommentString,"　　Так же вы можете поддержать автора через пожертвования https://www.donationalerts.com/r/enemy1pkally"
-Trigger01Action07=CommentString,"　　В папке (YDWE/Demo Maps) содержатся карты-примеры для ознакомления с некоторыми функциями YDWE PK"
-Trigger01Action08=CommentString,"　　Материал запрещен к публикации на Xgm, потому что местная администрация и комьюнити - токсичные куски дерьма"
-Trigger01Action09=CommentString,"　　Если ваша карта повредилась, вы можете найти до 26 бэкапов в папке backups"
-Trigger01Action10=CommentString,"　　Если ваш YDWE PK работает неккоректно или вы обнаружили баги, вы можете связаться во мной в discord или на hiveworkshop"
+NumTriggers=0
 [AIFunctionStrings]
 TownThreatened="Base is attacked"
 TownThreatened="Base is attacked"

@@ -246,6 +246,8 @@ Reforged функции = Reforged functions
 В настоящее время поддерживает встраивание функций. = Currently supports function inlining.
 Включить Jass Helper Дебаг = Enable JassHelper debug
 Включает дебаг режим. Вы можете использовать ключевое слово "debug" для того чтобы вся строка кода после него, вставилась в карту или была удалена при сохранении карты. Таким образом можно включать и отключать все дебаг строки когда вам это нужно. = Enables debug mode. Code lines starting with the "debug" keyword are kept or removed on save, so you can switch all debug lines on and off at once.
+Авто-зануление локальных переменных = Auto-null local variables
+При сохранении KFWE сам добавляет set x\s=\snull для локальных handle-переменных (unit, group, location и т.п.) перед каждым return и в конце функций, чтобы не было утечек. Код в триггерах не меняется, только скрипт сохранённой карты. Если после этого код не пройдёт проверку pjass, карта сохранится без зануления. Отключить для одной карты: строка // @nonull в любом месте кода карты. = On save, KFWE adds set x = null for local handle variables (unit, group, location and so on) before every return and at the end of functions, so they do not leak. Your trigger code is not changed, only the saved map script. If the result fails the pjass check, the map is saved without it. To turn it off for one map, put a // @nonull line anywhere in the map code.
 ПРОВЕРКА ГРАМАТИКИ КОДА (PJASS) = CODE SYNTAX CHECK (PJASS)
 Опции PJass. Который проверяет код на наличие ошибок при сохранении карты. = PJass options. PJass checks the code for errors when the map is saved.
 Новейший = Latest

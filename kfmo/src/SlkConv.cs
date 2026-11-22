@@ -667,6 +667,7 @@ sealed partial class SlkConv
             {
                 var s = SlkToTypeOut(m.Type, t.At(i));
                 var col = type == "doodad" ? m.Field + i.ToString("00") : m.Field + i;
+                if (NumLike(m.Type, s)) { od[i] = t.At(i); s = null; }
                 if (s != null) slkData[col] = s; else slkData.Remove(col);
             }
             if (over) OverLevel++;
@@ -674,9 +675,14 @@ sealed partial class SlkConv
         else
         {
             var s = SlkToTypeOut(m.Type, v);
+            if (NumLike(m.Type, s)) { objData.F[key] = v; s = null; }
             if (s != null) slkData[m.Field] = s; else slkData.Remove(m.Field);
         }
     }
+
+    static bool NumLike(int tp, string? s) =>
+        tp == 3 && s != null && s.Length > 2
+        && (char.IsAsciiDigit(s[1]) || s[1] == '-' || s[1] == '+' || s[1] == '.');
 
     byte[] BackendSlk(string type, string file)
     {

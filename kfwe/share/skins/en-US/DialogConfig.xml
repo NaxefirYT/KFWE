@@ -47,7 +47,7 @@
       </VerticalLayout>
       <TabLayout name="tabs" >
         <VerticalLayout class="Background" inset="24,14,20,14" >
-          <VerticalLayout height="140" >
+          <VerticalLayout height="124" >
             <Label text="ALLOWED FUNCTIONS" tooltip= "Опции разрешения функций" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
             <RadioButton class="NormalRadioButton" text="Classic 1.26 functions only" width="412" group="MapSave" name="MapSave_1" tooltip="Saves the map as 1.26 with classic functions." />
@@ -55,25 +55,26 @@
             <RadioButton class="NormalRadioButton" text="Reforged functions" width="412" group="MapSave" name="MapSave_3" tooltip="Saves the map as 1.26 but allows Reforged functions. The map will not work without Reforged, the format just stays 1.26. You lose map testing from the editor and all KFWE test features." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="120" >
+          <Control height="10" />
+          <VerticalLayout height="96" >
             <Label text="KFWE SYSTEMS" tooltip="Whether KFWE functions and systems are added to the map automatically when you use them." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Automatically" width="412" group="ScriptInjection" name="ScriptInjection_0" tooltip="KFWE functions and systems are added to the map automatically when you use them. Keep this on, otherwise you will get errors like 'undeclared function'." />
               <RadioButton class="NormalRadioButton" text="Manually"   width="412" group="ScriptInjection" name="ScriptInjection_1" tooltip="Add them with the boost preprocessor: #include &quot;Jass filename&quot;, for example #include &quot;YDWEAttackWaveTimer.j&quot;. The files are in ui\ydwe\jass." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="140" >
+          <Control height="10" />
+          <VerticalLayout height="152" >
             <Label text="CODE COMPILATION" tooltip="JassHelper compiler options." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6"  >
               <CheckBox text="Enable JassHelper" width="244" name="EnableJassHelper" tooltip="Required for KFWE functions. Turn it off only if you write plain Jass without vJass." />
               <CheckBox text="Enable JassHelper optimization"         width="440" name="EnableJassHelperOptimization" tooltip="Currently supports function inlining." />
               <CheckBox text="Enable JassHelper debug"         width="344" name="EnableJassHelperDebug" tooltip="Enables debug mode. Code lines starting with the &quot;debug&quot; keyword are kept or removed on save, so you can switch all debug lines on and off at once." />
+              <CheckBox text="Auto-null local variables"         width="440" name="EnableAutoNull" tooltip="On save, KFWE adds set x = null for local handle variables (unit, group, location and so on) before every return and at the end of functions, so they do not leak. Your trigger code is not changed, only the saved map script. If the result fails the pjass check, the map is saved without it. To turn it off for one map, put a // @nonull line anywhere in the map code." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="110" >
+          <Control height="10" />
+          <VerticalLayout height="72" >
             <Label text="CODE SYNTAX CHECK (PJASS)" tooltip="PJass options. PJass checks the code for errors when the map is saved." class="LabelTitle" />
             <HorizontalLayout height="40" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Latest" width="122" group="PJass" name="PJass_0" tooltip="pJass versions differ slightly. If you get strange errors, try switching. The latest one is recommended." />

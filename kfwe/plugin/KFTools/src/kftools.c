@@ -1057,8 +1057,7 @@ static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
     return CallNextHookEx(g_kb, code, vk, lp);
 }
 
-#define WE_CDS_SAVE_SITE 0x0055CFF1
-#define WE_CDS_SAVE 0x0051B5B0
+#define WE_APP 0x00803CB0
 #define WE_OE_NEW_SITE 0x00594327
 #define WE_OE_NEW 0x005935E0
 #define WE_OE_FREE_SITE 0x0059442D
@@ -1066,19 +1065,34 @@ static LRESULT CALLBACK kb_hook(int code, WPARAM vk, LPARAM lp)
 #define WE_CD_LOAD 0x005B7270
 #define WE_PANE_REFRESH 0x0064D4E0
 
-typedef int (__fastcall *cds_save_fn)(void *, void *, const char *, int);
 typedef void *(__fastcall *oe_new_fn)(void *, void *, void *, int);
 typedef void (__fastcall *oe_free_fn)(void *, void *);
 typedef int (__fastcall *cd_load_fn)(void *, void *, const char *);
 typedef int (__fastcall *pane_refresh_fn)(void *, void *);
 
-static uint8_t *g_cds, *g_oe;
+static uint8_t *g_oe;
 static int g_cd_hooks;
 
-static int __fastcall h_cds_save(uint8_t *cds, void *edx, const char *path, int flag)
+static uint8_t *map_cds(void)
 {
-    g_cds = cds;
-    return ((cds_save_fn)WE_CDS_SAVE)(cds, edx, path, flag);
+    uint8_t *app = *(uint8_t **)WE_APP;
+    if (!app || IsBadReadPtr(app + 0x1A8, 12))
+        return NULL;
+    uint8_t **tpls = *(uint8_t ***)(app + 0x1A8);
+    uint32_t i = *(uint32_t *)(app + 0x1B0);
+    if (!tpls || IsBadReadPtr(tpls + i, 4))
+        return NULL;
+    uint8_t *tpl = tpls[i];
+    if (!tpl || IsBadReadPtr(tpl + 0x114, 8) || !*(uint32_t *)(tpl + 0x114))
+        return NULL;
+    uint8_t **docs = *(uint8_t ***)(tpl + 0x118);
+    if (!docs || IsBadReadPtr(docs, 4))
+        return NULL;
+    uint8_t *doc = docs[0];
+    if (!doc || IsBadReadPtr(doc + 0x38F8, 4) || IsBadReadPtr(doc + 0x3A58, 4) || *(uint8_t **)(doc + 0x3A58) != tpl)
+        return NULL;
+    uint8_t *cds = *(uint8_t **)(doc + 0x38F8);
+    return cds && !IsBadReadPtr(cds, 32) ? cds : NULL;
 }
 
 static void *__fastcall h_oe_new(uint8_t *oe, void *edx, void *owner, int unk)
@@ -1116,21 +1130,20 @@ static int retarget_call(uintptr_t site, void *fn)
 static void install_customdata_hooks(void)
 {
     if ((uintptr_t)GetModuleHandleA(NULL) != 0x400000 ||
-        !call_site_ok(WE_CDS_SAVE_SITE, WE_CDS_SAVE, "\x8B\x8E\xF8\x38\x00\x00\x53\x8D\x95\xF4\xFE\xFF\xFF\x52", 14) ||
         !call_site_ok(WE_OE_NEW_SITE, WE_OE_NEW, "\x6A\x0B\x56\x8B\xC8", 5) ||
         !call_site_ok(WE_OE_FREE_SITE, WE_OE_FREE, "\x8B\xCF", 2))
         return;
-    g_cd_hooks = retarget_call(WE_OE_FREE_SITE, (void *)h_oe_free) && retarget_call(WE_OE_NEW_SITE, (void *)h_oe_new) &&
-                 retarget_call(WE_CDS_SAVE_SITE, (void *)h_cds_save);
+    g_cd_hooks = retarget_call(WE_OE_FREE_SITE, (void *)h_oe_free) && retarget_call(WE_OE_NEW_SITE, (void *)h_oe_new);
 }
 
 __declspec(dllexport) int KFToolsImportCustomData(int type, const char *path)
 {
     if (!g_cd_hooks)
         return -1;
-    if (!g_cds || type < 0 || type > 6 || !path)
+    uint8_t *cds = map_cds();
+    if (!cds || type < 0 || type > 6 || !path)
         return 0;
-    uint8_t *cd = *(uint8_t **)(g_cds + 4 + type * 4);
+    uint8_t *cd = *(uint8_t **)(cds + 4 + type * 4);
     WCHAR w[MAX_PATH];
     char a[MAX_PATH * 2];
     if (!cd || !MultiByteToWideChar(CP_UTF8, 0, path, -1, w, MAX_PATH) ||
@@ -1138,7 +1151,7 @@ __declspec(dllexport) int KFToolsImportCustomData(int type, const char *path)
         return 0;
     ((cd_load_fn)WE_CD_LOAD)(cd, NULL, a);
     uint8_t *pane = g_oe ? *(uint8_t **)(g_oe + 0x20 + type * 4) : NULL;
-    if (pane && *(uint8_t **)(pane + 4) == g_cds)
+    if (pane && *(uint8_t **)(pane + 4) == cds)
         ((pane_refresh_fn)WE_PANE_REFRESH)(pane, NULL);
     return 1;
 }

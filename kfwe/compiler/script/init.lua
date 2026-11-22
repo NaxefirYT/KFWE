@@ -2,6 +2,7 @@ local inject_code = require "compiler.inject_code"
 local wave = require "compiler.wave"
 local template = require "compiler.template_proc"
 local jasshelper = require "compiler.jasshelper"
+local autonull = require "compiler.autonull"
 local ev = require 'ev'
 
 local classic_names = {
@@ -95,6 +96,7 @@ local function make_option(config, war3ver)
 	option.enable_jasshelper_debug = config.ScriptCompiler.EnableJassHelperDebug == "1"
 	-- 是否优化地图
 	option.enable_jasshelper_optimization = config.ScriptCompiler.EnableJassHelperOptimization ~= "0"
+	option.enable_autonull = config.ScriptCompiler.EnableAutoNull ~= "0"
 	-- pjass的版本
 	option.pjass = config.PJass.Option
 	-- 代码注入选项
@@ -163,6 +165,14 @@ function compiler:compile(map_path, config, war3ver)
             compile_t.output = compile_t.log / "6_vjass.j"
             if not jasshelper_cached(compile_t) then
                 return
+            end
+            if option.enable_autonull then
+                compile_t.source = input
+                compile_t.input = compile_t.output
+                compile_t.output = compile_t.log / "7_autonull.j"
+                if not autonull:compile(compile_t) then
+                    return compile_t.input
+                end
             end
             return compile_t.output
         end

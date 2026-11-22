@@ -1,0 +1,6 @@
+[Info]
+PluginName = MapHelper
+[Load]
+Enable = 1
+Loader = MapHelper.lua
+Dll    = MapHelper.dll

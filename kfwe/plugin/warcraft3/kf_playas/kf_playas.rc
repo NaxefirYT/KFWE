@@ -10,7 +10,7 @@ BEGIN
     BLOCK "041904B0"
     BEGIN
       VALUE "CompanyName", "KFWE"
-      VALUE "FileDescription", "Тест за выбранного игрока"
+      VALUE "FileDescription", "Test as selected player"
       VALUE "FileVersion", "1.0"
       VALUE "InternalName", "kf_playas"
       VALUE "OriginalFilename", "kf_playas.dll"

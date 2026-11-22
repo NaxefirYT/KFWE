@@ -1,0 +1,331 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{ff679f68-9d4d-4ecb-864a-df4ca3182304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Nodes">
+      <UniqueIdentifier>{71dd9314-70a9-45de-9a81-f8dabe5f4cad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd">
+      <UniqueIdentifier>{8037b7e4-121a-4fbe-ab6c-0616dcdfee4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd\detours">
+      <UniqueIdentifier>{4204f959-0a8d-4f9f-bf9d-066995866974}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base">
+      <UniqueIdentifier>{e4155d02-e7d1-49ca-8be9-a8e26d15c76c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\hook">
+      <UniqueIdentifier>{50fa938c-d022-4b84-a283-c82d2509cc66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\seacher">
+      <UniqueIdentifier>{e1e29533-a582-4ae5-b297-cddbb1fdbf2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\udis86">
+      <UniqueIdentifier>{dd7ff8cd-7860-4719-9a36-a3145f50aa4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\util">
+      <UniqueIdentifier>{c09c96b0-a872-47c2-b43e-752a36e0c1c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\hook\detail">
+      <UniqueIdentifier>{9a682336-7691-4c13-a520-f1b0268f3f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{c6fbacfe-88d4-4bb0-9266-cd1da0666285}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\win">
+      <UniqueIdentifier>{8bbe3c26-edbc-4272-9346-1988491077b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\win\registry">
+      <UniqueIdentifier>{f85c6379-bb1a-46cc-bc17-a45073473494}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="3rd\Detours\src\creatwth.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\detours.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\disasm.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\disolx86.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\image.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\modules.cpp">
+      <Filter>3rd\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dllmain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MapHelper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriggerEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WorldEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Nodes\Node.cpp">
+      <Filter>src\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hook\iat.cpp">
+      <Filter>src\base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hook\inline.cpp">
+      <Filter>src\base\hook</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hook\detail\import_address_table.cpp">
+      <Filter>src\base\hook\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hook\detail\memory_protect.cpp">
+      <Filter>src\base\hook\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hook\detail\replace_pointer.cpp">
+      <Filter>src\base\hook\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\input.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\itab.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\syn.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\syn-att.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\syn-intel.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\udis86.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\seacher\basic_searcher.cpp">
+      <Filter>src\base\seacher</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\seacher\memory_search.cpp">
+      <Filter>src\base\seacher</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\seacher\pe_reader.cpp">
+      <Filter>src\base\seacher</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\json.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\unicode.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\udis86\decode.c">
+      <Filter>src\base\udis86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\YDPluginManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\string_hash.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\colored_cout.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\pugixml.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\lua\lua.cpp">
+      <Filter>3rd</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MPQ.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sfmpq.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\MapHelper.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TriggerEditor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WorldEditor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EditorData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Export.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Node.h">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\ActionNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Function.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\EventNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\ParameterNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\TriggerNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\ClosureNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Closures.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\fp_call.h">
+      <Filter>src\base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\iat.h">
+      <Filter>src\base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\inline.h">
+      <Filter>src\base\hook</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\detail\import_address_table.h">
+      <Filter>src\base\hook\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\detail\memory_protect.h">
+      <Filter>src\base\hook\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\hook\detail\replace_pointer.h">
+      <Filter>src\base\hook\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\decode.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\input.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\itab.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\syn.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\types.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\udint.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\udis86\udis86.h">
+      <Filter>src\base\udis86</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\seacher\basic_searcher.h">
+      <Filter>src\base\seacher</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\seacher\memory_search.h">
+      <Filter>src\base\seacher</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\seacher\pe_reader.h">
+      <Filter>src\base\seacher</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\BinaryReader.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\BinaryWriter.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\dynarray.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\fp_call.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\json.hpp">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\singleton.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\unicode.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\xorstr.hpp">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\YDPluginManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HashTable.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\string_hash.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\colored_cout.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\pugiconfig.hpp">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\pugixml.hpp">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\exception.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\getRegistry.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\key.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\predefined_keys.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\traits.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\value.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MPQ.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Export.def">
+      <Filter>src</Filter>
+    </None>
+    <None Include="resource\wave.exe">
+      <Filter>resource</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MapHelper.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\Icon.ico">
+      <Filter>resource</Filter>
+    </Image>
+    <Image Include="resource\qq.png" />
+  </ItemGroup>
+</Project>

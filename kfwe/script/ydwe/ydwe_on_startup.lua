@@ -181,7 +181,6 @@ local function check_war3_version()
 	local ydwe_path = fs.__ydwe_path:string()
 	local ydwePath = fs.ydwe_path()
 	local mapsave_number = tonumber(global_config["MapSave"]["Option"])
-	local mapHelper = (tonumber(global_config["ThirdPartyPlugin"]["EnableMapHelper"]) or 0)
 	local war3path = fs.war3_path()
 	--return tbl['Enable']['yd_jass_api.dll'] ~= '0' (PK Так было раньше)
     if war3_version.major ~= 1 or war3_version.minor < 20 or war3_version.minor > 27 then
@@ -189,26 +188,11 @@ local function check_war3_version()
         gui.error_message(nil, LNG.UNSUPPORTED_WAR3_VERSION, war3_version.major, war3_version.minor)
         os.exit(true, -1)
     end
-	--os.execute('IF EXIST'.."C:\\Users\\user\\Downloads\\WC3Tools\\Warcraft III 1.26")
-	--log.warn("mapHelper: " .. tostring(fs.war3_path()))
-
-	--if fs.exists(path / 'jass' / 'Base' /'PK_Init.j') then
-	-- Сначала удаляем в любом случае
-	--[[if fs.exists(war3path / 'MapHelper.asi') then
-		fs.remove(war3path / 'MapHelper.asi')
-	end
-	if fs.exists(war3path / 'MapHelper.json') then
-		fs.remove(war3path / 'MapHelper.json')
-	end]]
-	-- Теперь создаем если включен
-	if tostring(mapHelper) == "1" then
-		log.info("Map Helper Enabled")
-		for _, name in ipairs { 'MapHelper.asi', 'MapHelper.json' } do
-			local ok, err = pcall(fs.copy_file, ydwePath / 'plugin' / 'tesh' / 'data' / name, war3path / name, true)
-			if not ok then log.warn("Cannot copy " .. name .. ": " .. tostring(err)) end
+	for _, name in ipairs { 'MapHelper.asi', 'MapHelper.json' } do
+		if fs.exists(war3path / name) then
+			local ok, err = pcall(fs.remove, war3path / name)
+			if not ok then log.warn("Cannot remove " .. name .. ": " .. tostring(err)) end
 		end
-	else
-		log.info("Map Helper Disabled")
 	end
 	-- Check for inconsistencies between game.dll and war3patch.mpq caused by "version converter" etc.
 	if mapsave_number == 0 then
@@ -330,6 +314,9 @@ function event.EVENT_WE_START(event_data)
 		end
 		return (require 'stringify_slk')(t, 'unitUIID')
 	end)
+	virtual_mpq.watch('UI\\WorldEditGameStrings.txt', function ()
+		return (require 'mpqloader'):load('ui\\WorldEditGameStrings.txt')
+	end)
 
 	initialize_reg()
 	initialize_dark_mode()
@@ -352,12 +339,6 @@ function event.EVENT_WE_EXIT(event_data)
 	plugin:unload_all()
 
 	log.debug("********************* on exit end *********************")
-	local war3path = fs.war3_path()
-	for _, name in ipairs { 'MapHelper.asi', 'MapHelper.json' } do
-		if fs.exists(war3path / name) then
-			pcall(fs.remove, war3path / name)
-		end
-	end
 	local ffi = require 'ffi'
 	pcall(ffi.cdef, [[
 		void* __stdcall GetCurrentProcess();
@@ -391,6 +372,10 @@ local function is_game_mod(path)
 end
 
 function event.EVENT_MSS_LOAD(event_data)
+	local mh = plugin.loaders.MapHelper
+	if mh then
+		pcall(mh.attach)
+	end
 	local ok, skip = pcall(is_game_mod, event_data.library_name)
 	if not ok then
 		log.error("MSS filter: " .. tostring(skip))

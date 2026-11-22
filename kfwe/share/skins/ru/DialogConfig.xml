@@ -47,7 +47,7 @@
       </VerticalLayout>
       <TabLayout name="tabs" >
         <VerticalLayout class="Background" inset="24,14,20,14" >
-          <VerticalLayout height="140" >
+          <VerticalLayout height="124" >
             <Label text="РАЗРЕШЕННЫЕ ФУНКЦИИ" tooltip= "Опции разрешения функций" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
             <RadioButton class="NormalRadioButton" text="Только классические 1.26 функции" width="412" group="MapSave" name="MapSave_1" tooltip="Сохраряет карту как 1.26 с классическими функциями." />
@@ -55,25 +55,26 @@
             <RadioButton class="NormalRadioButton" text="Reforged функции" width="412" group="MapSave" name="MapSave_3" tooltip="Сохраряет карту как 1.26 но позволяет использовать функции из Reforged. Это не означает что карта будет работать без Reforged, просто совместимость останется на уровне 1.26. Однако вы лишаетесь возможности тестировать карту из редактора и использовать все преимущества теста карт в KFWE." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="120" >
+          <Control height="10" />
+          <VerticalLayout height="96" >
             <Label text="ИСПОЛЬЗОВАНИЕ СИСТЕМ KFWE" tooltip="Отвечает за то, будут ли уникальные функции и системы KFWE вставлены в карту автоматически когда вы используете их." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Автоматически" width="412" group="ScriptInjection" name="ScriptInjection_0" tooltip="Все встроенные уникальные системы и функции KFWE будут автоматически вставляться в карту когда вы их используете. Рекомендуется не отключать этот режим, иначе будете получать ошибки наподобие 'undeclared function' ." />
               <RadioButton class="NormalRadioButton" text="Вручную"   width="412" group="ScriptInjection" name="ScriptInjection_1" tooltip="Для ручного добавления используйте команду препроцессора boost: #include &quot;Jass filename&quot; Example: #include &quot;YDWEAttackWaveTimer.j&quot; Файлы можно найти в папке ui\ydwe\jass." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="140" >
+          <Control height="10" />
+          <VerticalLayout height="152" >
             <Label text="КОМПИЛЯЦИЯ КОДА" tooltip="Опции компилятора JassHelper." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6"  >
               <CheckBox text="Включить JassHelper" width="244" name="EnableJassHelper" tooltip="Это базовая опция обязательная к включению в любом случае, без нее вы не сможете использовать функции KFWE. Можете отключить только если не используете vJass и делаете карту на чистом Jass." />
               <CheckBox text="Включить Jass Helper Оптимизацию"         width="440" name="EnableJassHelperOptimization" tooltip="В настоящее время поддерживает встраивание функций." />
               <CheckBox text="Включить Jass Helper Дебаг"         width="344" name="EnableJassHelperDebug" tooltip="Включает дебаг режим. Вы можете использовать ключевое слово &quot;debug&quot; для того чтобы вся строка кода после него, вставилась в карту или была удалена при сохранении карты. Таким образом можно включать и отключать все дебаг строки когда вам это нужно." />
+              <CheckBox text="Авто-зануление локальных переменных"         width="440" name="EnableAutoNull" tooltip="При сохранении KFWE сам добавляет set x = null для локальных handle-переменных (unit, group, location и т.п.) перед каждым return и в конце функций, чтобы не было утечек. Код в триггерах не меняется, только скрипт сохранённой карты. Если после этого код не пройдёт проверку pjass, карта сохранится без зануления. Отключить для одной карты: строка // @nonull в любом месте кода карты." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="110" >
+          <Control height="10" />
+          <VerticalLayout height="72" >
             <Label text="ПРОВЕРКА ГРАМАТИКИ КОДА (PJASS)" tooltip="Опции PJass. Который проверяет код на наличие ошибок при сохранении карты." class="LabelTitle" />
             <HorizontalLayout height="40" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Новейший" width="122" group="PJass" name="PJass_0" tooltip="Есть некоторая разница между версиями pJass, если у вас странные ошибки, можете попробовать переключить режим. Однако я рекомендую использовать новейший." />

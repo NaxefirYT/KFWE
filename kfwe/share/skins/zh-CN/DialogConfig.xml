@@ -47,7 +47,7 @@
       </VerticalLayout>
       <TabLayout name="tabs" >
         <VerticalLayout class="Background" inset="24,14,20,14" >
-          <VerticalLayout height="140" >
+          <VerticalLayout height="124" >
             <Label text="ВЕРСИЯ КАРТЫ ПРИ СОХРАНЕНИИ" tooltip= "Настройки версии карты" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Стандарт (Ваша текущая версия wc3)"   width="412" group="MapSave" name="MapSave_0" tooltip="Сохранить такую же версию карты какую версию варкрафта вы указали для использовании этого редактора" />
@@ -55,25 +55,26 @@
               <RadioButton class="NormalRadioButton" text="Сохранить как новую （1.24+）" width="412" group="MapSave" name="MapSave_2" tooltip="Сохранить как версию после 1.24 и любые после нее" />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="120" >
+          <Control height="10" />
+          <VerticalLayout height="96" >
             <Label text="ИМПОРТ КОДА В КАРТУ" tooltip="Отвечает за импорт систем и функций KFWE, рекомендуется ставить автоматически" class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Автоматически" width="412" group="ScriptInjection" name="ScriptInjection_0" tooltip="Все встроенные системы и функции KFWE будут автоматически добавляться в код карты. Если вы используете их без автоматического импорта, вы будете получать ошибку &quot;Undeclared Function&quot;" />
               <RadioButton class="NormalRadioButton" text="Вручную"   width="412" group="ScriptInjection" name="ScriptInjection_1" tooltip="Для ручного добавления используйте: #include &quot;Имя файла.j&quot; Пример: #include &quot;YDWEAttackWaveTimer.j&quot; Файлы находятся в ui\ydwe\jass. Вы так же можете создавать и импортировать собственные части кода." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="140" >
+          <Control height="10" />
+          <VerticalLayout height="152" >
             <Label text="КОМПИЛЯТОР СКРИПТОВ" tooltip="Опции связанные с JassHelper и cJass Compiler." class="LabelTitle" />
             <VerticalLayout class="Background" inset="10,6,10,6"  >
               <CheckBox text="Включить JassHelper" width="244" name="EnableJassHelper" tooltip="Включает компилятор JassHelper. Компилятор JassHelper это то на чем базируются все функции KFWE, если вы его отключите, вы не сможете использовать ни одну уникальную функцию KFWE. Если вы не являетесь автором который использует чистый Jass без vJass, не отключайте эту опцию." />
               <CheckBox text="Включить Jass Helper Оптимизацию"         width="440" name="EnableJassHelperOptimization" tooltip="В настоящее время поддерживает встраивание функций." />
               <CheckBox text="Включить Jass Helper Дебагинг"         width="344" name="EnableJassHelperDebug" tooltip="Включить дебаг мод для карты. Влияет на пометки с &quot;#debug&quot; и оптимизацию кода." />
+              <CheckBox text="Авто-зануление локальных переменных"         width="440" name="EnableAutoNull" tooltip="При сохранении KFWE сам добавляет set x = null для локальных handle-переменных (unit, group, location и т.п.) перед каждым return и в конце функций, чтобы не было утечек. Код в триггерах не меняется, только скрипт сохранённой карты. Если после этого код не пройдёт проверку pjass, карта сохранится без зануления. Отключить для одной карты: строка // @nonull в любом месте кода карты." />
             </VerticalLayout>
           </VerticalLayout>
-          <Control height="12" />
-          <VerticalLayout height="110" >
+          <Control height="10" />
+          <VerticalLayout height="72" >
             <Label text="ПРОВЕРКА ГРАММАТИКИ (PJASS)" tooltip="Опции связанные с PJass." class="LabelTitle" />
             <HorizontalLayout height="40" inset="10,6,10,6" >
               <RadioButton class="NormalRadioButton" text="Последний" width="122" group="PJass" name="PJass_0" tooltip="" />
