@@ -1,7 +1,7 @@
 ## 1.8.2
 
 **New**
-- Auto-null local variables. On save, KFWE adds set x = null for local handle variables (unit, group, location and so on) before every return and at the end of functions, so they do not leak. Your trigger code is not changed, only the saved map script. If the result fails the pjass check, the map is saved without it. On by default, turn it off in “Config” → “Map compilation”, or for one map with a // @nonull line anywhere in the map code
+- Auto-null local variables. On save, KFWE adds set x = null for local handle variables (unit, group, location and so on) before every return and at the end of functions, so they do not leak. Your trigger code is not changed, only the saved map script. If the result fails the pjass check, the map is saved without it. On by default, turn it off in “Config” → “Map compilation”, or for one map with a `// @nonull` line anywhere in the map code
 
 **Fixed**
 - Objects created, changed or removed through slk showed up in the Object Editor only after reopening the map, and the notice about them popped up on every save
