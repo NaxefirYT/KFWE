@@ -17,11 +17,11 @@ Export file
 [SAVE_FILE]
 Save file
 [MENU_YDWE]
-&KFWE v1.8.2
+&KFWE v1.8.3
 [MENU_CONIFG]
 &Config
 [MENU_LAUNCH_WAR3]
-Launch &Warcraft3
+Launch &WC3
 [MENU_SHOW_LAST_COMPILE_RESULT]
 Show las&t compile result
 [MENU_SHOW_JASSHELPER_VERSION]
@@ -29,7 +29,7 @@ Show J&assHelper version
 [MENU_SHOW_CJASS_VERSION]
 Show c&Jass version
 [MENU_OPEN_OFFICIAL_SITE]
-Open KFWE &Discord Server
+KFWE &Discord
 [MENU_CREDITS]
 Cre&dits
 [NEW_OBJECT_ID]

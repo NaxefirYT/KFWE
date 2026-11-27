@@ -20,6 +20,7 @@ gui.MB_YESNO = 0x00000004
 gui.IDYES = 6
 gui.MF_STRING = 0x00000000
 gui.MF_POPUP = 0x00000010
+gui.MF_SEPARATOR = 0x00000800
 gui.WM_COMMAND = 0x0111
 gui.WM_SETTEXT = 0x000C
 
@@ -30,6 +31,10 @@ function mt:add(name, callback)
 	local wname = uni.u2w(name)
 	ffi.C.AppendMenuW(self.handle, gui.MF_STRING, generate_id, wname)
 	generate_id = generate_id + 1
+end
+
+function mt:separator()
+	ffi.C.AppendMenuW(self.handle, gui.MF_SEPARATOR, 0, nil)
 end
 
 function gui.on_command(id, callback) message_map[id] = callback end

@@ -44,6 +44,13 @@ function mt:load(filename)
             return res
         end
     end
+    for _, l in ipairs(chain) do
+        local res = io.load(ydwe / 'share' / 'internalRes' / l / 'mpq' / filename)
+        if res then
+            return res
+        end
+    end
+    return io.load(ydwe / 'share' / 'internalRes' / 'en-US' / 'mpq' / filename)
 end
 
 return mt

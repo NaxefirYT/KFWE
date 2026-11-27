@@ -154,7 +154,8 @@ function event.EVENT_TEST_MAP(event_data)
 
 	-- Get the name of the map currently being tested
 	local mappath = fs.path(event_data.map_path)
-	log.info('Current map path ' .. current_map_path:string())
+	local src_path = current_map_path or mappath
+	log.info('Current map path ' .. src_path:string())
 	log.debug("Testing " .. mappath:string())
     log.debug("Testing " .. event_data.command_line)
 
@@ -162,21 +163,21 @@ function event.EVENT_TEST_MAP(event_data)
 	if not event_data.save then
 		local mapSlk = "0" ~= global_config["MapTest"]["EnableMapSlk"]
 		-- If it is an lni map, you need to repackage it
-		if is_lni(current_map_path) then
+		if is_lni(src_path) then
 			if mapSlk then
-				if not map_packer('slk', current_map_path, mappath) then
+				if not map_packer('slk', src_path, mappath) then
 					log.info('Slk map failed!')
 					return -1
 				end
 			else
-				if not map_packer('obj', current_map_path, mappath) then
+				if not map_packer('obj', src_path, mappath) then
 					log.info('Pack map failed!')
 					return -1
 				end
 			end
 		else
 			if mapSlk then
-				if not map_packer('slk', current_map_path, mappath) then
+				if not map_packer('slk', src_path, mappath) then
 					log.info('Slk map failed!')
 					return -1
 				end

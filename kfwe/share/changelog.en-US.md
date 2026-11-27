@@ -1,3 +1,20 @@
+## 1.8.3
+
+**Fixed**
+- Saving campaigns (.w3n) popped up a "0 errors, 1 warnings" dialog and packed through w3x2lni with a broken config encoding, which could prevent maps inside from saving
+- "Test Map" (Ctrl+F9) on a new unsaved map (.w3m) did not launch the game, and fast save (MapHelper) always marked maps as TFT instead of RoC
+- In the English UI, object names and comments from slk were still in Russian
+- In the Ability Editor, the internal YDWETip field had the same name as the regular Tooltip (Tip), making it easy to confuse and break the ability. It is now labeled "KFWE friendly reminder"
+- In the multi-window local test, one of the windows crashed with FATAL ERROR on game start (especially in slots 2-4) if the host started the countdown before map verification finished
+- On every editor startup, loading WorldEditData.txt failed with an error in the log, preventing extra YDWE icons and models from loading
+- Updating KFWE no longer overwrites user TESH settings, styles, includes and templates (config/options.ini, config/styles.ini, includes/, templates/)
+
+**Changed**
+- Campaigns (.w3n) are now packed directly with KFMO, faster and without extra w3x2lni round-tripping. Map and campaign packing in KFMO now streams to disk instead of loading the entire project into memory
+- Cleaned up the KFWE menu in the top bar: shortened the title to KFWE without the version number, grouped items with separators and unified their naming
+- Removed leftover files from old TESH and Horus in plugin\tesh (they are also deleted automatically on update)
+- Updated KFWE icons across the loading screen, taskbar, launcher, config tool, editor, KFMO and installer
+
 ## 1.8.2
 
 **New**

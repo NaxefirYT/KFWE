@@ -907,7 +907,7 @@ static void mark_menu(HWND m, const char *latest)
     HMENU bar = GetMenu(m);
     WCHAR buf[64], label[64];
     for (int i = 0, n = GetMenuItemCount(bar); i < n; i++) {
-        if (GetMenuStringW(bar, i, buf, 64, MF_BYPOSITION) && wcsstr(buf, L"KFWE v")) {
+        if (GetMenuStringW(bar, i, buf, 64, MF_BYPOSITION) && wcsstr(buf, L"KFWE")) {
             MENUITEMINFOW mi = { sizeof mi, MIIM_STRING };
             swprintf(label, 64, TR(L"Доступно обновление %hs"), latest);
             mi.dwTypeData = label;

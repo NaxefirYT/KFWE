@@ -42,10 +42,36 @@ static class Installer
     {
         "bin/EverConfig.cfg", "plugin/warcraft3/config.cfg", "plugin/w3x2lni/config.ini",
         "plugin/ydhost/map.cfg", "plugin/ydhost/ydhost.cfg", "plugin/YDColorizer/YDColorizerConfig.ini",
+        "plugin/tesh/config/options.ini", "plugin/tesh/config/styles.ini", "plugin/tesh/config/trigger_editor_name.ini",
         "share/locale/default",
     };
 
-    static readonly string[] Obsolete = { "bin/splash.bmp" };
+    static readonly string[] KeepDirs = { "plugin/tesh/includes/", "plugin/tesh/templates/" };
+
+    static bool IsKept(string name) =>
+        Keep.Contains(name, StringComparer.OrdinalIgnoreCase)
+        || KeepDirs.Any(d => name.StartsWith(d, StringComparison.OrdinalIgnoreCase));
+
+    static readonly string[] Obsolete =
+    {
+        "bin/splash.bmp",
+        "plugin/w3x2lni/plugin/\u00b5\u00f9\u00d1\u00d5+\u00f9\u00de\u00c0\u00bb\u0565\u00e4.lua",
+        "plugin/tesh/.gitignore",
+        "plugin/tesh/Changelog - Horus.txt",
+        "plugin/tesh/Changelog - TESH.txt",
+        "plugin/tesh/Changelog.txt",
+        "plugin/tesh/funclist.db",
+        "plugin/tesh/horus.dll",
+        "plugin/tesh/license.txt",
+        "plugin/tesh/pjass.exe",
+        "plugin/tesh/SciLexer.dll",
+        "plugin/tesh/Styles.ini",
+        "plugin/tesh/TESH.conf",
+        "plugin/tesh/TESH.ini",
+        "plugin/tesh/TESH_en-US.conf",
+        "plugin/tesh/TESH_EN.conf",
+        "plugin/tesh/TESH_zh-CN.conf",
+    };
 
     public static string FindWar3()
     {
@@ -114,7 +140,7 @@ static class Installer
             var dst = Path.Combine(target, e.FullName.Replace('/', '\\'));
             if (e.FullName.EndsWith("/"))
                 Directory.CreateDirectory(dst);
-            else if (!(Keep.Contains(e.FullName, StringComparer.OrdinalIgnoreCase) && File.Exists(dst)))
+            else if (!(IsKept(e.FullName) && File.Exists(dst)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
                 if (File.Exists(dst)) File.SetAttributes(dst, FileAttributes.Normal);
@@ -127,7 +153,7 @@ static class Installer
         foreach (var f in Obsolete)
         {
             var path = Path.Combine(target, f.Replace('/', '\\'));
-            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(path)) { File.SetAttributes(path, FileAttributes.Normal); File.Delete(path); }
         }
     }
 
@@ -192,7 +218,7 @@ sealed class SetupForm : Form
         Font = new Font("Segoe UI", 9.75f);
         ClientSize = new Size(520, 252);
 
-        var title = new Label { Text = "KFWE 1.8.2", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
+        var title = new Label { Text = "KFWE 1.8.3", Font = new Font("Segoe UI Semibold", 18f), AutoSize = true, Location = new Point(22, 16) };
         var sub = new Label { Text = KfLang.T("Редактор Warcraft 3 нового поколения"), ForeColor = CDim, AutoSize = true, Location = new Point(25, 54) };
         var cap = new Label { Text = KfLang.T("Папка Warcraft III"), AutoSize = true, Location = new Point(24, 94) };
 

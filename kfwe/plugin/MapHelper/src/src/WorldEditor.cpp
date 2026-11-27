@@ -175,10 +175,12 @@ bool WorldEditor::hasSkillByUnit(uint32_t unit_id, uint32_t skill_id)
 	return this_call<bool>(getAddress(0x00501020), data, unit_id, skill_id, 0);
 }
 
-void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
+void WorldEditor::onSaveMap(const char* tempPath, EditorData* data, int isExpansion, const char* destPath)
 {
 	m_tempPath = tempPath;
 	m_currentData = data;
+	m_isExpansion = isExpansion;
+	m_destPath = destPath;
 
 	print("��ǰ��ͼ·��%s\n", getCurrentMapPath());
 	print("�����ͼ·�� %s\n", getTempSavePath());
@@ -227,7 +229,7 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 
 
 
-	if (ret == 6)
+	if (ret == 6 && m_isExpansion)
 	{
 
 		manager.m_enable = true;
@@ -305,6 +307,8 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 
 	m_tempPath = nullptr;
 	m_currentData = nullptr;
+	m_isExpansion = 1;
+	m_destPath = nullptr;
 }
 
 int WorldEditor::saveWts()
@@ -327,7 +331,7 @@ int WorldEditor::saveW3i()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x0055D280), getEditorData(), getTempSavePath(), 1);
+	int ret = this_call<int>(getAddress(0x0055D280), getEditorData(), getTempSavePath(), m_isExpansion);
 
 	print("w3i saving complete. Time taken: %f Seconds\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -479,7 +483,7 @@ int WorldEditor::saveObject()
 	object = *(uintptr_t*)((uintptr_t)getEditorData() + 0x390c);
 	this_call<int>(getAddress(0x00518CA0), object, getTempSavePath());
 
-	int ret = this_call<int>(getAddress(0x0051B5B0), getEditorData()->objects, getTempSavePath(), 1);
+	int ret = this_call<int>(getAddress(0x0051B5B0), getEditorData()->objects, getTempSavePath(), m_isExpansion);
 
 	print("Objects editing and saving completed. Time elapsed: %f Seconds\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -492,7 +496,7 @@ int WorldEditor::saveDoodas()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->doodas, getTempSavePath(), 1);
+	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->doodas, getTempSavePath(), m_isExpansion);
 
 	print("war3map.doo saved successfully. Time elapsed: %f Seconds\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -506,7 +510,7 @@ int WorldEditor::saveUnits()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->units, getTempSavePath(), 1);
+	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->units, getTempSavePath(), m_isExpansion);
 
 	print("war3mapUnit.doo saved successfully. Time elapsed: %f Seconds\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -558,7 +562,7 @@ int WorldEditor::saveTrigger()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x00520ED0), getEditorData()->triggers, getTempSavePath(), 1);
+	int ret = this_call<int>(getAddress(0x00520ED0), getEditorData()->triggers, getTempSavePath(), m_isExpansion);
 
 	print("wtg + wct saving complete. Time elapsed: %f Seconds\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -601,13 +605,13 @@ int WorldEditor::saveArchive()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x0055D720), getEditorData(), pathTemp.string().c_str(), 1);
+	int ret = this_call<int>(getAddress(0x0055D720), getEditorData(), pathTemp.string().c_str(), m_isExpansion);
 	
 	if (ret)
 	{
 		path.remove_filename();
 
-		fs::path path2 = path / name;
+		fs::path path2 = (m_destPath && *m_destPath) ? fs::path(m_destPath) : (path / name);
 
 		//�ƶ��ļ�Ŀ¼
 		ret = fast_call<int>(getAddress(0x004D0F60), pathTemp.string().c_str(), path2.string().c_str(), 1, 0);

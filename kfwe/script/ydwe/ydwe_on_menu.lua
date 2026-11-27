@@ -54,16 +54,21 @@ end
 function event.EVENT_INIT_MENU(event_data)
 	log.debug("********************* on menuinit start *********************")
 
-	local menu = gui.menu(event_data.main_menu_handle, LNG.MENU_YDWE)
+	local menu = gui.menu(event_data.main_menu_handle, '&KFWE')
 	menu:add(LNG.MENU_CONIFG, launch_config)
+	menu:separator()
 	menu:add(LNG.MENU_LAUNCH_WAR3, launch_warcraft3)
 	menu:add(TR('Закрыть все окна WC3'), close_warcraft3)
 	require('playas').attach(menu, gui.on_command)
 	local tools = plugin.loaders.KFTools
 	if tools then
+		menu:separator()
 		menu:add(TR('Копировать координаты\tCtrl+Shift+X'), tools.copy)
+		menu:separator()
 		menu:add(TR('Проверить обновления'), tools.check_update)
 		menu:add(TR('Что нового'), tools.changelog)
+	else
+		menu:separator()
 	end
 	menu:add(LNG.MENU_OPEN_OFFICIAL_SITE, open_offical_site)
 

@@ -5907,7 +5907,7 @@ WESTRING_AEVAL_ASPT=Special Attachment Point (aspt)
 WESTRING_AEVAL_ABUF=Buffs (abuf)
 WESTRING_AEVAL_AEFF=Effects (aeff)
 WESTRING_AEVAL_AANI=Animation Names (aani)
-WESTRING_AEVAL_YTIP="YDWE friendly reminder"
+WESTRING_AEVAL_YTIP="KFWE friendly reminder"
 WESTRING_AEVAL_YDID=command string - numeric command ID
 WESTRING_AEVAL_YDID_HINT="You can use this digital cast custom ID command in the trigger to cast this skill. It cannot be modified, and modifications have no effect."
 

@@ -5924,7 +5924,7 @@ WESTRING_AEVAL_ASPT=Special Attachment Point
 WESTRING_AEVAL_ABUF=Buffs
 WESTRING_AEVAL_AEFF=Effects
 WESTRING_AEVAL_AANI=Animation Names
-WESTRING_AEVAL_YTIP=Tooltip
+WESTRING_AEVAL_YTIP=KFWE friendly reminder
 
 // Ability Specific Values
 WESTRING_AEVAL_HBZ1=Number of Waves

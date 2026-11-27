@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using War3Net.IO.Mpq;
 
 namespace KFMO;
@@ -280,25 +281,94 @@ static class Optimize
         return res;
     }
 
+    /// <summary>Packs a directory into a .w3x/.w3m map or .w3n campaign using bounded-memory streaming I/O.</summary>
     public static int Pack(string input, string output, int level)
     {
         var sw = Stopwatch.StartNew();
         if (!Directory.Exists(input)) { Console.WriteLine(KfLang.T("нет папки ") + input); return 1; }
-        var files = ReadAll(new Options { Input = input }, out _, out _);
-        var hm3w = MapHeader(files);
-        if (hm3w == null) { Console.WriteLine(KfLang.T("не разобран war3map.w3i")); return 4; }
-        var bytes = MpqWriter.Write(files, hm3w, level, true, 7, dedup: false);
-        File.WriteAllBytes(output, bytes);
-        int bad = Verify(output, files);
-        if (bad != 0) { File.Delete(output); Console.WriteLine(KfLang.F("проверка: ОШИБОК {0}", bad)); return 3; }
-        Console.WriteLine(KfLang.F("упаковано {0} файлов, {1:F2} -> {2:F2} МБ, {3:F1} c", files.Count, files.Sum(f => (long)f.Data.Length) / 1048576.0, bytes.Length / 1048576.0, sw.Elapsed.TotalSeconds));
-        return 0;
+
+        bool isCampaign = output.EndsWith(".w3n", StringComparison.OrdinalIgnoreCase);
+        string root = Path.GetFullPath(input);
+        string outFull = Path.GetFullPath(output);
+        if (Path.GetDirectoryName(outFull) is { Length: > 0 } outDir)
+            Directory.CreateDirectory(outDir);
+        string tmp = $"{outFull}.kfmo.{Environment.ProcessId}.tmp";
+
+        var entries = new List<MpqWriter.FileEntry>();
+        foreach (var f in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        {
+            string full = Path.GetFullPath(f);
+            if (full.Equals(outFull, StringComparison.OrdinalIgnoreCase) || full.Equals(tmp, StringComparison.OrdinalIgnoreCase))
+                continue;
+            var rel = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(Path.GetRelativePath(root, f).Replace('/', '\\')));
+            if (rel.StartsWith("(") && rel.EndsWith(")")) continue;
+            bool raw = isCampaign && (rel.EndsWith(".w3x", StringComparison.OrdinalIgnoreCase) || rel.EndsWith(".w3m", StringComparison.OrdinalIgnoreCase));
+            entries.Add(new MpqWriter.FileEntry(rel, full, new FileInfo(full).Length, raw));
+        }
+        entries.Sort((a, b) => StringComparer.Ordinal.Compare(a.Name, b.Name));
+
+        byte[]? GetDisk(string name)
+        {
+            foreach (var e in entries)
+                if (e.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return File.ReadAllBytes(e.DiskPath);
+            return null;
+        }
+
+        var hm3w = isCampaign ? CampaignHeader(GetDisk) : MapHeader(GetDisk);
+        if (hm3w == null)
+        {
+            Console.WriteLine(isCampaign ? KfLang.T("не разобран ") + "war3campaign.w3f" : KfLang.T("не разобран war3map.w3i"));
+            return 4;
+        }
+
+        try
+        {
+            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536))
+                MpqWriter.WriteStream(entries, fs, hm3w, level, listfile: true, sectorShift: 7);
+
+            int bad = VerifyStream(tmp, entries);
+            if (bad != 0)
+            {
+                Console.WriteLine(KfLang.F("проверка: ОШИБОК {0}", bad));
+                return 3;
+            }
+
+            long outSize = new FileInfo(tmp).Length;
+            long inSize = entries.Sum(f => f.Size);
+            File.Move(tmp, outFull, overwrite: true);
+            Console.WriteLine(KfLang.F("упаковано {0} файлов, {1:F2} -> {2:F2} МБ, {3:F1} c", entries.Count, inSize / 1048576.0, outSize / 1048576.0, sw.Elapsed.TotalSeconds));
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return 2;
+        }
+        finally
+        {
+            try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+        }
     }
 
-    internal static byte[]? MapHeader(List<(string Name, byte[] Data)> files)
+    static byte[] BuildHm3wHeader(byte[] name, int flags, int players)
     {
-        byte[]? Get(string n) => files.FirstOrDefault(f => f.Name.Equals(n, StringComparison.OrdinalIgnoreCase)).Data;
-        var w3i = Get("war3map.w3i");
+        var hdr = new byte[512];
+        int len = Math.Min(name.Length, 512 - 8 - 9);
+        while (len > 0 && len < name.Length && (name[len] & 0xC0) == 0x80) len--;
+        Encoding.ASCII.GetBytes("HM3W").CopyTo(hdr, 0);
+        Array.Copy(name, 0, hdr, 8, len);
+        BitConverter.GetBytes(flags).CopyTo(hdr, 8 + len + 1);
+        BitConverter.GetBytes(players).CopyTo(hdr, 8 + len + 5);
+        return hdr;
+    }
+
+    internal static byte[]? MapHeader(List<(string Name, byte[] Data)> files) =>
+        MapHeader(n => files.FirstOrDefault(f => f.Name.Equals(n, StringComparison.OrdinalIgnoreCase)).Data);
+
+    internal static byte[]? MapHeader(Func<string, byte[]?> get)
+    {
+        var w3i = get("war3map.w3i");
         if (w3i == null) return null;
         try
         {
@@ -329,16 +399,33 @@ static class Optimize
                 r.ReadInt32(); r.ReadInt32(); Z(); r.ReadBytes(8 + 8);
             }
             var s = Encoding.UTF8.GetString(name);
-            if (s.StartsWith("TRIGSTR_") && int.TryParse(s.AsSpan(8), out int id) && Get("war3map.wts") is byte[] wts &&
+            if (s.StartsWith("TRIGSTR_") && int.TryParse(s.AsSpan(8), out int id) && get("war3map.wts") is byte[] wts &&
                 Strings.ParseWts(wts).TryGetValue(id, out var text))
                 name = Encoding.UTF8.GetBytes(text);
-            var hdr = new byte[512];
-            int len = Math.Min(name.Length, 512 - 8 - 9);
-            Encoding.ASCII.GetBytes("HM3W").CopyTo(hdr, 0);
-            Array.Copy(name, 0, hdr, 8, len);
-            BitConverter.GetBytes(flags & 0x3FFFFF).CopyTo(hdr, 8 + len + 1);
-            BitConverter.GetBytes(humans).CopyTo(hdr, 8 + len + 5);
-            return hdr;
+            return BuildHm3wHeader(name, flags & 0x3FFFFF, humans);
+        }
+        catch (EndOfStreamException) { return null; }
+    }
+
+    internal static byte[]? CampaignHeader(Func<string, byte[]?> get)
+    {
+        var w3f = get("war3campaign.w3f");
+        if (w3f == null) return null;
+        try
+        {
+            var r = new BinaryReader(new MemoryStream(w3f));
+            byte[] Z() { var b = new List<byte>(); for (byte c; (c = r.ReadByte()) != 0;) b.Add(c); return b.ToArray(); }
+            r.ReadInt32(); r.ReadInt32(); r.ReadInt32();
+            var name = Z();
+            var s = Encoding.UTF8.GetString(name);
+            if (s.Contains("TRIGSTR_") && get("war3campaign.wts") is byte[] wts)
+            {
+                var map = Strings.ParseWts(wts);
+                s = Regex.Replace(s, @"TRIGSTR_(\d+)", m =>
+                    int.TryParse(m.Groups[1].Value, out int id) && map.TryGetValue(id, out var text) ? text : m.Value);
+                name = Encoding.UTF8.GetBytes(s);
+            }
+            return BuildHm3wHeader(name, 0, 1);
         }
         catch (EndOfStreamException) { return null; }
     }
@@ -399,6 +486,37 @@ static class Optimize
                 if (!ms.ToArray().AsSpan().SequenceEqual(data)) { bad++; Console.WriteLine(KfLang.F("    не совпадает: {0}", name)); }
             }
             catch (Exception ex) { bad++; Console.WriteLine(KfLang.F("    не читается: {0}: {1}", name, ex.Message)); }
+        }
+        return bad;
+    }
+
+    static int VerifyStream(string path, IReadOnlyList<MpqWriter.FileEntry> expected)
+    {
+        using var a = MpqArchive.Open(path, true);
+        a.AddFileNames(expected.Select(f => f.Name));
+        var bufA = new byte[65536];
+        var bufB = new byte[65536];
+        int bad = 0;
+        foreach (var f in expected)
+        {
+            try
+            {
+                using var s = a.OpenFile(f.Name);
+                using var fs = File.OpenRead(f.DiskPath);
+                while (true)
+                {
+                    int ra = s.ReadAtLeast(bufA, bufA.Length, throwOnEndOfStream: false);
+                    int rb = fs.ReadAtLeast(bufB, bufB.Length, throwOnEndOfStream: false);
+                    if (ra != rb || !bufA.AsSpan(0, ra).SequenceEqual(bufB.AsSpan(0, rb)))
+                    {
+                        bad++;
+                        Console.WriteLine(KfLang.F("    не совпадает: {0}", f.Name));
+                        break;
+                    }
+                    if (ra == 0) break;
+                }
+            }
+            catch (Exception ex) { bad++; Console.WriteLine(KfLang.F("    не читается: {0}: {1}", f.Name, ex.Message)); }
         }
         return bad;
     }

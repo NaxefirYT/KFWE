@@ -11,6 +11,7 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <Product>KF Map Optimizer</Product>
     <Version>1.0.0</Version>
+    <ApplicationIcon>..\..\installer\kfwe.ico</ApplicationIcon>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 

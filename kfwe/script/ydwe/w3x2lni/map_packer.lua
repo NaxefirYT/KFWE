@@ -108,7 +108,7 @@ end
 
 local function kfmo_can_pack(map_path, target_path)
     local ext = target_path:extension():string():lower()
-    return (ext == '.w3x' or ext == '.w3m') and not fs.exists(map_path / 'w3x2lni' / 'plugin' / '.config')
+    return (ext == '.w3x' or ext == '.w3m' or ext == '.w3n') and not fs.exists(map_path / 'w3x2lni' / 'plugin' / '.config')
 end
 
 return function (mode, map_path, target_path)

@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #define GAME_BASE 0x6F000000u
 static uint8_t *g_game;
@@ -175,6 +176,39 @@ static int install_l_filter(void)
     return g_wndproc != NULL;
 }
 
+typedef int (WINAPI *start_game_fn)(int);
+typedef int (__attribute__((fastcall)) *get_game_info_fn)(void *, int);
+typedef int (__attribute__((fastcall)) *parse_map_info_fn)(void *, void *);
+typedef int (__attribute__((fastcall)) *init_map_data_fn)(void *);
+
+static int WINAPI ensure_map_loaded(int game_type)
+{
+    void **slot = (void **)G(0x6FAB65F4);
+    if (!*slot) {
+        uint8_t gi[0x100] = {0};
+        uint8_t mi[0xB0] = {0};
+        int gok = ((get_game_info_fn)G(0x6F53EFF0))(gi, 0);
+        int pok = gok ? ((parse_map_info_fn)G(0x6F5BE710))(mi, gi) : 0;
+        int iok = pok ? ((init_map_data_fn)G(0x6F5C05E0))(mi) : 0;
+        logf("догрузка карты перед стартом: gi=%d mi=%d init=%d ptr=%p", gok, pok, iok, *slot);
+        if (!*slot) return 0;
+    }
+    return ((start_game_fn)G(0x6F5C37A0))(game_type);
+}
+
+static int install_map_guard(void)
+{
+    static const uint8_t orig[5] = { 0xE8, 0xDD, 0xF6, 0xFF, 0xFF };
+    uint8_t *fn = G(0x6F5C40BE);
+    if (memcmp(fn, orig, 5)) return 0;
+    DWORD old;
+    if (!VirtualProtect(fn, 5, PAGE_EXECUTE_READWRITE, &old)) return 0;
+    *(int32_t *)(fn + 1) = (int32_t)((uint8_t *)ensure_map_loaded - (fn + 5));
+    VirtualProtect(fn, 5, old, &old);
+    FlushInstructionCache(GetCurrentProcess(), fn, 5);
+    return 1;
+}
+
 static DWORD WINAPI waiter(LPVOID p)
 {
     (void)p;
@@ -185,8 +219,8 @@ static DWORD WINAPI waiter(LPVOID p)
     if (g_auto) {
         HANDLE map = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(LONG), "KFWE_join_tick");
         if (map) g_join_tick = (volatile LONG *)MapViewOfFile(map, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LONG));
-        int menu = install_fast_menu(), slots = install();
-        logf("автовход: меню %d, слоты %d, клавиша %d", menu, slots, install_l_filter());
+        int menu = install_fast_menu(), slots = install(), guard = install_map_guard();
+        logf("автовход: меню %d, слоты %d, карта %d, клавиша %d", menu, slots, guard, install_l_filter());
         return 0;
     }
     logf("game.dll по %p, игрок %d, перехват %d", (void *)g, g_playas, install());

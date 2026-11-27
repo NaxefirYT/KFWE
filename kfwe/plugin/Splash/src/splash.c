@@ -4,13 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../common/src/kflang.h"
+#include "kf_logo_png.h"
 
 typedef struct { UINT32 ver; void *cb; BOOL nothread, nocodecs; } GdipInput;
 typedef void GpGraphics, GpBrush, GpPath, GpPen, GpImage, GpFontFamily, GpFont, GpStringFormat;
 typedef struct { float X, Y; } PointF;
 typedef struct { float X, Y, W, H; } RectF;
+IStream *WINAPI SHCreateMemStream(const BYTE *pInit, UINT cbInit);
 int WINAPI GdiplusStartup(ULONG_PTR *, const GdipInput *, void *);
 int WINAPI GdipCreateBitmapFromScan0(int, int, int, int, BYTE *, GpImage **);
+int WINAPI GdipLoadImageFromStream(IStream *stream, GpImage **image);
+int WINAPI GdipDrawImageRect(GpGraphics *graphics, GpImage *image, float x, float y, float width, float height);
+int WINAPI GdipSetInterpolationMode(GpGraphics *graphics, int interpolationMode);
 int WINAPI GdipGetImageGraphicsContext(GpImage *, GpGraphics **);
 int WINAPI GdipDisposeImage(GpImage *);
 int WINAPI GdipDeleteGraphics(GpGraphics *);
@@ -154,14 +159,32 @@ static void render_base(void)
     GdipDeletePath(card);
 
     float mx = cx + px(44), my = cy + px(48), ms = px(68);
-    GpPath *mark = rr_path(mx, my, ms, ms, px(18));
-    PointF m0 = { mx, my }, m1 = { mx + ms, my + ms };
-    GpBrush *mb;
-    GdipCreateLineBrush(&m0, &m1, 0xFF9479FF, 0xFF5E3FEA, 0, &mb);
-    GdipFillPath(g_g, mb, mark);
-    GdipDeleteBrush(mb);
+    GpPath *mark = rr_path(mx, my, ms, ms, px(16));
+    GpImage *logo = NULL;
+    IStream *ls = SHCreateMemStream(KF_LOGO_PNG, sizeof KF_LOGO_PNG);
+    if (ls) {
+        GdipLoadImageFromStream(ls, &logo);
+        ((ULONG (WINAPI *)(void *))(*(void ***)ls)[2])(ls);
+    }
+    if (logo) {
+        GdipSetClipPath(g_g, mark, 0);
+        GdipSetInterpolationMode(g_g, 7);
+        GdipDrawImageRect(g_g, logo, mx, my, ms, ms);
+        GdipResetClip(g_g);
+        GdipDisposeImage(logo);
+    } else {
+        PointF m0 = { mx, my }, m1 = { mx + ms, my + ms };
+        GpBrush *mb;
+        GdipCreateLineBrush(&m0, &m1, 0xFF9479FF, 0xFF5E3FEA, 0, &mb);
+        GdipFillPath(g_g, mb, mark);
+        GdipDeleteBrush(mb);
+        text(L"K", L"Segoe UI", px(40), 1, 0xFFFFFFFF, (RectF){ mx, my - px(2), ms, ms }, 1);
+    }
+    GpPen *mp;
+    GdipCreatePen1(0x33FFFFFF, px(1), 2, &mp);
+    GdipDrawPath(g_g, mp, mark);
+    GdipDeletePen(mp);
     GdipDeletePath(mark);
-    text(L"K", L"Segoe UI", px(40), 1, 0xFFFFFFFF, (RectF){ mx, my - px(2), ms, ms }, 1);
 
     float tx = mx + ms + px(22);
     text(L"KFWE", L"Segoe UI", px(46), 1, 0xFFFFFFFF, (RectF){ tx, my - px(10), px(330), px(58) }, 0);

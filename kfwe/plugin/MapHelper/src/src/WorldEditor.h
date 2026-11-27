@@ -24,17 +24,17 @@ public:
 
 	std::string getConfigData(const std::string& parentKey, const std::string& childKey, int index = 0);
 
-	//»ñÈ¡¼¼ÄÜÎï±àÊı¾İ ¼¼ÄÜid µÈ¼¶ ×Ö¶Î ·µ»ØÖµ
+	//è·å–æŠ€èƒ½ç‰©ç¼–æ•°æ® æŠ€èƒ½id ç­‰çº§ å­—æ®µ è¿”å›å€¼
 	bool getSkillObjectData(uint32_t id, uint32_t level, std::string text, std::string& value);
 
-	//µ¥Î»ÊÇ·ñ°üº¬¼¼ÄÜ °üÀ¨ÒÔ¸Ã¼¼ÄÜÎªÄ£°åÀ©Õ¹³öÀ´µÄ×Ó¼¼ÄÜ
+	//å•ä½æ˜¯å¦åŒ…å«æŠ€èƒ½ åŒ…æ‹¬ä»¥è¯¥æŠ€èƒ½ä¸ºæ¨¡æ¿æ‰©å±•å‡ºæ¥çš„å­æŠ€èƒ½
 	bool hasSkillByUnit(uint32_t unit_id, uint32_t skill_id);
 
 	int getSoundDuration(const char* path);
 
 	void saveMap(const char* outPath);
 
-	void onSaveMap(const char* tempPath, EditorData* data);
+	void onSaveMap(const char* tempPath, EditorData* data, int isExpansion = 1, const char* destPath = nullptr);
 
 	void loadConfigData();
 private:
@@ -70,6 +70,8 @@ protected:
 	uintptr_t m_editorObject;
 	//fs::path m_tmp_path{};
 	const char* m_tempPath;
+	int m_isExpansion = 1;
+	const char* m_destPath = nullptr;
 	bool m_bInit;
 public:
 	EditorData* m_currentData;

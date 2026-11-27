@@ -26,6 +26,8 @@ extern MakeEditorData* g_make_editor_data;
 const char* g_path;
 static uintptr_t g_object = 0;
 static uintptr_t g_addr;
+static int g_is_expansion = 1;
+static const char* g_dest_path = nullptr;
 
 namespace real
 {
@@ -165,6 +167,9 @@ static void __declspec(naked) insertSaveMapData()
 	__asm
 	{
 		mov g_object, esi
+		mov g_is_expansion, ebx
+		mov eax, dword ptr ss : [ebp + 0x8];
+		mov g_dest_path, eax
 		lea eax, dword ptr ss : [ebp - 0x10c];
 		mov g_path, eax
 		pushad
@@ -579,12 +584,16 @@ static HWND create_button(HWND parent, const char* name, int x, int y, int width
 	return btn;
 }
 
+static void set_window_icon(HWND hwnd) {
+	HICON hBig = (HICON)LoadImage(g_hModule, MAKEINTRESOURCE(IDI_ICON2), IMAGE_ICON, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR | LR_SHARED);
+	HICON hSmall = (HICON)LoadImage(g_hModule, MAKEINTRESOURCE(IDI_ICON2), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
+	if (hBig) SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hBig);
+	if (hSmall) SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hSmall);
+}
+
 static void __fastcall fakeInitWindows(uint32_t id, HWND hwnd) {
 
-	HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));
-	if (hIcon) {
-		SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-	}
+	set_window_icon(hwnd);
 	g_editor_windows[id] = hwnd;
 
 	switch (id) {
@@ -664,7 +673,7 @@ uintptr_t Helper::onSaveMap()
 {
 	auto& editor = get_world_editor();
 
-	editor.onSaveMap(g_path, (EditorData*)g_object);
+	editor.onSaveMap(g_path, (EditorData*)g_object, g_is_expansion, g_dest_path);
 	return editor.getAddress(0x0055D175);
 }
 
@@ -961,12 +970,7 @@ You can enable incremental update mode in the upper right corner of the editor f
 	
 		console_color_output(text);
 
-		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));
-		if (hIcon) {
-
-			SendMessage(v_hwnd_console, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-
-		}
+		set_window_icon(v_hwnd_console);
 
 
 	}

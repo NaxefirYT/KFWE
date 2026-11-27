@@ -16,6 +16,8 @@ end
 package.loaded['log'] = { trace = writer 'trace', debug = writer 'debug', info = writer 'info', warn = writer 'warn', error = writer 'error' }
 
 require 'utiliy'
+local i18n = require 'i18n'
+i18n.initialize(fs.ydwe_devpath() / 'share' / 'locale')
 
 table.insert(package.searchers, function (name)
     local filename
